@@ -1,0 +1,11 @@
+# Job Finder (web). Every address goes to app.php, except the stylesheet, scripts and pictures in static/ and assets/.
+Options -Indexes
+DirectoryIndex app.php
+
+<FilesMatch "^(config\.php|config\.sample\.php|cron\.php|.*\.ps1|.*\.md|\.gitignore)$">
+  Require all denied
+</FilesMatch>
+
+RewriteEngine On
+RewriteRule ^(?:static|assets)/ - [L]
+RewriteRule ^ app.php [L,QSA]

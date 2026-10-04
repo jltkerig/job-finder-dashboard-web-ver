@@ -1,0 +1,54 @@
+/* Web-only additions: the sign-in page and the "Coming soon" label. Every other page uses static/css/style.css, the desktop Job Finder's stylesheet. */
+
+.nav-signout { margin-left: auto; }
+.soon {
+  display: inline-block; vertical-align: middle; margin-left: 6px; padding: 2px 8px; border-radius: 999px;
+  font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
+  color: #4b3fd1; background: rgba(109, 93, 252, .12);
+}
+.inline { display: inline; margin-left: 8px; }
+.inline .bordered-button { padding: 4px 12px; font-size: .8rem; }
+
+/* Sign-in page: soft glowing colour blobs over a faint grid, behind the box */
+body.login-page {
+  margin: 0; display: flex; flex-direction: column;
+  min-height: 100vh;
+  font-family: system-ui, "Segoe UI", Arial, sans-serif;
+  color: #1d2330;
+  background:
+    linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px) 0 0 / 32px 32px,
+    linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px) 0 0 / 32px 32px,
+    radial-gradient(circle at 15% 20%, #6d5dfc 0, transparent 45%),
+    radial-gradient(circle at 85% 30%, #00b4d8 0, transparent 40%),
+    radial-gradient(circle at 50% 95%, #f472b6 0, transparent 45%),
+    #0f1226;
+  background-attachment: fixed;
+}
+body.login-page main.login-box {
+  flex: 0 0 auto; width: calc(100% - 32px); max-width: 400px; margin: 12vh auto 0; padding: 36px 32px 28px;
+  border-radius: 18px; text-align: center;
+  background: rgba(255, 255, 255, .9); backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, .25); box-shadow: 0 20px 50px rgba(0, 0, 0, .35);
+}
+.login-box .logo {
+  width: 54px; height: 54px; margin: 0 auto 14px; border-radius: 14px; display: grid; place-items: center;
+  color: #fff; background: linear-gradient(135deg, #6d5dfc, #00b4d8); box-shadow: 0 8px 20px rgba(109,93,252,.45);
+}
+.login-box h1 { font-size: 24px; margin: 0; letter-spacing: -.01em; }
+.login-box .sub, .login-box > p { color: #667085; margin: 4px 0 22px; }
+.login-box form { text-align: left; }
+.login-box label { display: block; font-size: 13px; font-weight: 600; color: #667085; margin: 0 0 14px; }
+.login-box input[type=text], .login-box input[type=password] {
+  display: block; width: 100%; margin-top: 6px; padding: 11px 13px; border: 1px solid #e3e6eb; border-radius: 10px;
+  background: #fff; color: #1d2330; font: inherit; font-size: 15px; transition: border-color .15s, box-shadow .15s;
+}
+.login-box input:focus { outline: none; border-color: #6d5dfc; box-shadow: 0 0 0 4px rgba(109,93,252,.2); }
+.login-box button {
+  width: 100%; margin-top: 8px; padding: 12px; border: 0; border-radius: 10px; cursor: pointer;
+  font: inherit; font-weight: 600; font-size: 15px; color: #fff;
+  background: linear-gradient(135deg, #6d5dfc, #00b4d8); box-shadow: 0 8px 20px rgba(109,93,252,.35);
+  transition: transform .1s, box-shadow .15s;
+}
+.login-box button:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(109,93,252,.45); }
+.login-box button:active { transform: translateY(0); }
+.login-box .error { color: #b42318; background: rgba(180, 35, 24, .1); padding: 8px 12px; border-radius: 8px; font-size: 14px; text-align: left; }

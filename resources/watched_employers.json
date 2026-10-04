@@ -1,0 +1,385 @@
+[
+  {
+    "name": "The Home Depot",
+    "system": "workday",
+    "host": "homedepot.wd5.myworkdayjobs.com",
+    "tenant": "homedepot",
+    "site": "CareerDepot",
+    "domain": "homedepot.com",
+    "title_keywords": [
+      "engineer",
+      "developer",
+      "software",
+      "data",
+      "analyst",
+      "architect",
+      "ux",
+      "ui",
+      "design",
+      "product",
+      "technolog",
+      "devops",
+      "cloud",
+      "security",
+      "machine learning",
+      "web",
+      "digital",
+      "content",
+      "creative",
+      "graphic",
+      "visual",
+      "producer",
+      "program"
+    ],
+    "exclude_locations": [
+      "DFC",
+      "DISTRIBUTION",
+      "FULFILLMENT",
+      "SUPPLY CHAIN"
+    ],
+    "extra_titles": [
+      "UX Designer",
+      "UI Designer",
+      "Digital Designer",
+      "Front End Developer",
+      "Web Developer"
+    ]
+  },
+  {
+    "name": "Capital One",
+    "system": "workday",
+    "host": "capitalone.wd12.myworkdayjobs.com",
+    "tenant": "capitalone",
+    "site": "Capital_One",
+    "domain": "capitalone.com"
+  },
+  {
+    "name": "T. Rowe Price",
+    "system": "workday",
+    "host": "troweprice.wd5.myworkdayjobs.com",
+    "tenant": "troweprice",
+    "site": "TRowePrice",
+    "domain": "troweprice.com"
+  },
+  {
+    "name": "Barclays",
+    "system": "workday",
+    "host": "barclays.wd3.myworkdayjobs.com",
+    "tenant": "barclays",
+    "site": "External_Career_Site_Barclays",
+    "domain": "barclays.com"
+  },
+  {
+    "name": "WSFS Bank",
+    "system": "workday",
+    "host": "wsfsbank.wd1.myworkdayjobs.com",
+    "tenant": "wsfsbank",
+    "site": "wsfscareers",
+    "domain": "wsfsbank.com"
+  },
+  {
+    "name": "DuPont",
+    "system": "workday",
+    "host": "dupont.wd5.myworkdayjobs.com",
+    "tenant": "dupont",
+    "site": "Jobs",
+    "domain": "dupont.com"
+  },
+  {
+    "name": "ChristianaCare",
+    "system": "workday",
+    "host": "christianacare.wd5.myworkdayjobs.com",
+    "tenant": "christianacare",
+    "site": "CCHS",
+    "domain": "christianacare.org"
+  },
+  {
+    "name": "JPMorgan Chase",
+    "system": "oracle",
+    "host": "jpmc.fa.oraclecloud.com",
+    "site": "CX_1001",
+    "domain": "jpmorganchase.com"
+  },
+  {
+    "name": "Sinclair",
+    "system": "oracle",
+    "host": "edyy.fa.us2.oraclecloud.com",
+    "site": "CX_2002",
+    "domain": "sbgi.net"
+  },
+  {
+    "name": "Chemours",
+    "system": "workday",
+    "host": "chemours.wd103.myworkdayjobs.com",
+    "tenant": "chemours",
+    "site": "Chemours",
+    "domain": "chemours.com"
+  },
+  {
+    "name": "Under Armour",
+    "system": "successfactors",
+    "host": "careers.underarmour.com",
+    "domain": "underarmour.com"
+  },
+  {
+    "name": "McCormick",
+    "system": "successfactors",
+    "host": "careers.mccormick.com",
+    "domain": "mccormick.com"
+  },
+  {
+    "name": "Allegis Group",
+    "system": "icims",
+    "host": "careers-allegisgroup.icims.com",
+    "domain": "allegisgroup.com"
+  },
+  {
+    "name": "The Agora Companies",
+    "system": "ultipro",
+    "host": "recruiting.ultipro.com",
+    "tenant": "WAD1002WADM",
+    "board": "be1bb296-2bff-4732-8fa5-4c8775112887",
+    "domain": "theagora.com"
+  },
+  {
+    "name": "Baltimore County Government",
+    "system": "neogov",
+    "agency": "baltimorecounty",
+    "domain": "baltimorecountymd.gov"
+  },
+  {
+    "name": "Howard County Government",
+    "system": "neogov",
+    "agency": "howardcountymd",
+    "domain": "howardcountymd.gov"
+  },
+  {
+    "name": "Anne Arundel County",
+    "system": "neogov",
+    "agency": "annearundel",
+    "domain": "aacounty.org"
+  },
+  {
+    "name": "Carroll County Government",
+    "system": "neogov",
+    "agency": "carrollcounty",
+    "domain": "carrollcountymd.gov"
+  },
+  {
+    "name": "State of Delaware",
+    "system": "neogov",
+    "agency": "delaware",
+    "domain": "delaware.gov"
+  },
+  {
+    "name": "Harford Community College",
+    "system": "neogov",
+    "agency": "harfordcc",
+    "domain": "harford.edu"
+  },
+  {
+    "name": "Community College of Baltimore County",
+    "system": "neogov",
+    "agency": "ccbcmd",
+    "domain": "ccbc.edu"
+  },
+  {
+    "name": "Howard Community College",
+    "system": "neogov",
+    "agency": "howardcc",
+    "domain": "howardcc.edu"
+  },
+  {
+    "name": "Baltimore City Community College",
+    "system": "neogov",
+    "agency": "bccc",
+    "domain": "bccc.edu"
+  },
+  {
+    "name": "Carroll Community College",
+    "system": "neogov",
+    "agency": "carrollcc",
+    "domain": "carrollcc.edu"
+  },
+  {
+    "name": "City of Baltimore",
+    "system": "workday",
+    "host": "baltimorecity.wd1.myworkdayjobs.com",
+    "tenant": "baltimorecity",
+    "site": "External",
+    "domain": "baltimorecity.gov"
+  },
+  {
+    "name": "Franklin Templeton",
+    "system": "workday",
+    "host": "franklintempleton.wd5.myworkdayjobs.com",
+    "tenant": "franklintempleton",
+    "site": "Primary-External-1",
+    "domain": "franklintempleton.com"
+  },
+  {
+    "name": "M&T Bank",
+    "system": "workday",
+    "host": "mtb.wd5.myworkdayjobs.com",
+    "tenant": "mtb",
+    "site": "MTB",
+    "domain": "mtb.com"
+  },
+  {
+    "name": "Loyola University Maryland",
+    "system": "workday",
+    "host": "loyola.wd5.myworkdayjobs.com",
+    "tenant": "loyola",
+    "site": "External",
+    "domain": "loyola.edu"
+  },
+  {
+    "name": "University of Baltimore",
+    "system": "workday",
+    "host": "marylandconnect.wd1.myworkdayjobs.com",
+    "tenant": "marylandconnect",
+    "site": "UBaltCareers",
+    "domain": "ubalt.edu"
+  },
+  {
+    "name": "University of Maryland, College Park",
+    "system": "workday",
+    "host": "umd.wd1.myworkdayjobs.com",
+    "tenant": "umd",
+    "site": "UMCP",
+    "domain": "umd.edu"
+  },
+  {
+    "name": "University of Maryland Global Campus",
+    "system": "workday",
+    "host": "umgc.wd1.myworkdayjobs.com",
+    "tenant": "umgc",
+    "site": "UMGC_Careers",
+    "domain": "umgc.edu"
+  },
+  {
+    "name": "University of Maryland, Baltimore",
+    "system": "workday",
+    "host": "umb.wd1.myworkdayjobs.com",
+    "tenant": "umb",
+    "site": "UMBExternal",
+    "domain": "umaryland.edu"
+  },
+  {
+    "name": "Stanley Black & Decker",
+    "system": "workday",
+    "host": "sbdinc.wd1.myworkdayjobs.com",
+    "tenant": "sbdinc",
+    "site": "Stanley_Black_Decker_Career_Site",
+    "domain": "stanleyblackanddecker.com"
+  },
+  {
+    "name": "Medifast",
+    "system": "workday",
+    "host": "medifastinc.wd108.myworkdayjobs.com",
+    "tenant": "medifastinc",
+    "site": "Medifast",
+    "domain": "medifastinc.com"
+  },
+  {
+    "name": "Wegmans",
+    "system": "workday",
+    "host": "wegmans.wd1.myworkdayjobs.com",
+    "tenant": "wegmans",
+    "site": "Wegmans",
+    "domain": "wegmans.com"
+  },
+  {
+    "name": "Target",
+    "system": "workday",
+    "host": "target.wd5.myworkdayjobs.com",
+    "tenant": "target",
+    "site": "targetcareers",
+    "domain": "target.com"
+  },
+  {
+    "name": "Walmart",
+    "system": "workday",
+    "host": "walmart.wd504.myworkdayjobs.com",
+    "tenant": "walmart",
+    "site": "WalmartExternal",
+    "domain": "walmart.com"
+  },
+  {
+    "name": "Gap Inc. (Old Navy, Gap, Banana Republic, Athleta)",
+    "system": "workday",
+    "host": "gapinc.wd1.myworkdayjobs.com",
+    "tenant": "gapinc",
+    "site": "GAPINC",
+    "domain": "gapinc.com"
+  },
+  {
+    "name": "TJX (HomeGoods, TJ Maxx, Marshalls)",
+    "system": "workday",
+    "host": "tjx.wd1.myworkdayjobs.com",
+    "tenant": "tjx",
+    "site": "TJX_EXTERNAL",
+    "domain": "tjx.com"
+  },
+  {
+    "name": "Dollar Tree",
+    "system": "workday",
+    "host": "dollartree.wd5.myworkdayjobs.com",
+    "tenant": "dollartree",
+    "site": "dollartreeus",
+    "domain": "dollartree.com"
+  },
+  {
+    "name": "Kohl's",
+    "system": "workday",
+    "host": "kohls.wd504.myworkdayjobs.com",
+    "tenant": "kohls",
+    "site": "kohlscareers",
+    "domain": "kohls.com"
+  },
+  {
+    "name": "PNC",
+    "system": "workday",
+    "host": "pnc.wd5.myworkdayjobs.com",
+    "tenant": "pnc",
+    "site": "External",
+    "domain": "pnc.com"
+  },
+  {
+    "name": "At Home",
+    "system": "oracle",
+    "host": "hdiy.fa.us2.oraclecloud.com",
+    "site": "CX",
+    "domain": "athome.com"
+  },
+  {
+    "name": "Booz Allen Hamilton",
+    "system": "workday",
+    "host": "bah.wd1.myworkdayjobs.com",
+    "tenant": "bah",
+    "site": "BAH_Jobs",
+    "domain": "boozallen.com"
+  },
+  {
+    "name": "Ingredion",
+    "system": "workday",
+    "host": "ingredion.wd1.myworkdayjobs.com",
+    "tenant": "ingredion",
+    "site": "IngredionCareers",
+    "domain": "ingredion.com"
+  },
+  {
+    "name": "Harford County Government",
+    "system": "workday",
+    "host": "harfordcountymd.wd503.myworkdayjobs.com",
+    "tenant": "harfordcountymd",
+    "site": "Harford_County_External_Career_Site",
+    "domain": "harfordcountymd.gov"
+  },
+  {
+    "name": "Long & Foster Real Estate",
+    "system": "smartrecruiters",
+    "company": "LongFosterRealEstate",
+    "domain": "longandfoster.com"
+  }
+]
