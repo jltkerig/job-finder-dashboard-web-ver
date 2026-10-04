@@ -1,0 +1,139 @@
+<?php
+// Tests: php -d extension=pdo_sqlite tests/run.php
+// They use a throwaway database in the temp folder, never data/jobfinder.sqlite, and make no network requests.
+
+declare(strict_types=1);
+
+$db = tempnam(sys_get_temp_dir(), 'jobfinder-test');
+putenv("JOBFINDER_DB=$db");
+require __DIR__ . '/../lib/bootstrap.php';
+require APP_ROOT . '/lib/listings.php';
+require APP_ROOT . '/lib/search/runner.php';
+require APP_ROOT . '/lib/documents.php';
+
+$failed = 0;
+function check(string $name, bool $ok): void
+{
+    global $failed;
+    echo ($ok ? 'ok   ' : 'FAIL ') . $name . "\n";
+    $failed += $ok ? 0 : 1;
+}
+
+function job(array $over = []): array
+{
+    return $over + ['name' => 'Acme', 'title' => 'Web Designer', 'career_credibility' => 6, 'domain' => 'acme.com',
+        'career_url' => 'https://acme.com/jobs/1', 'source_url' => 'https://acme.com/jobs/1', 'country' => 'United States', 'state' => 'MD',
+        'usa_credibility' => 7, 'work_arrangement' => 'Hybrid', 'skills' => ['HTML', 'CSS'], 'details' => ['location' => 'Bel Air, MD']];
+}
+
+// --- Saving jobs and the buttons on them ---
+check('a new job is saved', save_company(job()));
+check('the same posting again only updates it', !save_company(job(['title' => 'Senior Web Designer'])));
+check('tracking codes do not make it a new posting', !save_company(job(['source_url' => 'https://acme.com/jobs/1/?utm_source=x', 'title' => 'Senior Web Designer'])));
+$id = (int) value('SELECT id FROM companies');
+check('updated in place', value('SELECT career_job_title FROM companies WHERE id = ?', [$id]) === 'Senior Web Designer');
+check('shows in Search results', count(get_companies()) === 1);
+keep_listings([$id]);
+check('Keep saves it', count(get_kept_companies()) === 1 && get_dashboard_counts()['saved'] === 1);
+update_kept($id, 'Applied', 'Sent résumé');
+check('status and notes saved', row('SELECT application_status, notes FROM companies WHERE id = ?', [$id]) == ['application_status' => 'Applied', 'notes' => 'Sent résumé']);
+update_kept($id, 'Nonsense', '');
+check('unknown status becomes None', value('SELECT application_status FROM companies WHERE id = ?', [$id]) === 'None');
+reject_listing($id, 'wrong_role');
+check('reject hides it and remembers why', !get_companies() && get_rejected_companies()[0]['rejection_reason'] === 'wrong_role');
+check('rejected postings are not found again', isset(rejected_posting_urls()['https://acme.com/jobs/1']));
+restore_rejected($id);
+check('restore brings it back as it was', count(get_kept_companies()) === 1);
+save_company(job(['source_url' => 'https://other.com/jobs/2', 'name' => 'Other Co', 'domain' => 'other.com']));
+block_company('Other Co');
+check('a blocked company is hidden', count(get_companies()) === 1);
+unblock_company('other co');
+check('unblocking shows it again', count(get_companies()) === 2);
+block_domain('www.Other.com');
+check('a blocked domain is hidden', count(get_companies()) === 1 && domain_is_blocked('jobs.other.com'));
+check('recommended domains are blocked from the start', domain_is_blocked('indeed.com') && block_details('domains')['indeed.com']['source'] === 'Recommended');
+q("UPDATE companies SET job_open_status = 'Closed', closed_at = ? WHERE source_url = ?", [now_utc(-9 * 86400), 'https://other.com/jobs/2']);
+check('unsaved jobs closed over a week ago are deleted', tidy_closed_jobs() === 1);
+
+// --- Profile ---
+save_user_profile(['first_name' => 'Jamie', 'last_name' => 'K', 'state' => 'MD', 'job_titles' => ['Web Designer', 'UX Designer'],
+    'cities' => [['city' => 'Bel Air, MD', 'radius' => 30], ['city' => 'Nowhere', 'radius' => 7]], 'skills' => ['html5', 'Figma', 'figma'],
+    'home_zip' => '21014', 'linkedin_url' => 'linkedin.com/in/me', 'portfolio_url' => 'not a link', 'work_preferences' => ['Remote'],
+    'education' => [['school' => 'Towson University', 'degree' => 'Wizard'], ['school' => '']],
+    'work_history' => [['company' => 'Acme', 'role' => 'Designer', 'dates' => '2020 – 2022', 'city' => 'Towson']]]);
+$profile = get_user_profile();
+check('profile saved', $profile['first_name'] === 'Jamie' && $profile['job_titles'] === ['UX Designer', 'Web Designer']);
+check('only allowed radii are kept', $profile['cities'] === [['city' => 'Bel Air, MD', 'radius_miles' => 30]]);
+check('skills written the standard way, no repeats', $profile['skills'] === ['Figma', 'HTML']);
+check('links tidied', $profile['linkedin_url'] === 'https://linkedin.com/in/me' && $profile['portfolio_url'] === '');
+check('education cleaned', count($profile['education']) === 1 && $profile['education'][0]['degree'] === 'Other');
+check('work history details kept', $profile['work_history'][0]['city'] === 'Towson');
+check('home state read from the profile', home_state() === 'MD');
+$version = profile_version($profile);
+save_user_profile(['first_name' => 'Jamie', 'last_name' => 'K', 'state' => 'MD', 'job_titles' => ['Web Designer'], 'cities' => []]);
+check('the profile fingerprint changes when it changes', profile_version(get_user_profile()) !== $version);
+
+// --- Recent searches and skips ---
+record_search_history('web designer, ux designer', 'MD', [['city' => 'Bel Air, MD', 'radius' => 30]]);
+record_search_history('Web Designer, UX Designer', 'MD', [['city' => 'Bel Air, MD', 'radius' => 30]]);
+$history = get_search_history();
+check('the same search is listed once', count($history) === 1 && $history[0]['main_title'] === 'Web Designer' && $history[0]['other_titles'] === ['UX Designer']);
+record_skip('https://x.com/a', 'A page', 'Directory or marketplace page');
+check('a fresh skip is not checked again yet', recently_skipped('https://x.com/a'));
+record_skip('https://x.com/b', 'B page', 'Page unavailable');
+check('a temporary failure is retried next search', !recently_skipped('https://x.com/b'));
+[$items, $total] = search_skips_page('marketplace', 1);
+check('skips can be searched', $total === 1 && $items[0]['url'] === 'https://x.com/a');
+
+// --- Brave usage ---
+$sep30 = gmmktime(23, 59, 0, 9, 30, 2026);
+$oct1 = gmmktime(0, 0, 1, 10, 1, 2026);
+brave_record_search($sep30);
+brave_record_search($sep30);
+check('brave month count', brave_counts($sep30)['month'] === 2);
+check('brave month rolls over at 00:00 UTC on the 1st', brave_counts($oct1)['month'] === 0);
+brave_record_search($oct1);
+$c = brave_counts($oct1);
+check('brave total keeps counting across months', $c['month'] === 1 && $c['total'] === 3 && $c['since'] === '2026-09-30');
+check('brave history per month', $c['months'] === ['2026-09' => 2, '2026-10' => 1]);
+check('brave next reset', gmdate('Y-m-d H:i', brave_next_reset(gmmktime(5, 0, 0, 12, 15, 2026))) === '2027-01-01 00:00');
+
+// --- Tuning ---
+[$updated, $error] = apply_tuning_form(['search_time_limit_minutes' => '30', 'max_search_results' => '5', 'max_search_pages' => '1',
+    'request_delay_seconds' => '1.5', 'search_query_delay_seconds' => '1.1', 'website_timeout_seconds' => '15', 'parallel_page_fetches' => '6',
+    'stop_after_empty_queries' => '8', 'usa_only' => 'on'], []);
+check('tuning form saved', $error === null && $updated['request_delay_seconds'] === 1.5 && $updated['usa_only'] === true && $updated['related_titles'] === false);
+[, $error] = apply_tuning_form(['search_time_limit_minutes' => '999'] + $updated, []);
+check('out-of-range tuning refused', str_contains((string) $error, 'between'));
+
+// --- Search helpers ---
+check('web queries start with the company boards', str_contains(web_queries(['state' => 'Maryland', 'cities' => [], 'selected_titles' => ['Web Designer'],
+    'query_titles' => ['Web Designer']])[0], 'site:greenhouse.io'));
+check('same job across sites', job_match_key('Acme Inc.', 'Web Designer (Hybrid)', 'Towson, MD', 'Hybrid') === job_match_key('ACME', 'web designer', 'Towson, Maryland', 'Hybrid'));
+check('remote jobs match without a city', job_match_key('Acme', 'Web Designer', '', 'Remote') === 'acme|web designer|remote');
+check('board recognised from its address', identify_board('https://jobs.ashbyhq.com/aegis/123') === ['system' => 'ashby', 'slug' => 'aegis']);
+check('board names a company might use', board_slug_candidates('Acme Labs Inc') === ['acme-labs', 'acmelabs', 'acme']);
+check('verification label', verification_label(['ats_posting' => ['system' => 'lever']], null, 'Acme', 'https://x.com') === "Posted on the company's own Lever hiring board");
+check('job site places', search_places('Maryland', [['city' => 'Bel Air, MD', 'radius' => 30], ['city' => 'Delaware', 'radius' => 50]]) === [['Bel Air, MD', 30], ['Delaware', null]]);
+check('city targets from the bundled map data', prepare_city_targets('MD', [['city' => 'Bel Air', 'radius' => 30]])[0]['lat'] > 39);
+$validated = validate_search_criteria('Web Designer', 'MD', [['city' => 'Towson, MD', 'radius' => 7], ['city' => 'Towson, MD', 'radius' => 10]]);
+check('search criteria cleaned', $validated[2] === [['city' => 'Towson, MD', 'radius' => 10]] && $validated[3] === null);
+check('drive time from home', describe_trip('21014', null, 'Towson, MD')['miles'] > 10);
+
+// --- Résumés ---
+$zip = new ZipArchive();
+$docx = sys_get_temp_dir() . '/test-resume.docx';
+$zip->open($docx, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+$zip->addFromString('word/document.xml', '<w:document><w:body><w:p><w:r><w:t>Jane Doe</w:t></w:r></w:p><w:p><w:r><w:t>HTML, CSS &amp; Figma</w:t></w:r></w:p></w:body></w:document>');
+$zip->close();
+$text = docx_text((string) file_get_contents($docx));
+check('Word résumé read', str_contains($text, 'Jane Doe') && str_contains($text, 'HTML, CSS & Figma'));
+$suggestions = resume_suggestions($text);
+check('résumé suggestions', $suggestions['first_name'] === 'Jane' && $suggestions['skills'] === ['HTML', 'CSS', 'Figma']);
+$pdf = "%PDF-1.4\n1 0 obj << /Type /Page /Contents 2 0 R >> endobj\n2 0 obj << /Length 60 >> stream\nBT /F1 12 Tf 72 720 Td (Jane Doe) Tj 0 -14 Td (Web Designer) Tj ET\nendstream endobj\n%%EOF";
+check('PDF résumé read', str_contains(pdf_text($pdf), "Jane Doe\nWeb Designer"));
+@unlink($docx);
+
+@unlink($db);
+echo $failed ? "\n$failed failed\n" : "\nall passed\n";
+exit($failed ? 1 : 0);
