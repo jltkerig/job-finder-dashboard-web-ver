@@ -1,34 +1,38 @@
 <?php
-// Sign in. The very first visit asks you to choose the password instead.
+// Sign in. The very first visit asks you to choose the password instead; on the web that also needs the setup code
+// from config.php, so a stranger who finds the new site first can't claim it.
 
 declare(strict_types=1);
 
 start_session();
-$login = config()['login'] ?? null;  // username + password hash from config.php, if set there
-$first_run = $login === null && setting('password_hash') === null;
-$error = '';
+$first_run = password_hash_in_use() === null;
+$setup_code = trim((string) (config()['setup_code'] ?? ''));
+$needs_code = $first_run && !is_local_request();
+$error = $needs_code && $setup_code === ''
+    ? "Before the first sign-in, put a password hash or a 'setup_code' in config.php (see config.sample.php)."
+    : '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     check_csrf();
     $password = (string) ($_POST['password'] ?? '');
-    $locked_until = (int) setting('locked_until', '0');
 
     if ($first_run) {
-        if (strlen($password) < 10) {
+        if ($needs_code && ($setup_code === '' || !hash_equals($setup_code, trim((string) ($_POST['setup_code'] ?? ''))))) {
+            sleep(1);
+            $error = $setup_code === '' ? $error : "That setup code doesn't match the one in config.php.";
+        } elseif (strlen($password) < 10) {
             $error = 'Use at least 10 characters.';
         } elseif ($password !== ($_POST['confirm'] ?? '')) {
             $error = "The two passwords don't match.";
         } else {
             set_setting('password_hash', password_hash($password, PASSWORD_DEFAULT));
-            session_regenerate_id(true);
-            $_SESSION['user'] = 'me';
+            sign_in();
             redirect('/');
         }
     } else {
         $error = check_password((string) ($_POST['username'] ?? ''), $password);
         if ($error === null) {
-            session_regenerate_id(true);
-            $_SESSION['user'] = 'me';
+            sign_in();
             redirect('/');
         }
     }
@@ -48,10 +52,14 @@ require APP_ROOT . '/templates/_login_top.php';
   <?php if ($error): ?><p class="error"><?= h($error) ?></p><?php endif; ?>
   <form method="post" action="/login" id="login-form" name="login" autocomplete="on">
     <?= csrf_field() ?>
+    <?php if ($needs_code): ?>
+      <label for="setup_code">Setup code (from config.php) <input type="text" id="setup_code" name="setup_code" required autofocus
+        spellcheck="false" autocapitalize="none" autocomplete="off"></label>
+    <?php endif; ?>
     <?php if (!$first_run): ?>
       <label for="username">Username <input type="text" id="username" name="username" spellcheck="false" autocapitalize="none" required autofocus autocomplete="username"></label>
     <?php endif; ?>
-    <label for="password">Password <input type="password" id="password" name="password" required <?= $first_run ? 'autofocus' : '' ?>
+    <label for="password">Password <input type="password" id="password" name="password" required <?= $first_run && !$needs_code ? 'autofocus' : '' ?>
       autocomplete="<?= $first_run ? 'new-password' : 'current-password' ?>"></label>
     <?php if ($first_run): ?>
       <label for="confirm">Type it again <input type="password" id="confirm" name="confirm" required autocomplete="new-password"></label>

@@ -5,6 +5,9 @@
 declare(strict_types=1);
 
 $db = tempnam(sys_get_temp_dir(), 'jobfinder-test');
+$test_config = tempnam(sys_get_temp_dir(), "jobfinder-config");  // never the real config.php (its password, keys)
+file_put_contents($test_config, "<?php return ['db' => ['driver' => 'sqlite']];");
+putenv("JOBFINDER_CONFIG=$test_config");
 putenv("JOBFINDER_DB=$db");
 require __DIR__ . '/../lib/bootstrap.php';
 require APP_ROOT . '/lib/listings.php';
@@ -248,6 +251,28 @@ check('not a capture file', str_contains(import_capture_files([['x.json', '{"a":
 check('company lookups waiting', count(capture_lookups_pending()) === 3);
 check('description wording read', arrangement_from_description('in our office 3 days a week') === 'Hybrid'
     && arrangement_from_description('This is a remote position.') === 'Remote' && location_from_description('Greater Boston area') === 'Boston, MA');
+echo "\nsign-in\n";
+set_setting('password_hash', password_hash('correct horse battery', PASSWORD_DEFAULT));
+$_SERVER['REMOTE_ADDR'] = '203.0.113.5';
+check('right password', check_password('admin', 'correct horse battery') === null);
+for ($i = 0; $i < LOGIN_TRIES; $i++) {
+    check_password('admin', 'wrong');
+}
+check('one address locked after 5 wrong', str_starts_with((string) check_password('admin', 'correct horse battery'), 'Too many'));
+$_SERVER['REMOTE_ADDR'] = '198.51.100.7';
+check('another address still signs in', check_password('admin', 'correct horse battery') === null);
+set_setting('login_fails_all', LOGIN_TRIES_ALL . ':' . time());
+check('everyone paused after 30 wrong', str_starts_with((string) check_password('admin', 'correct horse battery'), 'Too many'));
+set_setting('login_fails_all', LOGIN_TRIES_ALL . ':' . (time() - LOGIN_LOCK_SECONDS - 1));
+check('the pause ends', check_password('admin', 'correct horse battery') === null);
+$_SESSION = ['user' => 'me', 'since' => time(), 'seen' => time() - SESSION_IDLE_SECONDS - 1];
+check('idle session signed out', !logged_in());
+$_SESSION = ['user' => 'me', 'since' => time() - SESSION_MAX_SECONDS - 1, 'seen' => time()];
+check('old session signed out', !logged_in());
+$_SESSION = ['user' => 'me', 'since' => time(), 'seen' => time()];
+check('fresh session kept', logged_in());
+check('data folder', data_path('resume') === rtrim(APP_ROOT, '/') . '/data/resume' || str_ends_with(data_path('resume'), '/data/resume'));
 @unlink($db);
+@unlink($test_config);
 echo $failed ? "\n$failed failed\n" : "\nall passed\n";
 exit($failed ? 1 : 0);

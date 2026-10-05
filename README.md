@@ -14,9 +14,13 @@ profile and settings are kept in `data/jobfinder.sqlite`, which is never uploade
 
 1. In hPanel, create a MySQL database and user.
 2. Upload every file into `public_html` (the site must be at the top of its domain or subdomain).
-3. Copy `config.sample.php` to `config.php` and fill in the database details, your sign-in, and your API keys.
-4. Open the site and sign in.
-5. In hPanel > Advanced > Cron Jobs, run `php /home/USER/public_html/cron.php` every minute. A search moves on
+3. Copy `config.sample.php` to `config.php` and fill in the database details, a long random `setup_code`, a
+   `data_dir` outside `public_html` (for example `/home/USER/jobfinder-data`), and your API keys. Make `config.php`
+   readable only by you (permissions 600 or 640), and give the MySQL user this one database only.
+4. Open the site (it always switches to https), type the setup code and choose your password. Then delete the
+   setup code from `config.php`.
+5. Turn on backups in hPanel.
+6. In hPanel > Advanced > Cron Jobs, run `php /home/USER/public_html/cron.php` every minute. A search moves on
    while the Search page is open; the cron job keeps it going if you close the page.
 
 ## How it differs from the desktop app
@@ -60,3 +64,9 @@ If the site sits behind a proxy that hides https, set `'base_url' => 'https://yo
   Résumé Builder and `lib/connector.php` its Claude connector (MCP and OAuth).
 - `resources/`: O*NET job titles and skills, Census places and ZIP codes, default block lists and watched employers.
 - `tests/run.php`: `php -d extension=pdo_sqlite tests/run.php` (uses a throwaway database; no network).
+
+## Sign-in security
+
+- Five wrong passwords from one address lock it for 15 minutes; 30 from everywhere pause sign-in for everyone.
+- You're signed out after 8 hours without using the site, and after 30 days in any case.
+- Pages can't be shown inside other sites, and every form needs the page's token.
