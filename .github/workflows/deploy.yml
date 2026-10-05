@@ -13,6 +13,11 @@ name: Deploy to Hostinger
 
 on:
   workflow_dispatch:
+    inputs:
+      full:
+        description: Upload every file, not just changed ones (when a file went missing on the server)
+        type: boolean
+        default: false
 
 concurrency: deploy
 
@@ -39,6 +44,8 @@ jobs:
           protocol: ftps
           security: loose  # Hostinger's certificate doesn't name its IP address; the connection is still encrypted
           server-dir: ${{ vars.FTP_DIR || 'public_html/' }}
+          # A full upload compares against a fresh, empty record, so every file is sent (nothing is deleted)
+          state-name: ${{ inputs.full && format('.ftp-deploy-full-{0}.json', github.run_id) || '.ftp-deploy-sync-state.json' }}
           exclude: |
             **/.git*
             **/.git*/**
