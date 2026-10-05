@@ -24,6 +24,9 @@ return [
     'data_dir' => '',
     // Sends http:// visits to https://. Turn off only if the site has no certificate yet.
     'force_https' => true,
+    // On Cloudflare: true turns away visits that go straight to the host instead of through Cloudflare.
+    // Turn it on once the domain works through Cloudflare.
+    'cloudflare_only' => false,
     'login' => [
         'username' => 'admin',
         'password_hash' => '',

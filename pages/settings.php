@@ -13,6 +13,8 @@ $domain_info = block_details('domains');
 $company_info = block_details('companies');
 $company_notice = (string) ($_GET['company_notice'] ?? '');
 $domain_notice = (string) ($_GET['domain_notice'] ?? '');
+$password_notice = (string) ($_SESSION['password_notice'] ?? '');
+unset($_SESSION['password_notice']);
 
 function reason_label(?string $reason): string
 {
@@ -153,6 +155,23 @@ require APP_ROOT . '/templates/_top.php';
     </nav><?php else: ?>
     <p>No companies are blocked.
     </p><?php endif; ?>
+  </details>
+  <details class="settings-panel history-collapse" id="password"<?= $password_notice !== '' ? ' open' : '' ?>>
+    <summary><h2>Password</h2><span class="summary-chevron" aria-hidden="true"></span></summary>
+    <p>Changing it signs out every other browser and disconnects Claude. Forgot it? Use "Forgot password?" on the
+      sign-in page with the setup code from config.php.
+    </p><?php if ($password_notice === 'saved'): ?>
+    <p class="settings-notice" role="status">Password changed.
+    </p><?php elseif ($password_notice !== ''): ?>
+    <p class="form-error" role="alert"><?= h($password_notice) ?>
+    </p><?php endif; ?>
+    <form class="password-change" action="/settings/password" method="post"><?= csrf_field() ?>
+      <input type="text" name="username" value="<?= h((string) (config()['login']['username'] ?? 'admin')) ?>" autocomplete="username" hidden />
+      <label for="current-password">Current password <input id="current-password" name="current" type="password" required autocomplete="current-password" /></label>
+      <label for="new-password">New password (10 or more characters) <input id="new-password" name="password" type="password" minlength="10" required autocomplete="new-password" /></label>
+      <label for="confirm-password">Type it again <input id="confirm-password" name="confirm" type="password" minlength="10" required autocomplete="new-password" /></label>
+      <button class="bordered-button secondary-action" type="submit">Change Password</button>
+    </form>
   </details>
 </main>
 <?php require APP_ROOT . '/templates/_bottom.php';
