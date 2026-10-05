@@ -237,7 +237,7 @@ function run_slice(float $seconds): void
                 return;
             }
             if (in_array($run['mode'], ['search', 'replacement'], true)) {
-                if ($run['saved'] >= $run['limit']) {
+                if (full($run)) {
                     finish_run($run, "{$run['saved']} of {$run['limit']} distinct jobs found");
                     return;
                 }
@@ -376,7 +376,7 @@ function company_blocked(?string $name): bool
 
 function full(array $run): bool
 {
-    return $run['saved'] >= $run['limit'];
+    return $run['limit'] > 0 && $run['saved'] >= $run['limit'];  // 0 = no limit
 }
 
 function matched_title_of(string $title, array $wanted): string
@@ -408,7 +408,7 @@ function task_feed(array &$run, array $payload): bool
 {
     $name = $payload['name'];
     $feed = feed_list()[$name];
-    $cap = max(1, intdiv($run['limit'], 3));
+    $cap = $run['limit'] > 0 ? max(1, intdiv($run['limit'], 3)) : PHP_INT_MAX;
     if (($run['counts']['feed_total'] ?? 0) >= $cap || full($run)) {
         return true;
     }
@@ -465,7 +465,8 @@ function task_employer(array &$run, array &$payload): bool
 {
     $employer = $payload['config'];
     $kind = !empty($employer['discovered']) ? 'Discovered board' : 'Employer board';
-    $total_cap = $payload['cap'] === 'employer' ? max(1, intdiv($run['limit'], 2)) : $run['limit'];
+    $total_cap = $run['limit'] <= 0 ? PHP_INT_MAX
+        : ($payload['cap'] === 'employer' ? max(1, intdiv($run['limit'], 2)) : $run['limit']);
     if (full($run) || ($payload['cap'] === 'employer' && ($run['counts']['employer_total'] ?? 0) >= $total_cap)) {
         return true;
     }
@@ -597,7 +598,7 @@ function task_site(array &$run, array &$payload): bool
         note_board($run['health'], $name, 'Job site', 'off', 0, 0, $site['setup']);
         return true;
     }
-    $cap = max(1, intdiv($run['limit'], 3));
+    $cap = $run['limit'] > 0 ? max(1, intdiv($run['limit'], 3)) : PHP_INT_MAX;
     $places = search_places($run['ctx']['state'], $run['ctx']['cities']);
     $titles = $run['ctx']['selected_titles'];
     $payload['found'] ??= 0;
