@@ -4,7 +4,7 @@
 declare(strict_types=1);
 
 const APP_ROOT = __DIR__ . '/..';
-const APP_VERSION = '0.6.0';
+const APP_VERSION = '0.7.0';
 const DATA_DIR = APP_ROOT . '/resources';     // bundled reference data (O*NET, Census places and ZIPs)
 const CACHE_DIR = APP_ROOT . '/data/cache';   // quick-loading copies of that data, made on first use
 

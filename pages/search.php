@@ -21,7 +21,7 @@ $subtitle_class = 'app-version';
 $body_attrs = ' data-scraper-running="' . (search_running($run) ? 'true' : 'false') . '" data-scraper-mode="'
     . h(search_running($run) ? $run['mode'] : '') . '" data-work-preferences="' . json_attr($profile['work_preferences']) . '"';
 $before_nav = "<div id=\"search-progress-bar\" class=\"search-progress-bar\" hidden>\n</div>";
-$scripts = ['captures.js', 'columns.js'];
+$scripts = ['capture-upload.js', 'columns.js'];
 
 function credibility_class($score): string
 {
@@ -85,8 +85,12 @@ require APP_ROOT . '/templates/_top.php';
         <div id="searching-status" class="searching-status" hidden aria-live="polite"><span class="searching-dot"></span><span id="activity-label">Searching</span><span class="searching-ellipsis" aria-hidden="true"></span>
         </div>
       </div>
-      <div id="capture-prompt" class="capture-prompt" hidden role="region" aria-label="Captured jobs" aria-live="polite">
-      </div>
+      <details id="capture-upload" class="capture-prompt capture-upload">
+        <summary>Import jobs from the Web Job Scraper</summary>
+        <p>Choose the <code>jobs.json</code> files the extension saved (Desktop\web-job-scraper\searches, one folder per day and site). Jobs are filtered by your profile like a search, and ones you applied to are saved as Applied.</p>
+        <form id="capture-form" class="capture-prompt-actions"><input type="file" name="captures[]" accept=".json,application/json" multiple required /><button class="bordered-button primary-action" type="submit">Import</button></form>
+        <div id="capture-result" aria-live="polite"></div>
+      </details>
     </div>
 
     <div class="section-heading-row">

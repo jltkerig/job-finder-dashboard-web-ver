@@ -215,6 +215,39 @@ check('a dismissed person stays gone', count(reference_suggestions($profile, [],
 check('jobs sort newest first', job_start(['dates' => 'Mar 2020 - Present']) > job_start(['dates' => '12/2019 - 2020']));
 
 remove_tree($rb_dir);
+
+// --- Web Job Scraper uploads (no network: company-website lookups are not run here) ---
+require_once APP_ROOT . '/lib/captures.php';
+q('DELETE FROM user_profile_job_titles');
+q("INSERT INTO user_profile_job_titles (profile_id, job_title) VALUES (1, 'Web Designer')");
+q("INSERT INTO blocked_companies (name_key, name, source) VALUES ('shady', 'Shady Co', 'User')");
+$capture = fn(string $site, array $jobs) => json_encode(['source' => 'web-job-scraper', 'site' => $site, 'jobs' => $jobs]);
+$job = fn(array $over) => $over + ['title' => 'Web Designer', 'company' => 'Pixel Works Inc', 'location' => 'Austin, TX',
+    'url' => 'https://www.linkedin.com/jobs/view/111/', 'description' => 'Build sites with HTML and CSS.'];
+$first_file = $capture('linkedin', [
+    $job([]),
+    $job(['title' => 'Plumber', 'url' => 'https://www.linkedin.com/jobs/view/222/']),
+    $job(['company' => 'Shady Co', 'url' => 'https://www.linkedin.com/jobs/view/333/']),
+    $job(['title' => 'Accountant', 'applied' => true, 'url' => 'https://www.linkedin.com/jobs/view/444/']),
+    $job(['title' => 'Web Designer (Verified job)', 'company' => 'Far Away LLC', 'location' => '',
+        'description' => 'This role is full time in Irving, TX.', 'url' => 'https://www.linkedin.com/jobs/view/555/']),
+]);
+$first = import_capture_files([['jobs.json', $first_file]]);
+check('capture file imported', $first['counts']['added'] === 3 && $first['counts']['skipped'] === 2);
+check('wrong titles and blocked companies filtered out', !value("SELECT COUNT(*) FROM companies WHERE career_job_title = 'Plumber' OR name = 'Shady Co'"));
+check('a job you applied to is saved as Applied', row("SELECT is_kept, application_status FROM companies WHERE career_job_title = 'Accountant'")
+    == ['is_kept' => 1, 'application_status' => 'Applied']);
+$far = row("SELECT career_job_title, listing_details FROM companies WHERE name = 'Far Away LLC'");
+check('badge dropped and place read from the description', $far['career_job_title'] === 'Web Designer'
+    && json_decode($far['listing_details'], true)['location'] === 'Irving, TX');
+check('the same file twice is skipped', import_capture_files([['jobs.json', $first_file]])['error'] === 'Nothing new to import.');
+$second = import_capture_files([['indeed.json', $capture('indeed', [$job(['company' => 'Pixel Works', 'url' => 'https://www.indeed.com/viewjob?jk=9'])])]]);
+$details = json_decode((string) value("SELECT listing_details FROM companies WHERE source_url LIKE '%linkedin.com/jobs/view/111%'"), true);
+check('the same job on another site is linked, not added', $second['counts']['linked'] === 1 && $details['also_on'][0]['site'] === 'Indeed');
+check('not a capture file', str_contains(import_capture_files([['x.json', '{"a":1}']])['log'][0], 'E6005'));
+check('company lookups waiting', count(capture_lookups_pending()) === 3);
+check('description wording read', arrangement_from_description('in our office 3 days a week') === 'Hybrid'
+    && arrangement_from_description('This is a remote position.') === 'Remote' && location_from_description('Greater Boston area') === 'Boston, MA');
 @unlink($db);
 echo $failed ? "\n$failed failed\n" : "\nall passed\n";
 exit($failed ? 1 : 0);
