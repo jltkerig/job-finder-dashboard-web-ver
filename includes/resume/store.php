@@ -6,7 +6,7 @@
 
 declare(strict_types=1);
 
-require_once APP_ROOT . '/lib/documents.php';
+require_once APP_ROOT . '/includes/documents.php';
 require_once __DIR__ . '/fonts.php';
 require_once __DIR__ . '/render.php';
 require_once __DIR__ . '/analyze.php';

@@ -4,9 +4,9 @@
 // popup (Load profile). Same fields as the desktop's /extension/fit-profile, plus your home's map point.
 
 declare(strict_types=1);
-require_once APP_ROOT . '/lib/onet.php';
-require_once APP_ROOT . '/lib/places.php';
-require_once APP_ROOT . '/lib/skill_data.php';
+require_once APP_ROOT . '/includes/onet.php';
+require_once APP_ROOT . '/includes/places.php';
+require_once APP_ROOT . '/includes/skill_data.php';
 
 $profile = get_user_profile();
 $titles = [];

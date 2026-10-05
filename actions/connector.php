@@ -1,9 +1,9 @@
 <?php
 // The connector's addresses that Claude calls itself (no browser session): the OAuth discovery documents,
-// app registration, the token endpoint, and /mcp. See lib/connector.php.
+// app registration, the token endpoint, and /mcp. See includes/connector.php.
 
 declare(strict_types=1);
-require_once APP_ROOT . '/lib/connector.php';
+require_once APP_ROOT . '/includes/connector.php';
 
 // Claude's web app reads the discovery documents from the browser; they hold nothing private.
 header('Access-Control-Allow-Origin: *');

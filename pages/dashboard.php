@@ -14,7 +14,7 @@ $companies = get_kept_companies($filters['status'], $filters['state'], $filters[
 $profile = get_user_profile();
 add_job_fit($companies, $profile['skills']);
 add_drive_times($companies, $profile['home_zip'], home_state());
-require_once APP_ROOT . '/lib/resume/store.php';
+require_once APP_ROOT . '/includes/resume/store.php';
 $application_files = files_by_job(); // résumés and cover letters made for each job
 $demanded_skills = array_map(fn($pair) => ['skill' => $pair[0], 'count' => $pair[1]], listing_skill_demand($profile['skills']));
 $search_history = get_search_history();

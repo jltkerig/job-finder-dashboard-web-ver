@@ -2,7 +2,7 @@
 // Saving the Tuning page's search settings, and resetting the Brave testing count.
 
 declare(strict_types=1);
-require_once APP_ROOT . '/lib/tuning.php';
+require_once APP_ROOT . '/includes/tuning.php';
 
 if (isset($_POST['reset_brave'])) {
     set_setting('brave_used', '0');

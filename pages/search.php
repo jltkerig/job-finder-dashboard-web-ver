@@ -3,7 +3,7 @@
 // Job Finder's templates/index.html.
 
 declare(strict_types=1);
-require_once APP_ROOT . '/lib/search/state.php';
+require_once APP_ROOT . '/includes/search/state.php';
 
 tidy_closed_jobs();
 $companies = get_companies();

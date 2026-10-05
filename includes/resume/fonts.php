@@ -199,7 +199,7 @@ function download_google_font(string $family): ?array
     if ($cached || !font_downloads_enabled() || !isset(GOOGLE_FONTS[$family])) {
         return $cached;
     }
-    require_once APP_ROOT . '/lib/search/http.php';
+    require_once APP_ROOT . '/includes/search/http.php';
     // An old browser name gets plain .ttf files rather than .woff2.
     $get = fn(string $url, int $limit) => http_request($url, ['agent' => 'Mozilla/4.0', 'timeout' => 10, 'max_bytes' => $limit]);
     $base = 'https://fonts.googleapis.com/css2?family=' . str_replace('%20', '+', rawurlencode($family));
@@ -319,7 +319,7 @@ function font_status(?string $name): array
 /** One page from the portfolio site; redirects are followed only within it. */
 function portfolio_get(string $url, int $limit = 1500000): array
 {
-    require_once APP_ROOT . '/lib/search/http.php';
+    require_once APP_ROOT . '/includes/search/http.php';
     for ($hops = 0; $hops < 5; $hops++) {
         $host = strtolower((string) parse_url($url, PHP_URL_HOST));
         if (parse_url($url, PHP_URL_SCHEME) !== 'https' || !in_array($host, PORTFOLIO_HOSTS, true)) {

@@ -11,16 +11,16 @@ if (PHP_SAPI !== 'cli') {
     exit;
 }
 
-require __DIR__ . '/lib/bootstrap.php';
-require __DIR__ . '/lib/listings.php';
-require __DIR__ . '/lib/search/runner.php';
+require __DIR__ . '/includes/bootstrap.php';
+require __DIR__ . '/includes/listings.php';
+require __DIR__ . '/includes/search/runner.php';
 
 $until = microtime(true) + 50;
 while (microtime(true) < $until && search_running(search_state())) {
     run_slice(min(10.0, $until - microtime(true)));
 }
 // Uploaded Web Job Scraper jobs whose company website hasn't been looked up yet.
-require_once __DIR__ . '/lib/captures.php';
+require_once __DIR__ . '/includes/captures.php';
 if (!search_running(search_state()) && ($left = $until - microtime(true)) > 5) {
     $looked = run_capture_lookups($left);
     if ($looked) {

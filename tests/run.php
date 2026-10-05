@@ -9,10 +9,10 @@ $test_config = tempnam(sys_get_temp_dir(), "jobfinder-config");  // never the re
 file_put_contents($test_config, "<?php return ['db' => ['driver' => 'sqlite']];");
 putenv("JOBFINDER_CONFIG=$test_config");
 putenv("JOBFINDER_DB=$db");
-require __DIR__ . '/../lib/bootstrap.php';
-require APP_ROOT . '/lib/listings.php';
-require APP_ROOT . '/lib/search/runner.php';
-require APP_ROOT . '/lib/documents.php';
+require __DIR__ . '/../includes/bootstrap.php';
+require APP_ROOT . '/includes/listings.php';
+require APP_ROOT . '/includes/search/runner.php';
+require APP_ROOT . '/includes/documents.php';
 
 $failed = 0;
 function check(string $name, bool $ok): void
@@ -142,8 +142,8 @@ check('PDF résumé read', str_contains(pdf_text($pdf), "Jane Doe\nWeb Designer"
 $rb_dir = sys_get_temp_dir() . '/jobfinder-test-resume-' . getmypid();
 putenv("JOBFINDER_RESUME_DIR=$rb_dir");
 putenv('JOBFINDER_OFFLINE=1');
-require_once APP_ROOT . '/lib/connector.php';
-require_once APP_ROOT . '/lib/resume/suggestions.php';
+require_once APP_ROOT . '/includes/connector.php';
+require_once APP_ROOT . '/includes/resume/suggestions.php';
 q("UPDATE user_profile SET first_name = 'Jane', last_name = 'Doe' WHERE id = 1");
 
 $resume = ['full_name' => 'Jane Doe', 'headline' => 'Web Designer', 'contact' => ['jane@example.com', 'Bel Air, MD'],
@@ -220,7 +220,7 @@ check('jobs sort newest first', job_start(['dates' => 'Mar 2020 - Present']) > j
 remove_tree($rb_dir);
 
 // --- Web Job Scraper uploads (no network: company-website lookups are not run here) ---
-require_once APP_ROOT . '/lib/captures.php';
+require_once APP_ROOT . '/includes/captures.php';
 q('DELETE FROM user_profile_job_titles');
 q("INSERT INTO user_profile_job_titles (profile_id, job_title) VALUES (1, 'Web Designer')");
 q("INSERT INTO blocked_companies (name_key, name, source) VALUES ('shady', 'Shady Co', 'User')");

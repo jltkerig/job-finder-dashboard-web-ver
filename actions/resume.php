@@ -3,7 +3,7 @@
 // shows the suggestions for you to review, and the file itself is never kept.
 
 declare(strict_types=1);
-require_once APP_ROOT . '/lib/documents.php';
+require_once APP_ROOT . '/includes/documents.php';
 
 $upload = $_FILES['resume'] ?? null;
 if (!$upload || ($upload['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE || ($upload['name'] ?? '') === '') {

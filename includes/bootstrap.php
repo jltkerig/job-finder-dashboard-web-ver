@@ -412,7 +412,7 @@ function change_password(string $password, string $confirm): ?string
     }
     set_setting('password_hash', password_hash($password, PASSWORD_DEFAULT));
     set_setting('signed_out_before', (string) time());
-    require_once APP_ROOT . '/lib/connector.php';
+    require_once APP_ROOT . '/includes/connector.php';
     disconnect_all();
     sign_in();
     return null;
