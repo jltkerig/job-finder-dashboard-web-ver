@@ -93,3 +93,11 @@ In the Cloudflare dashboard:
    the site by Hostinger's address and go around Cloudflare.
 
 Cloudflare's IP list changes rarely; if it does, update `CLOUDFLARE_RANGES` in `includes/bootstrap.php`.
+
+## Uploading to Hostinger
+
+GitHub uploads the site over FTPS when started: **Actions > Deploy to Hostinger > Run workflow**
+(or `gh workflow run deploy.yml`). The tests run first; after the first upload only changed files are sent.
+Repository secrets: `FTP_SERVER` (the FTP IP, not ftp.yourdomain, which goes through Cloudflare), `FTP_USERNAME`,
+`FTP_PASSWORD`; variable `FTP_DIR` is the site folder as the FTP account sees it (`/` for an account that opens in
+`public_html`). Hostinger's FTP won't create a folder named `lib`, which is why the code lives in `includes/`.
