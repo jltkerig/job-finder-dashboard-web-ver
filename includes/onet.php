@@ -221,24 +221,40 @@ function title_matches(string $text, int $limit = 10): array
         return [];
     }
     $typed = explode(' ', $key);
+    $compact = str_replace(' ', '', $key);
     $starts = $others = [];
     foreach (onet_title_names() as [$name, $title]) {
         $words = explode(' ', $name);
+        // Each typed word starts a word of the title; failing that, the typed words without spaces start a run of
+        // the title's words, so words written together or apart both match ("frontend" or "web site developer").
+        $joined = array_map(fn($i) => implode('', array_slice($words, $i)), array_keys($words));
+        $each = true;
         foreach ($typed as $part) {
             $hit = false;
             foreach ($words as $i => $word) {
-                // Words written together count too: "frontend" finds "Front End Developer"
-                if (str_starts_with($word, $part) || (strlen($part) > strlen($word)
-                        && str_starts_with(implode('', array_slice($words, $i)), $part))) {
+                if (str_starts_with($word, $part) || str_starts_with($joined[$i], $part)) {
                     $hit = true;
                     break;
                 }
             }
             if (!$hit) {
-                continue 2;
+                $each = false;
+                break;
             }
         }
-        if (str_starts_with($name, $key)) {
+        if (!$each) {
+            $together = false;
+            foreach ($joined as $run) {
+                if (str_starts_with($run, $compact)) {
+                    $together = true;
+                    break;
+                }
+            }
+            if (!$together) {
+                continue;
+            }
+        }
+        if (str_starts_with($joined[0], $compact)) {
             $starts[] = $title;
             if (count($starts) >= $limit) {
                 break;
