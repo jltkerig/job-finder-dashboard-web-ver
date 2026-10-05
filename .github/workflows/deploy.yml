@@ -37,6 +37,7 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftps
+          security: loose  # Hostinger's certificate doesn't name its IP address; the connection is still encrypted
           server-dir: ${{ vars.FTP_DIR || 'public_html/' }}
           exclude: |
             **/.git*
