@@ -1,0 +1,47 @@
+# Uploads the site to Hostinger over FTPS, only when started by hand: GitHub > Actions > Deploy to Hostinger >
+# Run workflow (or `gh workflow run deploy.yml`). The tests run first; if any fail, nothing is uploaded.
+#
+# Needs these repository secrets (Settings > Secrets and variables > Actions), from hPanel > Files > FTP Accounts:
+#   FTP_SERVER    the FTP host, for example ftp.yourdomain.com
+#   FTP_USERNAME  the FTP username
+#   FTP_PASSWORD  the FTP password
+# and optionally the repository variable FTP_DIR, the site folder as the FTP account sees it (default public_html/).
+#
+# config.php and your data are never in the repository, so an upload can't touch them.
+
+name: Deploy to Hostinger
+
+on:
+  workflow_dispatch:
+
+concurrency: deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: pdo_sqlite, mbstring
+
+      - name: Tests
+        run: php tests/run.php
+
+      - name: Upload changed files
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          server-dir: ${{ vars.FTP_DIR || 'public_html/' }}
+          exclude: |
+            **/.git*
+            **/.git*/**
+            .github/**
+            tests/**
+            **/*.md
+            run-local.ps1
