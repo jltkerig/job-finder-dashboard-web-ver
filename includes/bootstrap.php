@@ -269,6 +269,13 @@ function is_local_request(): bool
     return PHP_SAPI === 'cli-server' && in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true);
 }
 
+/** The Google Analytics measurement ID from config.php (G-...), or '' when analytics is off. */
+function google_analytics_id(): string
+{
+    $id = trim((string) (config()['google_analytics'] ?? ''));
+    return preg_match('/^G-[A-Z0-9]+$/i', $id) ? $id : '';
+}
+
 /**
  * Browser rules sent with every page. The Content-Security-Policy lets pages run only this site's own scripts
  * (no inline code, nothing from elsewhere), so text that sneaks into a page can't run as a script. $framing is who
@@ -277,9 +284,12 @@ function is_local_request(): bool
 function send_security_headers(string $framing = "'self'"): void
 {
     header_remove('X-Powered-By');
+    // Google Analytics (only when config.php has an ID, and it still loads only after the visitor accepts cookies)
+    $ga = google_analytics_id() === '' ? ''
+        : ' https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com';
     header('Content-Security-Policy: ' . implode('; ', [
-        "default-src 'self'", "script-src 'self'", "style-src 'self' 'unsafe-inline'", "img-src 'self' data: blob:",
-        "font-src 'self' data:", "connect-src 'self'", "frame-src 'self'", "object-src 'none'", "base-uri 'self'",
+        "default-src 'self'", "script-src 'self'$ga", "style-src 'self' 'unsafe-inline'", "img-src 'self' data: blob:$ga",
+        "font-src 'self' data:", "connect-src 'self'$ga", "frame-src 'self'", "object-src 'none'", "base-uri 'self'",
         "form-action 'self' https://claude.ai https://claude.com", "frame-ancestors $framing",
         ...(is_https() ? ['upgrade-insecure-requests'] : []),
     ]));

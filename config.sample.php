@@ -27,6 +27,7 @@ return [
     // On Cloudflare: true turns away visits that go straight to the host instead of through Cloudflare.
     // Turn it on once the domain works through Cloudflare.
     'cloudflare_only' => false,
+    'google_analytics' => '',  // optional: a GA4 measurement ID (G-XXXXXXXXXX); visitors see a cookie banner and analytics loads only if they accept
     'login' => [
         'username' => 'admin',
         'password_hash' => '',
