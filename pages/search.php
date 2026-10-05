@@ -21,7 +21,7 @@ $subtitle_class = 'app-version';
 $body_attrs = ' data-scraper-running="' . (search_running($run) ? 'true' : 'false') . '" data-scraper-mode="'
     . h(search_running($run) ? $run['mode'] : '') . '" data-work-preferences="' . json_attr($profile['work_preferences']) . '"';
 $before_nav = "<div id=\"search-progress-bar\" class=\"search-progress-bar\" hidden>\n</div>";
-$scripts = ['capture-upload.js', 'columns.js'];
+$scripts = ['capture-upload.js', 'columns.js', 'top-picks.js'];
 
 function credibility_class($score): string
 {
@@ -134,8 +134,15 @@ require APP_ROOT . '/templates/_top.php';
         </div>
       </div>
       </details>
+      <button id="top-picks-button" class="bordered-button" type="button" title="Rank the results shown and pick the 10 best to apply to">Top 10 Picks</button>
       <div class="results-count" id="results-count"><?= count($companies) ?> results
       </div>
+    </section>
+    <section id="top-picks" class="top-picks" hidden aria-labelledby="top-picks-heading">
+      <div class="top-picks-head"><h2 id="top-picks-heading">Top 10 Picks</h2><button id="top-picks-close" class="bordered-button secondary-action" type="button">Close</button></div>
+      <p class="field-help">Ranked by job fit, credibility and how close the job is, from the results shown (filters apply). Untick any you don't want, then build: they're kept on your Dashboard and one request for Claude is copied to make a résumé and cover letter for each.</p>
+      <ol id="top-picks-list" class="top-picks-list"></ol>
+      <div class="top-picks-actions"><span id="top-picks-status" class="field-help" role="status"></span><button id="top-picks-build" class="bordered-button primary-action" type="button">Build résumés and cover letters</button></div>
     </section>
     <div class="credibility-legend" aria-label="Credibility score guide"><strong>Scoring:</strong><span class="legend-item" tabindex="0" aria-describedby="credibility-low-help"><i class="legend-dot low"></i>Low<span id="credibility-low-help" class="credibility-tip" role="tooltip">0–40%: limited evidence.</span></span><span class="legend-item" tabindex="0" aria-describedby="credibility-medium-help"><i class="legend-dot medium"></i>Medium<span id="credibility-medium-help" class="credibility-tip" role="tooltip">50–70%: some evidence.</span></span><span class="legend-item" tabindex="0" aria-describedby="credibility-high-help"><i class="legend-dot high"></i>High<span id="credibility-high-help" class="credibility-tip" role="tooltip">80–100%: stronger evidence.</span></span><a href="/credibility-scores">How are scores calculated?</a>
     </div>
@@ -162,7 +169,7 @@ require APP_ROOT . '/templates/_top.php';
         $salary = (string) ($d['salary'] ?? '');
         $listing_url = $employer_site && $company['career_url'] ? $company['career_url'] : ($company['source_url'] ?: $company['career_url']);
     ?>
-      <tr class="result-row" data-company-id="<?= $id ?>" data-company="<?= h($company['name']) ?>" data-job="<?= h($company['career_job_title']) ?>" data-state="<?= h($company['state']) ?>" data-city="<?= h($company['city']) ?>" data-distance="<?= $company['distance_miles'] !== null ? h($company['distance_miles']) : 99999 ?>" data-status="<?= h($listing_status) ?>" data-work-arrangement="<?= h($company['work_arrangement']) ?>" data-career-credibility="<?= (int) $career ?>" data-usa-credibility="<?= (int) $usa ?>" data-saved="<?= $company['is_kept'] ? 'true' : 'false' ?>" data-schedule="<?= h($schedule) ?>" data-search-run="<?= $is_new ?>" data-new="<?= $is_new ?>">
+      <tr class="result-row" data-company-id="<?= $id ?>" data-company="<?= h($company['name']) ?>" data-job="<?= h($company['career_job_title']) ?>" data-state="<?= h($company['state']) ?>" data-city="<?= h($company['city']) ?>" data-distance="<?= $company['distance_miles'] !== null ? h($company['distance_miles']) : 99999 ?>" data-status="<?= h($listing_status) ?>" data-work-arrangement="<?= h($company['work_arrangement']) ?>" data-career-credibility="<?= (int) $career ?>" data-usa-credibility="<?= (int) $usa ?>" data-job-fit="<?= $company['job_fit']['score'] ?? '' ?>" data-saved="<?= $company['is_kept'] ? 'true' : 'false' ?>" data-schedule="<?= h($schedule) ?>" data-search-run="<?= $is_new ?>" data-new="<?= $is_new ?>">
         <td data-label="Save"><button class="bordered-button keep-action<?= $company['is_kept'] ? ' is-saved' : '' ?>" type="button" data-company-id="<?= $id ?>"><?= $company['is_kept'] ? 'Saved' : 'Keep' ?></button></td>
         <td data-label="Company"><?= h($company['name'] ?: 'Unknown') ?></td>
         <td data-label="Job"><strong><?= h($company['career_job_title'] ?: 'Unknown') ?></strong><?php if ($schedule !== '' || $salary !== ''): ?><small class="job-meta"><?= h(ucwords(str_replace('_', ' ', strtolower($schedule)))) ?><?= $schedule !== '' && $salary !== '' ? ' · ' : '' ?><?= h($salary) ?></small><?php endif; ?><?php if (!empty($d['also_on'])): ?><small class="job-meta">Also on: <?= implode(', ', array_map(fn($l) => '<a href="' . h($l['url']) . '" target="_blank" rel="noopener noreferrer">' . h($l['site']) . '</a>', $d['also_on'])) ?></small><?php endif; ?></td>
