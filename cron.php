@@ -19,5 +19,13 @@ $until = microtime(true) + 50;
 while (microtime(true) < $until && search_running(search_state())) {
     run_slice(min(10.0, $until - microtime(true)));
 }
+// Uploaded Web Job Scraper jobs whose company website hasn't been looked up yet.
+require_once __DIR__ . '/lib/captures.php';
+if (!search_running(search_state()) && ($left = $until - microtime(true)) > 5) {
+    $looked = run_capture_lookups($left);
+    if ($looked) {
+        echo "Looked up the company website for $looked captured job(s)\n";
+    }
+}
 $run = search_state();
 echo search_running($run) ? "Search still running: {$run['progress']}\n" : 'No search running' . (!empty($run['stop_reason']) ? " (last: {$run['stop_reason']})" : '') . "\n";

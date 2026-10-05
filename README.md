@@ -33,7 +33,10 @@ profile and settings are kept in `data/jobfinder.sqlite`, which is never uploade
   PDFs are drawn in plain PHP (`lib/resume/render.php`), and the uploaded résumé's design is measured the same way
   the desktop measures it with PyMuPDF (`lib/resume/analyze.php`). Claude gets the résumé's text and design notes,
   but not pictures of its pages.
-- **Not here yet:** importing jobs from the Web Job Scraper extension.
+- **Web Job Scraper jobs:** the server can't see your Desktop, so on the Search page open "Import jobs from the Web
+  Job Scraper" and choose the extension's `jobs.json` files. They are filtered like the desktop's import, and a
+  file already imported unchanged is skipped. Each job's company website is looked up for about 20 seconds after
+  the upload; the cron job finishes the rest a few a minute.
 
 ## Connect Claude to the Résumé Builder
 
