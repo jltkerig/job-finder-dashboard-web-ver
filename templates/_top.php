@@ -13,6 +13,9 @@ $menu = ['/' => ['Search', 'search'], '/dashboard' => ['Dashboard', 'dashboard']
   <title><?= h($title) ?> | Job Finder</title>
   <link rel="stylesheet" href="/static/css/style.css?v=<?= APP_VERSION ?>" />
   <link rel="stylesheet" href="/assets/style.css?v=<?= APP_VERSION ?>" />
+<?php foreach ($extra_css ?? [] as $sheet): ?>
+  <link rel="stylesheet" href="<?= h($sheet) ?>?v=<?= APP_VERSION ?>" />
+<?php endforeach; ?>
 </head>
 <body data-page="<?= h($page) ?>"<?= $body_attrs ?? '' ?>>
 <?= $before_nav ?? '' ?>

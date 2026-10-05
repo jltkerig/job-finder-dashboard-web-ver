@@ -284,18 +284,7 @@ function pdf_show(string $string, array $map): string
         }
         return pdf_latin((string) hex2bin(strlen($hex) % 2 ? $hex . '0' : $hex));
     }
-    $raw = substr($string, 1, -1);
-    $bytes = preg_replace_callback('#\\\\([nrtbf()\\\\]|[0-7]{1,3}|\r?\n)#', function ($m) {
-        $c = $m[1];
-        $simple = ['n' => "\n", 'r' => "\r", 't' => "\t", 'b' => "\x08", 'f' => "\x0C", '(' => '(', ')' => ')', '\\' => '\\'];
-        if (isset($simple[$c])) {
-            return $simple[$c];
-        }
-        if ($c[0] === "\r" || $c[0] === "\n") {
-            return '';
-        }
-        return chr(octdec($c) & 0xFF);
-    }, $raw);
+    $bytes = pdf_string_bytes($string);
     if ($map) {
         $width = intdiv(strlen((string) array_key_first($map)) ?: 2, 2);
         $text = '';
@@ -305,6 +294,29 @@ function pdf_show(string $string, array $map): string
         return $text;
     }
     return pdf_latin($bytes);
+}
+
+/** The raw bytes of a PDF string token: (literal with escapes) or <hex>. */
+function pdf_string_bytes(string $string): string
+{
+    if ($string === '') {
+        return '';
+    }
+    if ($string[0] === '<') {
+        $hex = preg_replace('/\s+/', '', substr($string, 1, -1));
+        return (string) hex2bin(strlen($hex) % 2 ? $hex . '0' : $hex);
+    }
+    return preg_replace_callback('#\\\\([nrtbf()\\\\]|[0-7]{1,3}|\r?\n)#', function ($m) {
+        $c = $m[1];
+        $simple = ['n' => "\n", 'r' => "\r", 't' => "\t", 'b' => "\x08", 'f' => "\x0C", '(' => '(', ')' => ')', '\\' => '\\'];
+        if (isset($simple[$c])) {
+            return $simple[$c];
+        }
+        if ($c[0] === "\r" || $c[0] === "\n") {
+            return '';
+        }
+        return chr(octdec($c) & 0xFF);
+    }, substr($string, 1, -1));
 }
 
 /** Single-byte PDF text (WinAnsi, close to Windows-1252) as UTF-8. */

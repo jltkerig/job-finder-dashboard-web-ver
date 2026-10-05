@@ -134,6 +134,87 @@ $pdf = "%PDF-1.4\n1 0 obj << /Type /Page /Contents 2 0 R >> endobj\n2 0 obj << /
 check('PDF résumé read', str_contains(pdf_text($pdf), "Jane Doe\nWeb Designer"));
 @unlink($docx);
 
+// --- Résumé Builder: drawing PDFs, measuring them, the connector, suggestions ---
+// Its files go to a throwaway folder, never data/resume; fonts are never downloaded.
+$rb_dir = sys_get_temp_dir() . '/jobfinder-test-resume-' . getmypid();
+putenv("JOBFINDER_RESUME_DIR=$rb_dir");
+putenv('JOBFINDER_OFFLINE=1');
+require_once APP_ROOT . '/lib/connector.php';
+require_once APP_ROOT . '/lib/resume/suggestions.php';
+q("UPDATE user_profile SET first_name = 'Jane', last_name = 'Doe' WHERE id = 1");
+
+$resume = ['full_name' => 'Jane Doe', 'headline' => 'Web Designer', 'contact' => ['jane@example.com', 'Bel Air, MD'],
+    'sections' => [['title' => 'Experience', 'items' => array_fill(0, 3, ['heading' => 'Web Designer', 'subheading' => 'Acme', 'dates' => '2020 – Present',
+        'bullets' => ['Redesigned the main site and cut load time by half.', 'Led a team of three designers.']])],
+        ['title' => 'Skills', 'text' => 'HTML, CSS, Figma']]];
+$layout = merge_layout(['font_family' => 'Arial', 'accent_color' => '#1F5F8B', 'heading_rule' => true]);
+$pdf = render_resume(clean_resume_content($resume), $layout);
+check('résumé PDF drawn', str_starts_with($pdf, '%PDF-1.4') && str_contains(pdf_text($pdf), 'Jane Doe'));
+$page = first_pdf_page($pdf);
+$measured = measure_pdf_layout($page);
+check('its layout measures back', $measured['body_size'] == 10.5 && $measured['name_size'] == 22.0 && $measured['accent_color'] === '#1F5F8B'
+    && $measured['heading_case'] === 'upper' && $measured['heading_rule'] && $measured['margin_in'] == 0.75);
+$facts = analyze_pdf_page($page);
+check('its design is described', $facts['page'] === 'Letter' && $facts['headings']['items'] === ['EXPERIENCE', 'SKILLS']
+    && $facts['bullets']['count'] === 6 && $facts['dates']['right'] === 3 && $facts['body']['spacing'] == 1.3);
+check('design rows written', str_contains(design_notes_text(describe_design($facts, $measured)), 'Section Order: EXPERIENCE → SKILLS'));
+$long = $resume;
+$long['sections'][0]['items'] = array_fill(0, 14, $resume['sections'][0]['items'][0]);
+check('a long résumé runs onto a second page', first_pdf_page(render_resume(clean_resume_content($long), $layout))['pages'] === 2);
+$letter = render_cover_letter(clean_letter_content(['full_name' => 'Jane Doe', 'paragraphs' => ['Hello.', 'Thanks.']]), $layout);
+check('cover letter drawn', str_contains(pdf_text($letter), 'Hello.') && str_contains(pdf_text($letter), date('F j, Y')));
+check('measured layouts are brought into range', fit_layout(['body_size' => 6, 'bullet_char' => '?'])['body_size'] == 7
+    && !isset(fit_layout(['bullet_char' => '?'])['bullet_char']));
+
+check('connector starts off', !connector_enabled() && oauth_register(['redirect_uris' => ['https://claude.ai/cb']])[0] === 403);
+set_setting('connector_enabled', '1');
+check('only Claude can register', oauth_register(['redirect_uris' => ['https://evil.example/cb']])[0] === 400
+    && oauth_register(['redirect_uris' => ['https://claude.ai.evil.example/cb']])[0] === 400
+    && oauth_register(['redirect_uris' => ['http://claude.ai/cb']])[0] === 400);
+[$status, $client] = oauth_register(['client_name' => 'Claude', 'redirect_uris' => ['https://claude.ai/api/mcp/auth_callback']]);
+$verifier = str_repeat('v', 50);
+$params = ['response_type' => 'code', 'client_id' => $client['client_id'], 'redirect_uri' => 'https://claude.ai/api/mcp/auth_callback',
+    'code_challenge' => rtrim(strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'), '='), 'code_challenge_method' => 'S256', 'state' => 's1'];
+check('approval request checked', check_authorize_request($params)[1] === null
+    && check_authorize_request(['code_challenge_method' => 'plain'] + $params)[1] !== null
+    && check_authorize_request(['redirect_uri' => 'https://claude.ai/other'] + $params)[1] !== null);
+parse_str((string) parse_url(issue_auth_code($params), PHP_URL_QUERY), $back);
+$exchange = ['grant_type' => 'authorization_code', 'client_id' => $client['client_id'], 'code' => $back['code'],
+    'redirect_uri' => $params['redirect_uri'], 'code_verifier' => $verifier];
+[$status, $tokens] = oauth_token($exchange);
+check('code becomes tokens once', $status === 200 && $back['state'] === 's1' && oauth_token($exchange)[0] === 400);
+check('only hashes are stored', !value('SELECT COUNT(*) FROM oauth_tokens WHERE token_hash = ?', [$tokens['access_token']])
+    && value('SELECT COUNT(*) FROM oauth_tokens WHERE token_hash = ?', [token_hash($tokens['access_token'])]) == 1);
+$_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $tokens['access_token'];
+check('access token accepted', bearer_client() === $client['client_id']);
+$reply = mcp_message(['jsonrpc' => '2.0', 'id' => 1, 'method' => 'tools/call', 'params' => ['name' => 'save_resume', 'arguments' => ['content' => $resume, 'company' => 'Acme', 'job_title' => 'Web Designer']]]);
+check('connector saves a résumé', !$reply['result']['isError'] && str_contains($reply['result']['content'][0]['text'], 'Jane_Doe_Acme_Web_Designer_'));
+$reply = mcp_message(['jsonrpc' => '2.0', 'id' => 2, 'method' => 'tools/call', 'params' => ['name' => 'get_build', 'arguments' => ['file_name' => '../config.php']]]);
+check('connector stays in its folder', $reply['result']['isError']);
+check('tools listed', count(mcp_message(['jsonrpc' => '2.0', 'id' => 3, 'method' => 'tools/list'])['result']['tools']) === 12);
+[$status, $refreshed] = oauth_token(['grant_type' => 'refresh_token', 'client_id' => $client['client_id'], 'refresh_token' => $tokens['refresh_token']]);
+check('refresh token works once', $status === 200 && bearer_client() === null
+    && oauth_token(['grant_type' => 'refresh_token', 'client_id' => $client['client_id'], 'refresh_token' => $tokens['refresh_token']])[0] === 400);
+disconnect_all();
+$_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $refreshed['access_token'];
+check('disconnecting cuts tokens off', bearer_client() === null);
+unset($_SERVER['HTTP_AUTHORIZATION']);
+set_setting('connector_enabled', '0');
+
+$contacts = "Bright Studio\n12 Harbor Way\n(410) 555-0100\n2019 - Present\nDana Fields\nCreative Director\ndana@bright.example.com\n\n"
+    . "Sam Lee, IT Director\n(410) 555-0123\nsam@example.com\nSupervisor reference known for 3 year(s).";
+$found = contacts_in($contacts);
+check('contact list read', $found['jobs'][0]['street'] === '12 Harbor Way' && $found['jobs'][0]['supervisor_name'] === 'Dana Fields'
+    && array_column($found['people'], 'name') === ['Dana Fields', 'Sam Lee']);
+$profile = ['first_name' => 'Jane', 'last_name' => 'Doe', 'skills' => [], 'work_history' => [['role' => 'Designer', 'company' => 'Bright Studio']]];
+$texts = [[['id' => 'x', 'label' => 'Contacts'], $contacts]];
+check('missing job details suggested', detail_suggestions($profile, $texts)[0]['details']['street'] === '12 Harbor Way');
+check('people suggested as references', reference_suggestions($profile, [], $texts)[1]['relationship'] === 'Supervisor');
+dismiss_suggestion('reference', 'sam lee');
+check('a dismissed person stays gone', count(reference_suggestions($profile, [], $texts)) === 1);
+check('jobs sort newest first', job_start(['dates' => 'Mar 2020 - Present']) > job_start(['dates' => '12/2019 - 2020']));
+
+remove_tree($rb_dir);
 @unlink($db);
 echo $failed ? "\n$failed failed\n" : "\nall passed\n";
 exit($failed ? 1 : 0);

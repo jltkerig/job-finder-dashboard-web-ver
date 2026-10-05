@@ -88,6 +88,11 @@ const LAYOUT_CHOICES = ['font_kind' => ['serif', 'sans'], 'name_align' => ['left
     'page_size' => ['letter', 'a4']];
 const LAYOUT_FLAGS = ['heading_rule', 'header_rule'];
 const LAYOUT_FONTS = ['font_family', 'name_font', 'heading_font', 'detail_font'];
+// The font boxes on the Résumé Design form, in the order shown.
+const DESIGN_FONT_ROLES = ['name_font' => 'Name Font', 'heading_font' => 'Section Heading Font', 'font_family' => 'Body Text Font',
+    'detail_font' => 'Dates, Sub-headings and Contact Font'];
+const DESIGN_NUMBERS = ['body_size', 'name_size', 'heading_size', 'line_spacing', 'section_gap', 'margin_top', 'margin_right', 'margin_bottom', 'margin_left'];
+const DESIGN_CHOICES = ['page_size', 'name_align', 'heading_case', 'bullet_char', 'contact_separator', 'accent_color', 'text_color'];
 
 /** The layout values given, typed and checked; throws InvalidArgumentException naming the first bad one. */
 function clean_layout(array $values): array
@@ -128,6 +133,23 @@ function clean_layout(array $values): array
         }
     }
     return $clean;
+}
+
+/** Measured settings brought into range (a 6 pt résumé becomes 7 pt) instead of refused; unknown choices are dropped. */
+function fit_layout(array $values): array
+{
+    foreach ($values as $key => $value) {
+        if (isset(LAYOUT_NUMBERS[$key]) && is_numeric($value)) {
+            $values[$key] = max(LAYOUT_NUMBERS[$key][0], min(LAYOUT_NUMBERS[$key][1], (float) $value));
+        } elseif (isset(LAYOUT_CHOICES[$key]) && !in_array($value, LAYOUT_CHOICES[$key], true)) {
+            unset($values[$key]);
+        } elseif (in_array($key, LAYOUT_FONTS, true)) {
+            $values[$key] = mb_substr(trim((string) $value), 0, 60);
+        } elseif (($key === 'accent_color' || $key === 'text_color') && !preg_match('/^#[0-9A-Fa-f]{6}$/', (string) $value)) {
+            unset($values[$key]);
+        }
+    }
+    return $values;
 }
 
 /** The defaults with each layer's settings on top (later layers win; empty values are skipped). */
@@ -476,7 +498,7 @@ function save_resume_upload(string $filename, string $data): array
         error_log('Could not read résumé: ' . $error->getMessage() . ' at ' . $error->getFile() . ':' . $error->getLine());
         throw new InvalidArgumentException('Could not read that file. Try another PDF or DOCX.');
     }
-    $layout = clean_layout($layout) + DEFAULT_LAYOUT;
+    $layout = clean_layout(fit_layout($layout)) + DEFAULT_LAYOUT;
     ensure_resume_dirs();
     $folder = resume_dir('current-resume');
     foreach (glob("$folder/*") ?: [] as $old) {
@@ -520,7 +542,7 @@ function reanalyze_resume_design(): ?array
             error_log('Could not look at the résumé again: ' . $error->getMessage());
         }
     }
-    $info['layout'] = array_merge($info['layout'], clean_layout(layout_from_facts($facts)));
+    $info['layout'] = array_merge($info['layout'], clean_layout(fit_layout(layout_from_facts($facts))));
     $info['design'] = design_record($facts, $info['layout']);
     write_json_file(resume_dir('current-resume/info.json'), $info);
     return $info;
@@ -708,6 +730,19 @@ function list_builds(): array
     }
     usort($records, fn($a, $b) => strcmp($b['updated'] ?? '', $a['updated'] ?? ''));
     return $records;
+}
+
+/** [job id => [['kind', 'label', 'pdf', 'updated'], ...]] for the Dashboard's job cards: PDFs that still exist, newest first. */
+function files_by_job(): array
+{
+    $found = [];
+    foreach (list_builds() as $record) {
+        if ($record['pdf_exists'] && is_numeric($record['job_id'] ?? null)) {
+            $found[(int) $record['job_id']][] = ['kind' => $record['kind'], 'pdf' => $record['pdf'], 'updated' => $record['updated'] ?? '',
+                'label' => $record['kind'] === 'resume' ? 'Résumé' : 'Cover Letter'];
+        }
+    }
+    return $found;
 }
 
 function delete_build(string $filename): void

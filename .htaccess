@@ -7,5 +7,8 @@ DirectoryIndex app.php
 </FilesMatch>
 
 RewriteEngine On
+# Some hosts drop the Authorization header before PHP sees it; the Résumé Builder connector needs it.
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 RewriteRule ^(?:static|assets)/ - [L]
 RewriteRule ^ app.php [L,QSA]
