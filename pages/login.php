@@ -24,23 +24,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user'] = 'me';
             redirect('/');
         }
-    } elseif ($locked_until > time()) {
-        $error = 'Too many tries. Wait ' . ceil(($locked_until - time()) / 60) . ' minutes and try again.';
-    } elseif (hash_equals($login['username'] ?? 'admin', trim((string) ($_POST['username'] ?? '')))
-        && password_verify($password, (string) ($login['password_hash'] ?? setting('password_hash')))) {
-        set_setting('failed_logins', '0');
-        session_regenerate_id(true);
-        $_SESSION['user'] = 'me';
-        redirect('/');
     } else {
-        sleep(1);
-        $fails = (int) setting('failed_logins', '0') + 1;
-        set_setting('failed_logins', (string) $fails);
-        if ($fails >= 5) {
-            set_setting('locked_until', (string) (time() + 15 * 60));
-            set_setting('failed_logins', '0');
+        $error = check_password((string) ($_POST['username'] ?? ''), $password);
+        if ($error === null) {
+            session_regenerate_id(true);
+            $_SESSION['user'] = 'me';
+            redirect('/');
         }
-        $error = 'That username or password is wrong.';
     }
 }
 

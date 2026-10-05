@@ -4,7 +4,7 @@
 declare(strict_types=1);
 
 const APP_ROOT = __DIR__ . '/..';
-const APP_VERSION = '0.5.1';
+const APP_VERSION = '0.6.0';
 const DATA_DIR = APP_ROOT . '/resources';     // bundled reference data (O*NET, Census places and ZIPs)
 const CACHE_DIR = APP_ROOT . '/data/cache';   // quick-loading copies of that data, made on first use
 
@@ -238,6 +238,32 @@ function check_csrf(): void
         http_response_code(403);
         exit('This form expired. Go back, reload the page and try again.');
     }
+}
+
+/**
+ * Checks the sign-in username and password (the sign-in page and the connector's approval page both use this).
+ * Returns null when right, or the message to show. Five wrong tries lock it for 15 minutes.
+ */
+function check_password(string $username, string $password): ?string
+{
+    $login = config()['login'] ?? null;
+    $locked_until = (int) setting('locked_until', '0');
+    if ($locked_until > time()) {
+        return 'Too many tries. Wait ' . ceil(($locked_until - time()) / 60) . ' minutes and try again.';
+    }
+    $hash = (string) ($login['password_hash'] ?? setting('password_hash'));
+    if ($hash !== '' && hash_equals($login['username'] ?? 'admin', trim($username)) && password_verify($password, $hash)) {
+        set_setting('failed_logins', '0');
+        return null;
+    }
+    sleep(1);
+    $fails = (int) setting('failed_logins', '0') + 1;
+    set_setting('failed_logins', (string) $fails);
+    if ($fails >= 5) {
+        set_setting('locked_until', (string) (time() + 15 * 60));
+        set_setting('failed_logins', '0');
+    }
+    return 'That username or password is wrong.';
 }
 
 function logged_in(): bool

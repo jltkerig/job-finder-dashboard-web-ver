@@ -28,13 +28,32 @@ profile and settings are kept in `data/jobfinder.sqlite`, which is never uploade
   career sites, job sites (National Labor Exchange, plus USAJOBS and Adzuna when their keys are in `config.php`),
   then web results.
 - **Places:** the bundled Census places and ZIP codes are used first; only unknown places are looked up online.
-- **Not here yet:** the Résumé Builder, and importing jobs from the Web Job Scraper extension.
+- **Résumé Builder:** part of the site (`/resume-builder`), not a separate app. Its files (your uploaded résumé,
+  documents, references, rules and the finished PDFs) are kept in `data/resume`, which is never uploaded to GitHub.
+  PDFs are drawn in plain PHP (`lib/resume/render.php`), and the uploaded résumé's design is measured the same way
+  the desktop measures it with PyMuPDF (`lib/resume/analyze.php`). Claude gets the résumé's text and design notes,
+  but not pictures of its pages.
+- **Not here yet:** importing jobs from the Web Job Scraper extension.
+
+## Connect Claude to the Résumé Builder
+
+Instead of a connector installed on your PC, Claude adds the site by its address:
+
+1. On the Résumé Builder page, under Connect Claude, click **Turn On**. It is off until you do.
+2. In Claude, go to Settings > Connectors > Add custom connector, and paste `https://your-site/mcp`.
+3. Claude opens the site's approval page; type your Job Finder password to allow it.
+
+Claude signs in with OAuth 2.1 (PKCE, codes sent back only to claude.ai or claude.com, tokens stored as hashes,
+access tokens lasting an hour). The page lists every connection with a Disconnect button, and turning the
+connector off cuts them all. Claude only connects to https addresses, so this works on Hostinger, not on your PC.
+If the site sits behind a proxy that hides https, set `'base_url' => 'https://your-site'` in `config.php`.
 
 ## What's where
 
 - `app.php`: every address comes here and goes to a page (`pages/`) or an action (`actions/`).
 - `templates/`: the menu, header and footer shared by the pages.
 - `static/`: the desktop app's stylesheet and scripts, unchanged.
-- `lib/`: database, profile, listings and lookups; `lib/search/` is the search itself.
+- `lib/`: database, profile, listings and lookups; `lib/search/` is the search itself; `lib/resume/` is the
+  Résumé Builder and `lib/connector.php` its Claude connector (MCP and OAuth).
 - `resources/`: O*NET job titles and skills, Census places and ZIP codes, default block lists and watched employers.
 - `tests/run.php`: `php -d extension=pdo_sqlite tests/run.php` (uses a throwaway database; no network).

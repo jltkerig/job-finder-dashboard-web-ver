@@ -3,6 +3,7 @@
 // On your own PC you don't need config.php: a local SQLite file in data/ is used instead.
 return [
     'timezone' => 'America/New_York',  // for times shown on the site
+    'base_url' => '',  // optional: the site's https address, if the Claude connector shows http:// instead
     'db' => [
         'driver' => 'mysql',
         'host' => 'localhost',

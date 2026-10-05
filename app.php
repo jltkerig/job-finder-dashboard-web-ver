@@ -32,6 +32,16 @@ if ($path === '/logout') {
     redirect('/login');
 }
 
+// The Résumé Builder connector: Claude calls these itself and signs in with OAuth, not the site's session.
+if (preg_match('#^/(\.well-known/(oauth-authorization-server|oauth-protected-resource|openid-configuration)(/.*)?|oauth/(register|token)|mcp)$#', $path)) {
+    require __DIR__ . '/actions/connector.php';
+    exit;
+}
+if ($path === '/oauth/authorize') {
+    require __DIR__ . '/pages/authorize.php';
+    exit;
+}
+
 require_login();
 if ($method === 'POST') {
     check_csrf();
@@ -73,6 +83,17 @@ if ($handler === null && $method === 'POST'
     $handler = 'actions/listings.php';
     $path = '/' . $m[1];
     $route_id = (int) $m[2];
+}
+
+// Résumé Builder's own addresses: /resume-builder/build/<file> is a page; the rest are its buttons and files.
+if ($handler === null && preg_match('#^/resume-builder(/.+)$#', $path, $m)) {
+    $rb = $m[1];
+    if ($method === 'GET' && preg_match('#^/build/([^/]+)$#', $rb, $file)) {
+        $rb_file = $file[1];
+        $handler = 'pages/resume_build.php';
+    } else {
+        $handler = 'actions/resume_builder.php';
+    }
 }
 
 if ($handler === null) {

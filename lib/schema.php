@@ -5,7 +5,7 @@
 
 declare(strict_types=1);
 
-const SCHEMA_VERSION = '5';
+const SCHEMA_VERSION = '6';
 
 // Optional details some applications ask for: where the job was, its phone and website, and the supervisor.
 const WORK_DETAIL_COLUMNS = ['street' => 200, 'city' => 100, 'state' => 50, 'zip' => 20, 'phone' => 40, 'website' => 255,
@@ -131,6 +131,19 @@ function ensure_schema(PDO $pdo): void
     $pdo->exec("CREATE TABLE IF NOT EXISTS page_cache (
         url_key VARCHAR(64) PRIMARY KEY, url TEXT NOT NULL, status INT NOT NULL, body $text NULL,
         final_url TEXT NULL, fetched_at VARCHAR(19) NOT NULL)$tail");
+
+    // The Résumé Builder connector (lib/connector.php): apps Claude registered, one-time sign-in codes, and access
+    // tokens. Codes and tokens are kept only as SHA-256 hashes, so a copy of the database can't be used to sign in.
+    $pdo->exec("CREATE TABLE IF NOT EXISTS oauth_clients (
+        client_id VARCHAR(64) PRIMARY KEY, client_name VARCHAR(200) NOT NULL DEFAULT '', redirect_uris TEXT NOT NULL,
+        created_at VARCHAR(19) NOT NULL)$tail");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS oauth_codes (
+        code_hash VARCHAR(64) PRIMARY KEY, client_id VARCHAR(64) NOT NULL, redirect_uri TEXT NOT NULL,
+        code_challenge VARCHAR(128) NOT NULL, resource TEXT NULL, expires_at VARCHAR(19) NOT NULL)$tail");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS oauth_tokens (
+        token_hash VARCHAR(64) PRIMARY KEY, kind VARCHAR(10) NOT NULL, client_id VARCHAR(64) NOT NULL,
+        grant_id VARCHAR(32) NOT NULL, expires_at VARCHAR(19) NOT NULL, created_at VARCHAR(19) NOT NULL,
+        last_used_at VARCHAR(19) NULL)$tail");
 
     seed_defaults($pdo);
     $pdo->exec("DELETE FROM settings WHERE name = 'schema_version'");

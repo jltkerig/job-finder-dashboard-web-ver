@@ -14,6 +14,8 @@ $companies = get_kept_companies($filters['status'], $filters['state'], $filters[
 $profile = get_user_profile();
 add_job_fit($companies, $profile['skills']);
 add_drive_times($companies, $profile['home_zip'], home_state());
+require_once APP_ROOT . '/lib/resume/store.php';
+$application_files = files_by_job(); // résumés and cover letters made for each job
 $demanded_skills = array_map(fn($pair) => ['skill' => $pair[0], 'count' => $pair[1]], listing_skill_demand($profile['skills']));
 $search_history = get_search_history();
 $skill_suggestions = profile_skill_suggestions($profile);
@@ -215,8 +217,10 @@ require APP_ROOT . '/templates/_top.php';
             <div class="card-panels">
               <section class="card-panel application-files">
                 <h4>Résumé and Cover Letter</h4>
-                <p class="field-help">None yet. Apply copies a request for Claude; what it makes will show up here once the Résumé Builder is on the web.</p>
-                <button class="bordered-button apply-action" type="button" data-job-id="<?= $id ?>" data-job-title="<?= h($company['career_job_title']) ?>" data-company-name="<?= h($company['name']) ?>" title="Copy a request for a tailored résumé and cover letter, then open Claude to paste it.">Apply</button>
+                <?php $files = $application_files[(int) $id] ?? []; ?>
+                <?php if ($files): ?><ul class="file-list"><?php foreach ($files as $file): $name = rawurlencode($file['pdf']); ?><li><span class="file-kind"><?= h($file['label']) ?></span><a href="/resume-builder/files/<?= $name ?>" target="_blank" rel="noopener"><?= h($file['pdf']) ?></a><a class="file-edit" href="/resume-builder/build/<?= $name ?>">Edit</a></li><?php endforeach; ?></ul>
+                <?php else: ?><p class="field-help">None yet. Apply copies a request for Claude; what it makes through the Résumé Builder connector shows up here.</p><?php endif; ?>
+                <button class="bordered-button apply-action" type="button" data-job-id="<?= $id ?>" data-job-title="<?= h($company['career_job_title']) ?>" data-company-name="<?= h($company['name']) ?>" title="Copy a request for a tailored résumé and cover letter, then open Claude to paste it."><?= $files ? 'Make New Versions' : 'Apply' ?></button>
               </section>
               <section class="card-panel application-section">
                 <h4>Your Application</h4>
