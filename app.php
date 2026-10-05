@@ -18,6 +18,13 @@ if (PHP_SAPI === 'cli-server' && $path !== '/' && is_file(__DIR__ . $path)) {
 require __DIR__ . '/lib/bootstrap.php';
 require __DIR__ . '/lib/listings.php';
 
+// With 'cloudflare_only' on, visits that skip Cloudflare (straight to the host's address) are turned away, so its
+// protections can't be bypassed. The cron job runs from the command line and isn't affected.
+if (PHP_SAPI !== 'cli-server' && !empty(config()['cloudflare_only']) && !from_cloudflare()) {
+    http_response_code(403);
+    exit('Open this site through its domain name.');
+}
+
 // On the web: always https, and pages can't be shown inside other sites or guessed as other file types.
 if (PHP_SAPI !== 'cli-server' && !is_https() && (config()['force_https'] ?? true)) {
     header('Location: https://' . ($_SERVER['HTTP_HOST'] ?? '') . ($_SERVER['REQUEST_URI'] ?? '/'), true, 301);
@@ -27,6 +34,7 @@ header('X-Frame-Options: DENY');
 header("Content-Security-Policy: frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://claude.ai https://claude.com");
 header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: same-origin');
+header('Cache-Control: private, no-store');  // pages are yours: no copies kept by Cloudflare or the browser
 if (is_https()) {
     header('Strict-Transport-Security: max-age=31536000');
 }
@@ -78,6 +86,7 @@ $routes = [
     'GET /job-title-suggestions' => 'actions/lookups.php',
     'GET /skill-related' => 'actions/lookups.php',
     'POST /save-kept' => 'actions/listings.php',
+    'POST /settings/password' => 'actions/password.php',
     'POST /settings/blocked-domains' => 'actions/blocklists.php',
     'POST /settings/blocked-companies' => 'actions/blocklists.php',
     'POST /start-search' => 'actions/search.php',

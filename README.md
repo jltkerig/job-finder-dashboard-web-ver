@@ -70,3 +70,26 @@ If the site sits behind a proxy that hides https, set `'base_url' => 'https://yo
 - Five wrong passwords from one address lock it for 15 minutes; 30 from everywhere pause sign-in for everyone.
 - You're signed out after 8 hours without using the site, and after 30 days in any case.
 - Pages can't be shown inside other sites, and every form needs the page's token.
+- Forgot your password? Put a `setup_code` in `config.php` (hPanel > File Manager), click "Forgot password?" on the
+  sign-in page, type the code and choose a new one. Changing the password (here or in Settings > Password) signs out
+  every other browser and disconnects Claude. Delete the setup code afterwards.
+
+## Cloudflare
+
+The site expects to sit behind Cloudflare. It reads the visitor's real address from `CF-Connecting-IP`, but only
+when the request comes from one of Cloudflare's own addresses (https://www.cloudflare.com/ips/), so it can't be faked.
+In the Cloudflare dashboard:
+
+1. **SSL/TLS > Overview:** set the mode to **Full (strict)**, and keep Hostinger's free certificate on. Don't use
+   Flexible: it leaves the trip from Cloudflare to Hostinger unencrypted.
+2. **SSL/TLS > Edge Certificates:** turn on Always Use HTTPS.
+3. **Security > WAF > Rate limiting rules:** one rule for `URI Path equals /login` with method POST, 5 requests per
+   10 seconds per IP, action Block. This stops guessing before it reaches the site.
+4. **Bots:** leave Bot Fight Mode off if you use the Claude connector; it can block Claude's servers calling `/mcp`
+   and `/oauth/token`, and it can't be skipped with a rule.
+5. **Caching:** nothing to do. The site sends `Cache-Control: private, no-store` on every page, so Cloudflare
+   keeps only the files in `static/` and `assets/`.
+6. Once the domain works through Cloudflare, set `'cloudflare_only' => true` in `config.php`, so nobody can reach
+   the site by Hostinger's address and go around Cloudflare.
+
+Cloudflare's IP list changes rarely; if it does, update `CLOUDFLARE_RANGES` in `lib/bootstrap.php`.

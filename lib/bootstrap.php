@@ -4,7 +4,7 @@
 declare(strict_types=1);
 
 const APP_ROOT = __DIR__ . '/..';
-const APP_VERSION = '0.7.1';
+const APP_VERSION = '0.7.2';
 const DATA_DIR = APP_ROOT . '/resources';     // bundled reference data (O*NET, Census places and ZIPs)
 
 // Choices for a saved job's Application Status, in the order the drop-downs show them.
@@ -217,6 +217,52 @@ function is_https(): bool
         || (string) ($_SERVER['SERVER_PORT'] ?? '') === '443';
 }
 
+// Cloudflare's addresses (https://www.cloudflare.com/ips/, checked 2026-10-04). Only requests from these may say who
+// the visitor really is (CF-Connecting-IP); anyone else could fake that header.
+const CLOUDFLARE_RANGES = [
+    '173.245.48.0/20', '103.21.244.0/22', '103.22.200.0/22', '103.31.4.0/22', '141.101.64.0/18', '108.162.192.0/18',
+    '190.93.240.0/20', '188.114.96.0/20', '197.234.240.0/22', '198.41.128.0/17', '162.158.0.0/15', '104.16.0.0/13',
+    '104.24.0.0/14', '172.64.0.0/13', '131.0.72.0/22', '2400:cb00::/32', '2606:4700::/32', '2803:f800::/32',
+    '2405:b500::/32', '2405:8100::/32', '2a06:98c0::/29', '2c0f:f248::/32',
+];
+
+function ip_in_range(string $ip, string $cidr): bool
+{
+    [$net, $bits] = explode('/', $cidr);
+    $a = @inet_pton($ip);
+    $b = @inet_pton($net);
+    if ($a === false || $b === false || strlen($a) !== strlen($b)) {
+        return false;
+    }
+    $bytes = intdiv((int) $bits, 8);
+    $rest = (int) $bits % 8;
+    if (substr($a, 0, $bytes) !== substr($b, 0, $bytes)) {
+        return false;
+    }
+    return $rest === 0 || ((ord($a[$bytes]) ^ ord($b[$bytes])) & (0xFF << (8 - $rest)) & 0xFF) === 0;
+}
+
+function from_cloudflare(): bool
+{
+    $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+    foreach (CLOUDFLARE_RANGES as $range) {
+        if (ip_in_range($ip, $range)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/** The visitor's address: Cloudflare's CF-Connecting-IP when the request really came through Cloudflare. */
+function client_ip(): string
+{
+    $forwarded = trim((string) ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? ''));
+    if ($forwarded !== '' && filter_var($forwarded, FILTER_VALIDATE_IP) && from_cloudflare()) {
+        return $forwarded;
+    }
+    return (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+}
+
 /** True on this PC (php -S from run-local.ps1, opened from this computer). */
 function is_local_request(): bool
 {
@@ -283,32 +329,94 @@ const LOGIN_LOCK_SECONDS = 15 * 60;
  */
 function check_password(string $username, string $password): ?string
 {
-    $now = time();
-    $mine = 'login_fails_' . substr(hash('sha256', (string) ($_SERVER['REMOTE_ADDR'] ?? '')), 0, 16);
-    $counts = [];
-    foreach ([$mine, 'login_fails_all'] as $key) {
-        [$count, $since] = array_map('intval', explode(':', (string) setting($key, '0:0')) + [1 => 0]);
-        $counts[$key] = $now - $since > LOGIN_LOCK_SECONDS ? [0, $now] : [$count, $since];
-    }
-    foreach ([$mine => LOGIN_TRIES, 'login_fails_all' => LOGIN_TRIES_ALL] as $key => $limit) {
-        [$count, $since] = $counts[$key];
-        if ($count >= $limit) {
-            return 'Too many tries. Wait ' . max(1, (int) ceil(($since + LOGIN_LOCK_SECONDS - $now) / 60)) . ' minutes and try again.';
-        }
+    if (($locked = login_locked()) !== null) {
+        return $locked;
     }
     $hash = (string) password_hash_in_use();
     $username_ok = hash_equals((string) (config()['login']['username'] ?? 'admin'), trim($username));
     if ($hash !== '' && password_verify($password, $hash) && $username_ok) {
-        set_setting($mine, '0:0');
+        set_setting(login_fails_key(), '0:0');
         return null;
     }
-    sleep(1);
-    foreach ($counts as $key => [$count, $since]) {
-        set_setting($key, ($count + 1) . ':' . $since);
-    }
+    login_failed();
     return 'That username or password is wrong.';
 }
 
+/** Checks the setup code from config.php (first sign-in and password reset); the same lockout as passwords. */
+function check_setup_code(string $code): ?string
+{
+    $setup_code = trim((string) (config()['setup_code'] ?? ''));
+    if ($setup_code === '') {
+        return "Put a 'setup_code' in config.php first (in hPanel's File Manager), then use it here.";
+    }
+    if (($locked = login_locked()) !== null) {
+        return $locked;
+    }
+    if (hash_equals($setup_code, trim($code))) {
+        return null;
+    }
+    login_failed();
+    return "That setup code doesn't match the one in config.php.";
+}
+
+function login_fails_key(): string
+{
+    return 'login_fails_' . substr(hash('sha256', client_ip()), 0, 16);
+}
+
+/** [this address's [count, since], everyone's [count, since]], with counts older than the lock time reset. */
+function login_fail_counts(): array
+{
+    $now = time();
+    $counts = [];
+    foreach ([login_fails_key() => LOGIN_TRIES, 'login_fails_all' => LOGIN_TRIES_ALL] as $key => $limit) {
+        [$count, $since] = array_map('intval', explode(':', (string) setting($key, '0:0')) + [1 => 0]);
+        $counts[$key] = $now - $since > LOGIN_LOCK_SECONDS ? [0, $now, $limit] : [$count, $since, $limit];
+    }
+    return $counts;
+}
+
+/** The "too many tries" message while locked, otherwise null. */
+function login_locked(): ?string
+{
+    foreach (login_fail_counts() as [$count, $since, $limit]) {
+        if ($count >= $limit) {
+            return 'Too many tries. Wait ' . max(1, (int) ceil(($since + LOGIN_LOCK_SECONDS - time()) / 60)) . ' minutes and try again.';
+        }
+    }
+    return null;
+}
+
+function login_failed(): void
+{
+    sleep(1);
+    foreach (login_fail_counts() as $key => [$count, $since]) {
+        set_setting($key, ($count + 1) . ':' . $since);
+    }
+}
+
+/**
+ * Saves a new password: every other signed-in browser is signed out and Claude is disconnected.
+ * Returns null when saved, or the message to show.
+ */
+function change_password(string $password, string $confirm): ?string
+{
+    if (trim((string) (config()['login']['password_hash'] ?? '')) !== '') {
+        return "Your password is set in config.php. Empty 'password_hash' there first, then try again.";
+    }
+    if (strlen($password) < 10) {
+        return 'Use at least 10 characters.';
+    }
+    if ($password !== $confirm) {
+        return "The two passwords don't match.";
+    }
+    set_setting('password_hash', password_hash($password, PASSWORD_DEFAULT));
+    set_setting('signed_out_before', (string) time());
+    require_once APP_ROOT . '/lib/connector.php';
+    disconnect_all();
+    sign_in();
+    return null;
+}
 const SESSION_IDLE_SECONDS = 8 * 3600;       // signed out after 8 hours without using the site
 const SESSION_MAX_SECONDS = 30 * 24 * 3600;  // and after 30 days in any case
 
@@ -334,7 +442,9 @@ function logged_in(): bool
         return false;
     }
     $now = time();
-    if ($now - (int) ($_SESSION['seen'] ?? 0) > SESSION_IDLE_SECONDS || $now - (int) ($_SESSION['since'] ?? 0) > SESSION_MAX_SECONDS) {
+    $since = (int) ($_SESSION['since'] ?? 0);
+    if ($now - (int) ($_SESSION['seen'] ?? 0) > SESSION_IDLE_SECONDS || $now - $since > SESSION_MAX_SECONDS
+        || $since < (int) setting('signed_out_before', '0')) {  // the password changed since this browser signed in
         sign_out();
         return false;
     }
