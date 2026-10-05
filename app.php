@@ -134,5 +134,6 @@ try {
         json_out(['status' => 'error', 'error_code' => 'E9001', 'message' => 'The dashboard hit an unexpected server error.'], 500);
     }
     http_response_code(500);
-    echo 'Internal server error [E9001]';
+    // Only a signed-in user gets here, so the details are shown to help fix it (they're in the error log too).
+    echo 'Internal server error [E9001]: ' . h($error->getMessage() . ' (' . basename($error->getFile()) . ':' . $error->getLine() . ')');
 }
