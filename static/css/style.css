@@ -1993,3 +1993,21 @@ body[data-page="search"] #results-table .details-blocks .bordered-button { min-h
 	margin-top: 14px;
 	text-align: center;
 }
+
+.sign-in-log {
+	width: 100%;
+	font-size: .85rem;
+	border-collapse: collapse;
+}
+
+.sign-in-log th,
+.sign-in-log td {
+	padding: 4px 8px;
+	text-align: left;
+	vertical-align: top;
+	border-bottom: 1px solid #e5e7eb;
+}
+
+.sign-in-log td:last-child {
+	word-break: break-word;
+}

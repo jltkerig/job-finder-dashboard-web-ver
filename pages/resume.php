@@ -124,7 +124,7 @@ require APP_ROOT . '/templates/_top.php';
         <p class="ref-name"><strong><?= h($c['client_name']) ?></strong></p>
         <p class="field-help">Connected <?= h(local_time($c['connected_at'])) ?><?= $c['last_used_at'] ? ' · last used ' . h(how_long($c['last_used_at'])) : '' ?></p>
       </div>
-      <form method="post" action="/resume-builder/connector/disconnect/<?= h($c['client_id']) ?>" onsubmit="return confirm('Disconnect <?= h($c['client_name']) ?>?');">
+      <form method="post" action="/resume-builder/connector/disconnect/<?= h($c['client_id']) ?>" data-confirm="Disconnect <?= h($c['client_name']) ?>?">
         <?= csrf_field() ?>
         <button class="bordered-button danger" type="submit">Disconnect</button>
       </form>
@@ -175,7 +175,7 @@ require APP_ROOT . '/templates/_top.php';
             <button class="bordered-button primary" type="submit">Save label</button>
           </form>
         </details>
-        <form method="post" action="/resume-builder/documents/<?= h($d['id']) ?>/delete" onsubmit="return confirm('Delete this document?');">
+        <form method="post" action="/resume-builder/documents/<?= h($d['id']) ?>/delete" data-confirm="Delete this document?">
           <?= csrf_field() ?>
           <button class="bordered-button danger" type="submit">Delete</button>
         </form>
@@ -276,7 +276,7 @@ require APP_ROOT . '/templates/_top.php';
       <a class="bordered-button" href="/resume-builder?preset=portfolio#design">Match My Portfolio (jamiekerig.com)</a>
     </div>
   </form>
-  <form method="post" action="/resume-builder/design/reset" class="inline-form" onsubmit="return confirm('Go back to the design measured from your résumé?');">
+  <form method="post" action="/resume-builder/design/reset" class="inline-form" data-confirm="Go back to the design measured from your résumé?">
     <?= csrf_field() ?>
     <button class="bordered-button" type="submit">Reset to My Résumé</button>
   </form>
@@ -429,7 +429,7 @@ require APP_ROOT . '/templates/_top.php';
             <button class="bordered-button primary" type="submit">Save changes</button>
           </form>
         </details>
-        <form method="post" action="/resume-builder/references/<?= h($r['id']) ?>/delete" onsubmit="return confirm('Delete this reference?');">
+        <form method="post" action="/resume-builder/references/<?= h($r['id']) ?>/delete" data-confirm="Delete this reference?">
           <?= csrf_field() ?>
           <button class="bordered-button danger" type="submit">Delete</button>
         </form>
@@ -497,26 +497,6 @@ require APP_ROOT . '/templates/_top.php';
 
 </div>
 </main>
-<script>
-  // Panels remember being open or closed, and open when a link points at them (adding a reference, saving a design...).
-  (function () {
-    [["references-panel", "resumeBuilder.referencesOpen", "#references"], ["design-panel", "resumeBuilder.designOpen", "#design"],
-     ["profile-panel", "resumeBuilder.profileOpen", "#profile", true], ["resume-rules-panel", "resumeBuilder.resumeRulesOpen", "#resume-rules"],
-     ["cover-letter-rules-panel", "resumeBuilder.letterRulesOpen", "#cover-letter-rules"]]
-      .forEach(function (item) {
-        var panel = document.getElementById(item[0]);
-        if (!panel) return;
-        try { var saved = localStorage.getItem(item[1]); panel.open = saved === null ? Boolean(item[3]) : saved === "1"; } catch (e) {}
-        if (location.hash === item[2] || (item[2] === "#design" && /[?&]preset=/.test(location.search))) panel.open = true;
-        panel.addEventListener("toggle", function () { try { localStorage.setItem(item[1], panel.open ? "1" : "0"); } catch (e) {} });
-      });
-    document.addEventListener("click", function (event) {
-      var button = event.target.closest("[data-copy]");
-      if (!button || !navigator.clipboard) return;
-      navigator.clipboard.writeText(button.dataset.copy).then(function () { button.textContent = "Copied"; });
-    });
-  })();
-</script>
 <?php
-$scripts = ['design.js'];
+$scripts = ['design.js', 'resume-panels.js'];
 require APP_ROOT . '/templates/_bottom.php';

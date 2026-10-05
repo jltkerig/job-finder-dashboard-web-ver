@@ -2,6 +2,11 @@
 Options -Indexes
 DirectoryIndex app.php
 
+# Hidden files (.htaccess, the upload tool's .ftp-deploy-sync-state.json) are never sent.
+<FilesMatch "^\.">
+  Require all denied
+</FilesMatch>
+
 <FilesMatch "^(config\.php|config\.sample\.php|cron\.php|.*\.ps1|.*\.md|\.gitignore)$">
   Require all denied
 </FilesMatch>
@@ -10,5 +15,7 @@ RewriteEngine On
 # Some hosts drop the Authorization header before PHP sees it; the Résumé Builder connector needs it.
 RewriteCond %{HTTP:Authorization} .
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+# Nothing in static/ or assets/ ever runs as a script.
+RewriteRule ^(?:static|assets)/.*\.(?:php\d?|phtml|phar)$ - [F,L]
 RewriteRule ^(?:static|assets)/ - [L]
 RewriteRule ^ app.php [L,QSA]

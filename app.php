@@ -30,13 +30,11 @@ if (PHP_SAPI !== 'cli-server' && !is_https() && (config()['force_https'] ?? true
     header('Location: https://' . ($_SERVER['HTTP_HOST'] ?? '') . ($_SERVER['REQUEST_URI'] ?? '/'), true, 301);
     exit;
 }
-header('X-Frame-Options: DENY');
-header("Content-Security-Policy: frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://claude.ai https://claude.com");
-header('X-Content-Type-Options: nosniff');
-header('Referrer-Policy: same-origin');
+send_security_headers();
 header('Cache-Control: private, no-store');  // pages are yours: no copies kept by Cloudflare or the browser
-if (is_https()) {
-    header('Strict-Transport-Security: max-age=31536000');
+if ($path === '/robots.txt') {
+    header('Content-Type: text/plain');
+    exit("User-agent: *\nDisallow: /\n");
 }
 
 $method = $_SERVER['REQUEST_METHOD'];

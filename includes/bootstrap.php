@@ -4,7 +4,7 @@
 declare(strict_types=1);
 
 const APP_ROOT = __DIR__ . '/..';
-const APP_VERSION = '0.7.2';
+const APP_VERSION = '0.8.0';
 const DATA_DIR = APP_ROOT . '/resources';     // bundled reference data (O*NET, Census places and ZIPs)
 
 // Choices for a saved job's Application Status, in the order the drop-downs show them.
@@ -269,13 +269,43 @@ function is_local_request(): bool
     return PHP_SAPI === 'cli-server' && in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true);
 }
 
+/**
+ * Browser rules sent with every page. The Content-Security-Policy lets pages run only this site's own scripts
+ * (no inline code, nothing from elsewhere), so text that sneaks into a page can't run as a script. $framing is who
+ * may show the page in a frame: this site (the Résumé Builder's PDF preview) or nobody (the Claude approval page).
+ */
+function send_security_headers(string $framing = "'self'"): void
+{
+    header_remove('X-Powered-By');
+    header('Content-Security-Policy: ' . implode('; ', [
+        "default-src 'self'", "script-src 'self'", "style-src 'self' 'unsafe-inline'", "img-src 'self' data: blob:",
+        "font-src 'self' data:", "connect-src 'self'", "frame-src 'self'", "object-src 'none'", "base-uri 'self'",
+        "form-action 'self' https://claude.ai https://claude.com", "frame-ancestors $framing",
+        ...(is_https() ? ['upgrade-insecure-requests'] : []),
+    ]));
+    header('X-Frame-Options: ' . ($framing === "'none'" ? 'DENY' : 'SAMEORIGIN'));
+    header('X-Content-Type-Options: nosniff');
+    header('Referrer-Policy: same-origin');
+    header('Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()');
+    header('Cross-Origin-Opener-Policy: same-origin');
+    header('Cross-Origin-Resource-Policy: same-origin');
+    header('X-Robots-Tag: noindex, nofollow, noarchive');  // a private site: search engines and AI crawlers keep out
+    if (is_https()) {
+        header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+    }
+}
+
 function start_session(): void
 {
     if (session_status() === PHP_SESSION_ACTIVE) {
         return;
     }
-    session_name('jobfinder');
+    ini_set('session.use_strict_mode', '1');   // never accept a session id the site didn't make
+    ini_set('session.use_only_cookies', '1');
+    // On https the cookie gets the __Host- prefix: browsers then refuse it unless it's secure, for this host only.
+    session_name(is_https() ? '__Host-jobfinder' : 'jobfinder');
     session_set_cookie_params([
+        'path' => '/',
         'httponly' => true,
         'samesite' => 'Strict',
         'secure' => is_https(),
@@ -389,6 +419,7 @@ function login_locked(): ?string
 
 function login_failed(): void
 {
+    log_sign_in(false);
     sleep(1);
     foreach (login_fail_counts() as $key => [$count, $since]) {
         set_setting($key, ($count + 1) . ':' . $since);
@@ -420,8 +451,18 @@ function change_password(string $password, string $confirm): ?string
 const SESSION_IDLE_SECONDS = 8 * 3600;       // signed out after 8 hours without using the site
 const SESSION_MAX_SECONDS = 30 * 24 * 3600;  // and after 30 days in any case
 
+/** Keeps the last 30 sign-ins and wrong tries (time, address, browser) for Settings > Password. */
+function log_sign_in(bool $ok): void
+{
+    $log = json_decode((string) setting('sign_in_log', '[]'), true) ?: [];
+    array_unshift($log, ['at' => date('Y-m-d H:i'), 'ok' => $ok, 'ip' => client_ip(),
+        'browser' => mb_substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 160)]);
+    set_setting('sign_in_log', json_encode(array_slice($log, 0, 30)));
+}
+
 function sign_in(): void
 {
+    log_sign_in(true);
     start_session();
     session_regenerate_id(true);
     $_SESSION['user'] = 'me';
