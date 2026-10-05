@@ -54,6 +54,7 @@ $routes = [
     'GET /tuning' => 'pages/tuning.php',
     'GET /credibility-scores' => 'pages/scores.php',
     'GET /resume-builder' => 'pages/resume.php',
+    'GET /extension-profile' => 'actions/extension.php',
     'POST /tuning/settings' => 'actions/tuning.php',
     'POST /save-profile' => 'actions/profile.php',
     'POST /profile/save-title' => 'actions/profile.php',
