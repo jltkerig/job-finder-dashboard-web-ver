@@ -4,7 +4,7 @@
 declare(strict_types=1);
 
 const APP_ROOT = __DIR__ . '/..';
-const APP_VERSION = '0.8.1';
+const APP_VERSION = '0.8.2';
 const DATA_DIR = APP_ROOT . '/resources';     // bundled reference data (O*NET, Census places and ZIPs)
 
 // Choices for a saved job's Application Status, in the order the drop-downs show them.
