@@ -8,7 +8,7 @@ declare(strict_types=1);
 // key => [label, help, kind, minimum, maximum, default]
 const TUNING_FIELDS = [
     'search_time_limit_minutes' => ['Search time limit (minutes)', 'A search stops after this long.', 'int', 1, 240, 60],
-    'max_search_results' => ['Jobs to find per search', 'A search stops once it has saved this many new jobs.', 'int', 1, 100, 10],
+    'max_search_results' => ['Jobs to find per search', 'A search stops once it has saved this many new jobs. 0 = no limit: it runs until it runs out of places to look or reaches the time limit.', 'int', 0, 100, 0],
     'max_search_pages' => ['Result pages per query', 'How many pages of Brave results to read for each search query. Each page is one search from your Brave allowance.', 'int', 1, 10, 1],
     'request_delay_seconds' => ['Pause between requests to one site (seconds)', 'Lower is faster; keep at 1 or more to stay polite.', 'float', 0, 10, 1],
     'search_query_delay_seconds' => ['Pause between search-engine queries (seconds)', "Brave's free plan allows one search a second.", 'float', 0, 10, 1.1],
