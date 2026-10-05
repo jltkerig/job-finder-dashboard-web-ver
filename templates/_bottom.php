@@ -14,6 +14,7 @@
     </div>
   </div>
 </footer>
+<script src="/static/js/page.js?v=<?= APP_VERSION ?>"></script>
 <script src="/static/js/charts.js?v=<?= APP_VERSION ?>"></script>
 <?php foreach ($scripts ?? [] as $script): ?><script src="/static/js/<?= h($script) ?>?v=<?= APP_VERSION ?>"></script>
 <?php endforeach; ?>

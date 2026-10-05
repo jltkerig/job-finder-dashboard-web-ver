@@ -127,21 +127,6 @@ require APP_ROOT . '/templates/_top.php';
     <?php endforeach; ?>
   </fieldset>
   <script type="application/json" id="saved-references"><?= json_encode($saved_references, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?></script>
-  <script>
-    (function () {
-      var pick = document.getElementById("pick-reference");
-      if (!pick) return;
-      var saved = JSON.parse(document.getElementById("saved-references").textContent);
-      pick.addEventListener("change", function () {
-        var ref = saved[pick.value];
-        if (!ref) return;
-        document.querySelectorAll("#new-reference input").forEach(function (input) {
-          var field = input.name.replace(/^ref\d+_/, "");
-          if (field in ref) input.value = ref[field];
-        });
-      });
-    })();
-  </script>
 <?php else: ?>
   <label>Date <span class="field-help">empty means today</span><input name="date" value="<?= h($c['date']) ?>" /></label>
   <label>Recipient <span class="field-help">one line each</span>
@@ -159,11 +144,12 @@ require APP_ROOT . '/templates/_top.php';
 
 <div class="preview card">
   <iframe title="PDF preview" src="/resume-builder/files/<?= $file ?>?v=<?= h(substr(md5((string) ($draft['updated'] ?? '')), 0, 8)) ?>#view=FitH"></iframe>
-  <form method="post" action="/resume-builder/build/<?= $file ?>/delete" onsubmit="return confirm('Delete <?= h($draft['pdf']) ?> and its draft? This cannot be undone.');">
+  <form method="post" action="/resume-builder/build/<?= $file ?>/delete" data-confirm="Delete <?= h($draft['pdf']) ?> and its draft? This cannot be undone.">
     <?= csrf_field() ?>
     <button class="bordered-button danger" type="submit">Delete this file</button>
   </form>
 </div>
 </div>
 </main>
-<?php require APP_ROOT . '/templates/_bottom.php';
+<?php $scripts = ['resume-build.js'];
+require APP_ROOT . '/templates/_bottom.php';

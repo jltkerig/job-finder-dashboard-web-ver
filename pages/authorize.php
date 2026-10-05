@@ -6,8 +6,7 @@ declare(strict_types=1);
 require_once APP_ROOT . '/includes/connector.php';
 
 start_session();
-header('X-Frame-Options: DENY');
-header("Content-Security-Policy: frame-ancestors 'none'");
+send_security_headers("'none'");
 $keys = ['response_type', 'client_id', 'redirect_uri', 'code_challenge', 'code_challenge_method', 'state', 'resource', 'scope'];
 $params = [];
 foreach ($keys as $key) {

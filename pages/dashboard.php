@@ -232,7 +232,7 @@ require APP_ROOT . '/templates/_top.php';
               </section>
             </div>
             <div class="card-footer-actions" aria-label="Remove or block"><?php if (!$is_feed): ?><button class="text-action block-action destructive-action" type="button" data-company-id="<?= $id ?>" data-domain="<?= h($domain) ?>" title="Hide this website and all future jobs from it.">Block Domain</button><?php endif; ?><button class="text-action block-company-action destructive-action" type="button" data-company-id="<?= $id ?>" data-company-name="<?= h($company['name']) ?>" title="Exclude this company name from future searches.">Block Company</button><button class="text-action reject-action destructive-action" type="button" data-company-id="<?= $id ?>" data-company-name="<?= h($company['name'] ?: 'this listing') ?>" title="Hide this job, but allow other jobs from this company.">Reject</button>
-              <form action="/delete-kept/<?= $id ?>" method="post" class="delete-result-form" onsubmit="return confirm('Permanently delete this saved job? This cannot be undone.');"><?= csrf_field() ?><button class="text-action danger-action destructive-action" type="submit">Delete</button></form>
+              <form action="/delete-kept/<?= $id ?>" method="post" class="delete-result-form" data-confirm="Permanently delete this saved job? This cannot be undone."><?= csrf_field() ?><button class="text-action danger-action destructive-action" type="submit">Delete</button></form>
             </div>
           </div>
         </details>

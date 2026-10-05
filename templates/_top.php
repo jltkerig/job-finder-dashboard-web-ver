@@ -8,7 +8,7 @@ $menu = ['/' => ['Search', 'search'], '/dashboard' => ['Dashboard', 'dashboard']
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="robots" content="noindex, nofollow" />
+  <meta name="robots" content="noindex, nofollow, noarchive" />
   <meta name="csrf-token" content="<?= h(csrf_token()) ?>" />
   <title><?= h($title) ?> | Job Finder</title>
   <link rel="stylesheet" href="/static/css/style.css?v=<?= APP_VERSION ?>" />

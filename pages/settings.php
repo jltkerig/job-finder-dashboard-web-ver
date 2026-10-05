@@ -172,6 +172,15 @@ require APP_ROOT . '/templates/_top.php';
       <label for="confirm-password">Type it again <input id="confirm-password" name="confirm" type="password" minlength="10" required autocomplete="new-password" /></label>
       <button class="bordered-button secondary-action" type="submit">Change Password</button>
     </form>
+    <h3>Recent sign-ins</h3>
+    <p>The last 30 sign-ins and wrong passwords. One you don't recognize? Change your password.</p>
+    <table class="sign-in-log">
+      <thead><tr><th>When</th><th>Result</th><th>Address</th><th>Browser</th></tr></thead>
+      <tbody><?php foreach (json_decode((string) setting('sign_in_log', '[]'), true) ?: [] as $entry): ?>
+        <tr><td><?= h($entry['at']) ?></td><td><?= $entry['ok'] ? 'Signed in' : '<strong>Wrong password</strong>' ?></td>
+          <td><?= h($entry['ip']) ?></td><td><?= h($entry['browser']) ?></td></tr><?php endforeach; ?>
+      </tbody>
+    </table>
   </details>
 </main>
 <?php require APP_ROOT . '/templates/_bottom.php';
