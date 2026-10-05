@@ -44,7 +44,7 @@ function search_status_payload(array $run): array
 /** Runs $work while holding the search lock; returns false straight away when another request holds it. */
 function with_search_lock(callable $work): bool
 {
-    $dir = APP_ROOT . '/data';
+    $dir = data_path();
     if (!is_dir($dir)) {
         @mkdir($dir, 0775, true);
     }

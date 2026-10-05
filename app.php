@@ -18,6 +18,19 @@ if (PHP_SAPI === 'cli-server' && $path !== '/' && is_file(__DIR__ . $path)) {
 require __DIR__ . '/lib/bootstrap.php';
 require __DIR__ . '/lib/listings.php';
 
+// On the web: always https, and pages can't be shown inside other sites or guessed as other file types.
+if (PHP_SAPI !== 'cli-server' && !is_https() && (config()['force_https'] ?? true)) {
+    header('Location: https://' . ($_SERVER['HTTP_HOST'] ?? '') . ($_SERVER['REQUEST_URI'] ?? '/'), true, 301);
+    exit;
+}
+header('X-Frame-Options: DENY');
+header("Content-Security-Policy: frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://claude.ai https://claude.com");
+header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: same-origin');
+if (is_https()) {
+    header('Strict-Transport-Security: max-age=31536000');
+}
+
 $method = $_SERVER['REQUEST_METHOD'];
 
 // Signing in and out are the only pages open without signing in.
@@ -26,9 +39,10 @@ if ($path === '/login') {
     exit;
 }
 if ($path === '/logout') {
-    start_session();
-    $_SESSION = [];
-    session_destroy();
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {  // a form button with the page's token, so other sites can't sign you out
+        check_csrf();
+        sign_out();
+    }
     redirect('/login');
 }
 

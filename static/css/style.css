@@ -227,6 +227,18 @@ footer p {
 	transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
 }
 
+.nav-signout-form {
+	display: contents;
+}
+
+button.nav-link {
+	border: 0;
+	background: none;
+	font: inherit;
+	font-weight: 700;
+	cursor: pointer;
+}
+
 .nav-link:hover {
 	background: #374151;
 	color: #ffffff;

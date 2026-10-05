@@ -16,7 +16,7 @@ const RESUME_MAX_UPLOAD = 10 * 1024 * 1024;
 /** A path inside data/resume (JOBFINDER_RESUME_DIR moves it, so tests never touch the real files). */
 function resume_dir(string $sub = ''): string
 {
-    $root = getenv('JOBFINDER_RESUME_DIR') ?: APP_ROOT . '/data/resume';
+    $root = getenv('JOBFINDER_RESUME_DIR') ?: data_path('resume');
     return rtrim($root, '/\\') . ($sub === '' ? '' : '/' . $sub);
 }
 

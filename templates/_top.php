@@ -20,7 +20,7 @@ $menu = ['/' => ['Search', 'search'], '/dashboard' => ['Dashboard', 'dashboard']
 <body data-page="<?= h($page) ?>"<?= $body_attrs ?? '' ?>>
 <?= $before_nav ?? '' ?>
 <nav class="top-nav" aria-label="Main navigation">
-  <div class="nav-inner"><?php foreach ($menu as $href => [$label, $key]): ?><a class="nav-link<?= $key === $page || ($key === 'settings' && $page === 'rejected-listings') ? ' active' : '' ?>" href="<?= $href ?>"><?= h($label) ?></a><?php endforeach; ?><a class="nav-link nav-signout" href="/logout">Sign out</a>
+  <div class="nav-inner"><?php foreach ($menu as $href => [$label, $key]): ?><a class="nav-link<?= $key === $page || ($key === 'settings' && $page === 'rejected-listings') ? ' active' : '' ?>" href="<?= $href ?>"><?= h($label) ?></a><?php endforeach; ?><form method="post" action="/logout" class="nav-signout-form"><?= csrf_field() ?><button type="submit" class="nav-link nav-signout">Sign out</button></form>
   </div>
 </nav>
 <header>

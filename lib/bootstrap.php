@@ -4,9 +4,8 @@
 declare(strict_types=1);
 
 const APP_ROOT = __DIR__ . '/..';
-const APP_VERSION = '0.7.0';
+const APP_VERSION = '0.7.1';
 const DATA_DIR = APP_ROOT . '/resources';     // bundled reference data (O*NET, Census places and ZIPs)
-const CACHE_DIR = APP_ROOT . '/data/cache';   // quick-loading copies of that data, made on first use
 
 // Choices for a saved job's Application Status, in the order the drop-downs show them.
 const APPLICATION_STATUSES = ['None', 'Saved', 'Applied', 'Talking With Recruiter', 'Interview', 'Rejected', 'Closed'];
@@ -22,6 +21,18 @@ function config(): array
     return $config;
 }
 
+/**
+ * Where your own data lives: the SQLite file, uploaded résumés, made PDFs and caches. data/ by default;
+ * config.php 'data_dir' moves it out of the public web folder.
+ */
+function data_path(string $sub = ''): string
+{
+    $root = rtrim((string) (config()['data_dir'] ?? '') ?: APP_ROOT . '/data', '/\\');
+    return $sub === '' ? $root : "$root/$sub";
+}
+
+define('CACHE_DIR', data_path('cache'));   // quick-loading copies of the bundled data, made on first use
+
 date_default_timezone_set(config()['timezone'] ?? 'America/New_York');
 
 function db(): PDO
@@ -32,7 +43,7 @@ function db(): PDO
     }
     $c = config()['db'];
     if ($c['driver'] === 'sqlite') {
-        $path = getenv('JOBFINDER_DB') ?: ($c['path'] ?? APP_ROOT . '/data/jobfinder.sqlite');
+        $path = getenv('JOBFINDER_DB') ?: ($c['path'] ?? data_path('jobfinder.sqlite'));
         $pdo = new PDO('sqlite:' . $path);
         $pdo->exec('PRAGMA journal_mode = WAL');
         $pdo->exec('PRAGMA busy_timeout = 5000');
@@ -198,6 +209,20 @@ function wants_json(): bool
 
 // --- Session, sign-in and form protection ------------------------------------------------------------------
 
+/** True when this request came over https (directly, or through the host's proxy). */
+function is_https(): bool
+{
+    return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https'
+        || (string) ($_SERVER['SERVER_PORT'] ?? '') === '443';
+}
+
+/** True on this PC (php -S from run-local.ps1, opened from this computer). */
+function is_local_request(): bool
+{
+    return PHP_SAPI === 'cli-server' && in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true);
+}
+
 function start_session(): void
 {
     if (session_status() === PHP_SESSION_ACTIVE) {
@@ -207,7 +232,7 @@ function start_session(): void
     session_set_cookie_params([
         'httponly' => true,
         'samesite' => 'Strict',
-        'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        'secure' => is_https(),
     ]);
     session_start();
 }
@@ -240,38 +265,82 @@ function check_csrf(): void
     }
 }
 
+/** The password hash: config.php's when filled in, otherwise the one chosen on the first visit (or null). */
+function password_hash_in_use(): ?string
+{
+    $configured = trim((string) (config()['login']['password_hash'] ?? ''));
+    return $configured !== '' ? $configured : setting('password_hash');
+}
+
+const LOGIN_TRIES = 5;          // wrong passwords from one address before it is locked out
+const LOGIN_TRIES_ALL = 30;     // wrong passwords from everyone together before sign-in pauses
+const LOGIN_LOCK_SECONDS = 15 * 60;
+
 /**
  * Checks the sign-in username and password (the sign-in page and the connector's approval page both use this).
- * Returns null when right, or the message to show. Five wrong tries lock it for 15 minutes.
+ * Returns null when right, or the message to show. Five wrong tries from one address lock that address for
+ * 15 minutes; 30 from everywhere together pause sign-in for everyone, so a guesser can't keep you locked out alone.
  */
 function check_password(string $username, string $password): ?string
 {
-    $login = config()['login'] ?? null;
-    $locked_until = (int) setting('locked_until', '0');
-    if ($locked_until > time()) {
-        return 'Too many tries. Wait ' . ceil(($locked_until - time()) / 60) . ' minutes and try again.';
+    $now = time();
+    $mine = 'login_fails_' . substr(hash('sha256', (string) ($_SERVER['REMOTE_ADDR'] ?? '')), 0, 16);
+    $counts = [];
+    foreach ([$mine, 'login_fails_all'] as $key) {
+        [$count, $since] = array_map('intval', explode(':', (string) setting($key, '0:0')) + [1 => 0]);
+        $counts[$key] = $now - $since > LOGIN_LOCK_SECONDS ? [0, $now] : [$count, $since];
     }
-    $hash = (string) ($login['password_hash'] ?? setting('password_hash'));
-    if ($hash !== '' && hash_equals($login['username'] ?? 'admin', trim($username)) && password_verify($password, $hash)) {
-        set_setting('failed_logins', '0');
+    foreach ([$mine => LOGIN_TRIES, 'login_fails_all' => LOGIN_TRIES_ALL] as $key => $limit) {
+        [$count, $since] = $counts[$key];
+        if ($count >= $limit) {
+            return 'Too many tries. Wait ' . max(1, (int) ceil(($since + LOGIN_LOCK_SECONDS - $now) / 60)) . ' minutes and try again.';
+        }
+    }
+    $hash = (string) password_hash_in_use();
+    $username_ok = hash_equals((string) (config()['login']['username'] ?? 'admin'), trim($username));
+    if ($hash !== '' && password_verify($password, $hash) && $username_ok) {
+        set_setting($mine, '0:0');
         return null;
     }
     sleep(1);
-    $fails = (int) setting('failed_logins', '0') + 1;
-    set_setting('failed_logins', (string) $fails);
-    if ($fails >= 5) {
-        set_setting('locked_until', (string) (time() + 15 * 60));
-        set_setting('failed_logins', '0');
+    foreach ($counts as $key => [$count, $since]) {
+        set_setting($key, ($count + 1) . ':' . $since);
     }
     return 'That username or password is wrong.';
+}
+
+const SESSION_IDLE_SECONDS = 8 * 3600;       // signed out after 8 hours without using the site
+const SESSION_MAX_SECONDS = 30 * 24 * 3600;  // and after 30 days in any case
+
+function sign_in(): void
+{
+    start_session();
+    session_regenerate_id(true);
+    $_SESSION['user'] = 'me';
+    $_SESSION['since'] = $_SESSION['seen'] = time();
+}
+
+function sign_out(): void
+{
+    start_session();
+    $_SESSION = [];
+    session_destroy();
 }
 
 function logged_in(): bool
 {
     start_session();
-    return !empty($_SESSION['user']);
+    if (empty($_SESSION['user'])) {
+        return false;
+    }
+    $now = time();
+    if ($now - (int) ($_SESSION['seen'] ?? 0) > SESSION_IDLE_SECONDS || $now - (int) ($_SESSION['since'] ?? 0) > SESSION_MAX_SECONDS) {
+        sign_out();
+        return false;
+    }
+    $_SESSION['seen'] = $now;
+    return true;
 }
-
 function require_login(): void
 {
     if (logged_in()) {
