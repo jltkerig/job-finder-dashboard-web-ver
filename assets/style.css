@@ -83,3 +83,6 @@ body.login-page main.login-box { margin-bottom: 8vh; }
 }
 .cookie-actions .cookie-accept { background: #6d5dfc; border-color: #6d5dfc; }
 .cookie-actions button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* The sign-in page doesn't load static/css/style.css, so widths include padding here too (keeps the inputs, box and banner inside the screen) */
+body.login-page *, body.login-page *::before, body.login-page *::after, .cookie-banner, .cookie-banner * { box-sizing: border-box; }
