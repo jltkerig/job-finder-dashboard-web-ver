@@ -7,9 +7,9 @@
 
 declare(strict_types=1);
 
-require_once APP_ROOT . '/lib/listings.php';
-require_once APP_ROOT . '/lib/search/runner.php';
-require_once APP_ROOT . '/lib/skills.php';
+require_once APP_ROOT . '/includes/listings.php';
+require_once APP_ROOT . '/includes/search/runner.php';
+require_once APP_ROOT . '/includes/skills.php';
 
 // Extension site key => [source_type saved in companies, domain]
 const CAPTURE_SITES = [

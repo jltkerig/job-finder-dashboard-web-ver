@@ -4,8 +4,8 @@
 // back to the page with a message at the top.
 
 declare(strict_types=1);
-require_once APP_ROOT . '/lib/connector.php';
-require_once APP_ROOT . '/lib/resume/suggestions.php';
+require_once APP_ROOT . '/includes/connector.php';
+require_once APP_ROOT . '/includes/resume/suggestions.php';
 
 $back = fn(string $anchor = '') => redirect('/resume-builder' . ($anchor !== '' ? "#$anchor" : ''));
 

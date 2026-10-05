@@ -3,7 +3,7 @@
 // PDF's file name (see app.php). Ported from the desktop's build.html.
 
 declare(strict_types=1);
-require_once APP_ROOT . '/lib/resume/store.php';
+require_once APP_ROOT . '/includes/resume/store.php';
 
 try {
     $draft = load_draft($rb_file);

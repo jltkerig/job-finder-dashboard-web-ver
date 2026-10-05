@@ -3,8 +3,8 @@
 // desktop Job Finder's templates/tuning.html, plus the Brave Search Usage panel.
 
 declare(strict_types=1);
-require_once APP_ROOT . '/lib/tuning.php';
-require_once APP_ROOT . '/lib/search/brave.php';
+require_once APP_ROOT . '/includes/tuning.php';
+require_once APP_ROOT . '/includes/search/brave.php';
 
 $values = read_tuning_settings();
 $health = read_board_health();

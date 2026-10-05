@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-require_once APP_ROOT . '/lib/tuning.php';
+require_once APP_ROOT . '/includes/tuning.php';
 require_once __DIR__ . '/state.php';
 require_once __DIR__ . '/judging.php';
 require_once __DIR__ . '/employers.php';

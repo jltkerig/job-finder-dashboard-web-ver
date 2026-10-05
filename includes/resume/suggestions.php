@@ -6,8 +6,8 @@
 
 declare(strict_types=1);
 
-require_once APP_ROOT . '/lib/skills.php';
-require_once APP_ROOT . '/lib/onet.php'; // fold()
+require_once APP_ROOT . '/includes/skills.php';
+require_once APP_ROOT . '/includes/onet.php'; // fold()
 
 const SUGGESTION_KINDS = ['job', 'skill', 'detail', 'reference'];
 const SUGGEST_MONTH = '(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?';

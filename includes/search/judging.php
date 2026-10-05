@@ -7,8 +7,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/company.php';
 require_once __DIR__ . '/location.php';
-require_once APP_ROOT . '/lib/skills.php';
-require_once APP_ROOT . '/lib/onet.php';
+require_once APP_ROOT . '/includes/skills.php';
+require_once APP_ROOT . '/includes/onet.php';
 
 const TITLE_FAMILIES = [
     ['/\bdesign(?:er)?\b/i', ['Multimedia Designer', 'Brand Designer', 'Creative Designer', 'Marketing Designer', 'Email Designer', 'Communications Designer']],

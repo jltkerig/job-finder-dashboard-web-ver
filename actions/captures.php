@@ -1,10 +1,10 @@
 <?php
-// Jobs saved by the Web Job Scraper extension, uploaded on the Search page (see lib/captures.php).
+// Jobs saved by the Web Job Scraper extension, uploaded on the Search page (see includes/captures.php).
 // POST /captures/import takes one or more jobs.json files; GET /captures/pending says how many captured jobs still
 // wait for their company-website lookup.
 
 declare(strict_types=1);
-require_once APP_ROOT . '/lib/captures.php';
+require_once APP_ROOT . '/includes/captures.php';
 
 if ($path === '/captures/pending') {
     json_out(['lookups' => count(capture_lookups_pending(500))]);

@@ -1,9 +1,9 @@
 <?php
 // Claude's sign-in to the Résumé Builder connector sends you here. Allowing it takes your Job Finder password
-// (with the sign-in page's lockout), even when you are already signed in. See lib/connector.php.
+// (with the sign-in page's lockout), even when you are already signed in. See includes/connector.php.
 
 declare(strict_types=1);
-require_once APP_ROOT . '/lib/connector.php';
+require_once APP_ROOT . '/includes/connector.php';
 
 start_session();
 header('X-Frame-Options: DENY');

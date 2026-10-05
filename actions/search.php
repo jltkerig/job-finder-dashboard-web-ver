@@ -1,9 +1,9 @@
 <?php
 // Starting, refreshing, updating and stopping searches, and their status. The Search page asks for the status
-// every two seconds while one runs; each time, the search moves on a few seconds (see lib/search/runner.php).
+// every two seconds while one runs; each time, the search moves on a few seconds (see includes/search/runner.php).
 
 declare(strict_types=1);
-require_once APP_ROOT . '/lib/search/runner.php';
+require_once APP_ROOT . '/includes/search/runner.php';
 
 const SLICE_SECONDS = 5.0;
 

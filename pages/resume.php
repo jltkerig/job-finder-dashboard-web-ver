@@ -4,8 +4,8 @@
 // your profile is edited on the Dashboard here, so this page only shows it.
 
 declare(strict_types=1);
-require_once APP_ROOT . '/lib/connector.php';
-require_once APP_ROOT . '/lib/resume/suggestions.php';
+require_once APP_ROOT . '/includes/connector.php';
+require_once APP_ROOT . '/includes/resume/suggestions.php';
 
 $title = 'Résumé Builder';
 $page = 'resume';

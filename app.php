@@ -15,8 +15,8 @@ if (PHP_SAPI === 'cli-server' && $path !== '/' && is_file(__DIR__ . $path)) {
     exit;
 }
 
-require __DIR__ . '/lib/bootstrap.php';
-require __DIR__ . '/lib/listings.php';
+require __DIR__ . '/includes/bootstrap.php';
+require __DIR__ . '/includes/listings.php';
 
 // With 'cloudflare_only' on, visits that skip Cloudflare (straight to the host's address) are turned away, so its
 // protections can't be bypassed. The cron job runs from the command line and isn't affected.

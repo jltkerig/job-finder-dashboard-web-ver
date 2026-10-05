@@ -7,7 +7,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/listings.php';
-require_once APP_ROOT . '/lib/places.php';
+require_once APP_ROOT . '/includes/places.php';
 
 const US_STATES = ['alabama' => 'AL', 'alaska' => 'AK', 'arizona' => 'AZ', 'arkansas' => 'AR', 'california' => 'CA',
     'colorado' => 'CO', 'connecticut' => 'CT', 'delaware' => 'DE', 'florida' => 'FL', 'georgia' => 'GA', 'hawaii' => 'HI',

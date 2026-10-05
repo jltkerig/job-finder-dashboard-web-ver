@@ -122,7 +122,7 @@ function ensure_schema(PDO $pdo): void
         url_key VARCHAR(64) PRIMARY KEY, url TEXT NOT NULL, title VARCHAR(255) NOT NULL DEFAULT '',
         reason VARCHAR(80) NOT NULL, checked_at VARCHAR(25) NOT NULL)$tail");
 
-    // A search's to-do list while it runs, worked through a slice at a time (see lib/search/runner.php).
+    // A search's to-do list while it runs, worked through a slice at a time (see includes/search/runner.php).
     $pdo->exec("CREATE TABLE IF NOT EXISTS search_tasks (
         id $id, run_id VARCHAR(32) NOT NULL, kind VARCHAR(30) NOT NULL, payload $text NOT NULL,
         priority INT NOT NULL DEFAULT 0, done TINYINT NOT NULL DEFAULT 0)$tail");
@@ -132,7 +132,7 @@ function ensure_schema(PDO $pdo): void
         url_key VARCHAR(64) PRIMARY KEY, url TEXT NOT NULL, status INT NOT NULL, body $text NULL,
         final_url TEXT NULL, fetched_at VARCHAR(19) NOT NULL)$tail");
 
-    // The Résumé Builder connector (lib/connector.php): apps Claude registered, one-time sign-in codes, and access
+    // The Résumé Builder connector (includes/connector.php): apps Claude registered, one-time sign-in codes, and access
     // tokens. Codes and tokens are kept only as SHA-256 hashes, so a copy of the database can't be used to sign in.
     $pdo->exec("CREATE TABLE IF NOT EXISTS oauth_clients (
         client_id VARCHAR(64) PRIMARY KEY, client_name VARCHAR(200) NOT NULL DEFAULT '', redirect_uris TEXT NOT NULL,
