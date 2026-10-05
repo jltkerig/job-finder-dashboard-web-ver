@@ -226,8 +226,10 @@ function title_matches(string $text, int $limit = 10): array
         $words = explode(' ', $name);
         foreach ($typed as $part) {
             $hit = false;
-            foreach ($words as $word) {
-                if (str_starts_with($word, $part)) {
+            foreach ($words as $i => $word) {
+                // Words written together count too: "frontend" finds "Front End Developer"
+                if (str_starts_with($word, $part) || (strlen($part) > strlen($word)
+                        && str_starts_with(implode('', array_slice($words, $i)), $part))) {
                     $hit = true;
                     break;
                 }
