@@ -52,3 +52,18 @@ body.login-page main.login-box {
 .login-box button:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(109,93,252,.45); }
 .login-box button:active { transform: translateY(0); }
 .login-box .error { color: #b42318; background: rgba(180, 35, 24, .1); padding: 8px 12px; border-radius: 8px; font-size: 14px; text-align: left; }
+
+/* Sign-in page footer: the same footer as every other page (static/css/style.css isn't loaded here) */
+body.login-page .site-footer { margin-top: auto; padding: 22px 40px; font-size: .78rem; background: rgba(15, 18, 38, .85); color: #f5f7fa; border-top: 1px solid rgba(255, 255, 255, .15); }
+body.login-page main.login-box { margin-bottom: 8vh; }
+.login-page .footer-inner { max-width: 1400px; margin: 0 auto; width: 100%; }
+.login-page .footer-main { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px 24px; }
+.login-page .footer-social { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; }
+.login-page .site-footer a { color: #f5f7fa; text-decoration: underline; text-underline-offset: 3px; }
+.login-page .footer-social a { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+.login-page .footer-social svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.login-page .footer-tech { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, .15); color: #cbd5e1; line-height: 1.5; }
+@media (max-width: 760px) {
+  body.login-page .site-footer { padding: 20px 16px; }
+  .login-page .footer-main { align-items: flex-start; flex-direction: column; }
+}

@@ -70,5 +70,6 @@ require APP_ROOT . '/templates/_login_top.php';
   <?php if ($reset): ?><p class="login-alt"><a href="/login">Back to sign in</a></p>
   <?php elseif (!$first_run): ?><p class="login-alt"><a href="/login?forgot">Forgot password?</a></p><?php endif; ?>
 </main>
+<?php require APP_ROOT . '/templates/_footer.php'; ?>
 </body>
 </html>
