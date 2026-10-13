@@ -42,9 +42,11 @@ profile and settings are kept in `data/jobfinder.sqlite`, which is never uploade
   file already imported unchanged is skipped. Each job's company website is looked up for about 20 seconds after
   the upload; the cron job finishes the rest a few a minute.
 
-## What changed in 0.9.0
+## What changed in 1.1.240
 
-Brought in line with the desktop app's Dashboard and imports (desktop v1.1.240):
+The web version now uses the desktop Job Finder's version number: this release is the desktop's v1.1.240 (it was
+0.9.0 before). Keep the two the same: when the web version catches up to a desktop release, set `APP_VERSION` in
+`includes/bootstrap.php` to that release's number. This release brings the Dashboard and imports in line with it:
 
 - **Saved jobs:** a cleaner row (title, then company and place, then status chips) with a Listing button, one
   "Job Listing" button when the career page and listing are the same address, and a **Date applied** field. Marking a
