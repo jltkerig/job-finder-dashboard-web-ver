@@ -184,6 +184,14 @@ function arrangement_from_description(?string $text): ?string
     return $remote ? 'Remote' : ($onsite ? 'Onsite' : null);
 }
 
+/** A short fingerprint of a captured job: the same when it is only seen again, different when anything about it changed. */
+function capture_fingerprint(array $job): string
+{
+    unset($job['last_seen'], $job['changed_at'], $job['written_at']);
+    ksort($job);
+    return substr(sha1(json_encode($job, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)), 0, 16);
+}
+
 function row_details(?array $row): array
 {
     $details = json_decode((string) ($row['listing_details'] ?? ''), true);
@@ -202,6 +210,7 @@ final class CaptureImport
     private array $blocked;
     private array $by_url = [];
     private array $by_key = [];
+    private array $mine = [];  // [company key, title key] => rows you saved or applied to: a repost of one is never added again
 
     public function __construct()
     {
@@ -229,10 +238,28 @@ final class CaptureImport
             'selected_states' => selected_state_codes($profile['state'], $cities, $statewide), 'city_targets' => prepare_city_targets($profile['state'], $cities)];
         $this->rejected = rejected_posting_urls();
         $this->blocked = array_fill_keys(array_map('mb_strtolower', blocked_company_list()), true);
-        foreach (rows('SELECT id, name, career_job_title, work_arrangement, city, state, source_url, source_type, listing_details, is_kept
-            FROM companies WHERE is_rejected = 0') as $row) {
+        foreach (rows('SELECT id, name, career_job_title, work_arrangement, city, state, source_url, source_type, listing_details, is_kept,
+            application_status FROM companies WHERE is_rejected = 0') as $row) {
             $this->remember($row);
         }
+    }
+
+    /**
+     * A job you saved or applied to that this one repeats (LinkedIn gives a reposted job a new id and link): the same
+     * company and title, and the same city unless either one has none (remote, or no place on the card).
+     */
+    private function reposted_mine(?string $company, ?string $title, string $location, ?string $arrangement): ?array
+    {
+        $who = capture_company_key($company);
+        $what = capture_title_key($title);
+        $city = capture_city_key($location);
+        $remote = strtolower((string) $arrangement) === 'remote';
+        foreach ($this->mine["$who|$what"] ?? [] as [$row, $row_city, $row_arrangement]) {
+            if ($remote || strtolower($row_arrangement) === 'remote' || $city === '' || $row_city === '' || $city === $row_city) {
+                return $row;
+            }
+        }
+        return null;
     }
 
     private function remember(array $row): void
@@ -245,6 +272,13 @@ final class CaptureImport
         $key = capture_match_key($row['name'], $row['career_job_title'], $place, $row['work_arrangement']);
         if ($key !== null) {
             $this->by_key[$key] ??= $row;
+        }
+        if (!empty($row['is_kept']) || in_array($row['application_status'] ?? '', APPLIED_STATUSES, true)) {
+            $who = capture_company_key($row['name'] ?? '');
+            $what = capture_title_key($row['career_job_title'] ?? '');
+            if ($who !== '' && $what !== '') {
+                $this->mine["$who|$what"][] = [$row, capture_city_key($place), (string) ($row['work_arrangement'] ?? '')];
+            }
         }
     }
 
@@ -282,6 +316,17 @@ final class CaptureImport
         $company = tidy_company_name((string) ($job['company'] ?? '')) ?: null;
         $applied = !empty($job['applied']);
         $row = $this->by_url[$url] ?? null;
+        $closed = !empty($job['closed']);
+        // a job already imported and not changed since is left alone
+        $fingerprint = capture_fingerprint($job);
+        if ($row && (row_details($row)['capture_fp'] ?? '') === $fingerprint) {
+            return ['skipped', 'Already imported, unchanged'];
+        }
+        if ($closed && $row) {
+            // Job Finder is told it is closed whatever the filters below decide about the rest of the capture
+            q("UPDATE companies SET job_open_status = 'Closed', last_checked = ?,
+                result_updated_at = CASE WHEN job_open_status <> 'Closed' THEN ? ELSE result_updated_at END WHERE id = ?", [now_utc(), now_utc(), $row['id']]);
+        }
         if (!$applied) {
             // a job you already applied to skips the filters: it is always saved, as Applied
             if (!$row && isset($this->rejected[$url])) {
@@ -297,7 +342,6 @@ final class CaptureImport
                 return ['skipped', 'Internship'];
             }
         }
-        $closed = !empty($job['closed']);
         $location = trim((string) ($job['location'] ?? ''));
         $description = (string) ($job['description'] ?? '');
         // a card without a place is read again from its description, and its work arrangement likewise
@@ -320,12 +364,14 @@ final class CaptureImport
         $arrangement = $outcome['arrangement'] ?: $arrangement;
         if (!$row) {
             $key = capture_match_key($company, $title, $location, $arrangement);
-            $same = $key !== null ? ($this->by_key[$key] ?? null) : null;
+            $same = ($key !== null ? ($this->by_key[$key] ?? null) : null) ?? $this->reposted_mine($company, $title, $location, $arrangement);
             if ($same) {
                 $details = row_details($same);
                 if (add_also_on($details, $site, $url)) {
                     q('UPDATE companies SET listing_details = ? WHERE id = ?', [json_encode($details, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), $same['id']]);
-                    $this->by_key[$key]['listing_details'] = json_encode($details);
+                    if ($key !== null && isset($this->by_key[$key])) {
+                        $this->by_key[$key]['listing_details'] = json_encode($details);
+                    }
                 }
                 if ($applied) {
                     $this->mark_applied((int) $same['id']);
@@ -349,6 +395,7 @@ final class CaptureImport
             'location' => $location, 'salary' => (string) ($job['salary'] ?? ''), 'posted' => (string) ($job['posted'] ?? ''),
             'description' => mb_substr($description, 0, 20000), 'closes' => mb_substr((string) ($job['closes'] ?? ''), 0, 10),
             'matched_title' => $matched, 'location_unknown' => $location === '', 'location_from_description' => $described !== '',
+            'capture_fp' => $fingerprint,
             'remote_limited_to' => array_values($outcome['remote_limited_to']),
             'evidence' => array_merge(["Seen on $source_type", $applied ? 'you applied' : 'matching title'], $described !== '' ? ['place read from the description'] : []),
         ]);

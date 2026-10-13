@@ -15,7 +15,9 @@ const FEED_NAMES = ['Remote OK', 'Remotive', 'We Work Remotely', 'USAJOBS', 'Adz
 const CAPTURE_SOURCES = ['LinkedIn', 'Indeed', 'Glassdoor', 'Maryland Workforce Exchange', 'USAJOBS'];
 const SAVED_STATUSES = ['Saved', 'Applied', 'Talking With Recruiter', 'Interview'];
 const CLOSED_KEEP_DAYS = 7;
-const REJECT_REASONS = ['wrong_role', 'wrong_location', 'not_a_job', 'duplicate', 'other'];
+const REJECT_REASONS = ['wrong_role', 'wrong_location', 'not_a_job', 'duplicate', 'closed', 'other'];
+const APPLIED_STATUSES = ['Applied', 'Talking With Recruiter', 'Interview'];
+const UNSAVED_KEEP_DAYS = 14;  // an unsaved result is deleted this long after it was first saved here
 const SKIPS_PER_PAGE = 25;
 // How long a page that clearly isn't a job is left alone before it is checked again (hours); other reasons retry next search.
 const SKIP_TTL_HOURS = ["Directory or marketplace page" => 24, "Article or student employment guide" => 24,
@@ -95,7 +97,11 @@ function get_kept_companies(string $status = '', string $state = '', string $tit
 {
     $where = ['is_kept = 1', 'is_rejected = 0'];
     $args = [];
-    if ($status !== '') {
+    if ($status === '__applied') {
+        $where[] = "application_status IN ('Applied', 'Talking With Recruiter', 'Interview')";
+    } elseif ($status === '__not_applied') {
+        $where[] = "COALESCE(application_status, 'None') NOT IN ('Applied', 'Talking With Recruiter', 'Interview')";
+    } elseif ($status !== '') {
         $where[] = 'application_status = ?';
         $args[] = $status;
     }
@@ -112,8 +118,18 @@ function get_kept_companies(string $status = '', string $state = '', string $tit
     $rows = rows('SELECT ' . COMPANY_COLUMNS . ' FROM companies WHERE ' . implode(' AND ', $where) . " ORDER BY $order", $args);
     foreach ($rows as &$row) {
         decode_details($row);
+        $row['applied_on'] = clean_applied_date($row['details']['applied_on'] ?? '');
+        $row['applied_label'] = $row['applied_on'] !== '' ? date('M d, Y', (int) strtotime($row['applied_on'] . ' 12:00:00')) : '';
     }
     return $rows;
+}
+
+/** A date as YYYY-MM-DD, or '' when it is empty or not a real date. */
+function clean_applied_date($value): string
+{
+    $value = trim((string) $value);
+    $date = DateTime::createFromFormat('!Y-m-d', $value);
+    return $date !== false && $date->format('Y-m-d') === $value ? $value : '';
 }
 
 function get_rejected_companies(): array
@@ -153,12 +169,25 @@ function add_drive_times(array &$companies, string $home_zip, string $home_state
 /** Unsaved jobs closed for more than a week are deleted; saved ones are never deleted. */
 function tidy_closed_jobs(): int
 {
+    tidy_old_jobs();  // every place that tidies closed jobs also drops old unsaved ones
     q("UPDATE companies SET closed_at = ? WHERE job_open_status = 'Closed' AND closed_at IS NULL", [now_utc()]);
     q("UPDATE companies SET closed_at = NULL WHERE job_open_status <> 'Closed' AND closed_at IS NOT NULL");
     $marks = implode(', ', array_fill(0, count(SAVED_STATUSES), '?'));
     return q("DELETE FROM companies WHERE job_open_status = 'Closed' AND closed_at IS NOT NULL AND closed_at < ?
         AND is_kept = 0 AND application_status NOT IN ($marks)",
         array_merge([now_utc(-CLOSED_KEEP_DAYS * 86400)], SAVED_STATUSES))->rowCount();
+}
+
+/**
+ * Unsaved results are deleted UNSAVED_KEEP_DAYS days after they were first saved here (date_found is when this site
+ * first saved the job; it does not change when the job is seen again, so this is not the posting's age). Saved and
+ * applied jobs stay, and rejected ones stay so a rejected job is still recognised.
+ */
+function tidy_old_jobs(): int
+{
+    $marks = implode(', ', array_fill(0, count(SAVED_STATUSES), '?'));
+    return q("DELETE FROM companies WHERE is_rejected = 0 AND is_kept = 0 AND COALESCE(application_status, 'None') NOT IN ($marks)
+        AND date_found < ?", array_merge(SAVED_STATUSES, [now_utc(-UNSAVED_KEEP_DAYS * 86400)]))->rowCount();
 }
 
 // --- What the buttons do -----------------------------------------------------------------------------------
@@ -207,10 +236,42 @@ function unsave_listing(int $id): void
     q("UPDATE companies SET is_kept = 0, application_status = 'None' WHERE id = ?", [$id]);
 }
 
-function update_kept(int $id, string $status, string $notes): void
+/**
+ * Status and notes of a saved job, and the date applied (kept in listing_details). $applied_on is null when the form had
+ * no date field, '' when it was cleared. Becoming Applied uses today's date when none is saved or typed; a job that was
+ * already Applied before dates existed stays without one until you enter it.
+ */
+function update_kept(int $id, string $status, string $notes, ?string $applied_on = null): void
 {
     $status = in_array($status, APPLICATION_STATUSES, true) ? $status : 'None';
-    q('UPDATE companies SET application_status = ?, notes = ? WHERE id = ? AND is_kept = 1', [$status, mb_substr($notes, 0, 5000), $id]);
+    $before = row('SELECT application_status, listing_details FROM companies WHERE id = ? AND is_kept = 1', [$id]);
+    if (!$before) {
+        return;
+    }
+    $details = json_decode((string) ($before['listing_details'] ?: '{}'), true);
+    $details = is_array($details) ? $details : [];
+    $had = clean_applied_date($details['applied_on'] ?? '');
+    $chosen = $applied_on === null ? $had : clean_applied_date($applied_on);
+    if ($status === 'Applied' && $chosen === '' && $before['application_status'] !== 'Applied') {
+        $chosen = date('Y-m-d');  // the site's own time zone (config timezone)
+    }
+    if ($chosen !== '') {
+        $details['applied_on'] = $chosen;
+    } else {
+        unset($details['applied_on']);
+    }
+    q('UPDATE companies SET application_status = ?, notes = ?, listing_details = ? WHERE id = ? AND is_kept = 1',
+        [$status, mb_substr($notes, 0, 5000), json_encode($details, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), $id]);
+}
+
+/** Deletes the saved jobs ticked on the Dashboard (the page asks "Are you sure?" first). Returns how many. */
+function delete_kept_many(array $ids): int
+{
+    $ids = array_slice(array_values(array_unique(array_filter(array_map('intval', $ids)))), 0, 1000);
+    if (!$ids) {
+        return 0;
+    }
+    return q('DELETE FROM companies WHERE is_kept = 1 AND id IN (' . implode(',', array_fill(0, count($ids), '?')) . ')', $ids)->rowCount();
 }
 
 function delete_kept(int $id): void

@@ -44,8 +44,25 @@
 
   function pick() {
     const rows = Array.from(document.querySelectorAll("#results-table .result-row"))
-      .filter((row) => shown(row) && row.dataset.status !== "closed");
+      .filter((row) => shown(row) && row.dataset.status !== "closed" && row.dataset.saved !== "true");  // kept jobs are done
     return rows.map(rank).sort((a, b) => b.score - a.score).slice(0, PICKS);
+  }
+
+  // The same facts the listing's row shows (work, place, distance, credibility, fit, domain, found date), read from the row.
+  function facts(row) {
+    const text = (label) => (row.querySelector(`td[data-label="${label}"]`)?.textContent || "").replace(/\s+/g, " ").trim();
+    const place = text("Location");
+    const distance = text("Distance");
+    const domain = row.querySelector('td[data-label="Domain"] a')?.textContent.trim() || "";
+    const meta = (row.querySelector('td[data-label="Job"] .job-meta')?.textContent || "").replace(/\s+/g, " ").trim();
+    const found = (row.querySelector('td[data-label="Found"]')?.title || "").split(". Last checked")[0].replace(/^Found /, "");
+    const fit = row.dataset.jobFit;
+    return [
+      ["Pay", meta], ["Work", text("Work Location").replace(/^—$/, "")],
+      ["Location", place + (distance && distance !== "—" ? ` (${distance})` : "")], ["Job fit", fit ? `${fit}%` : ""],
+      ["Career credibility", text("Career Credibility")], ["USA credibility", text("USA Credibility")],
+      ["Domain", domain], ["Found", found],
+    ].filter(([, value]) => value);
   }
 
   function render(picks) {
@@ -66,6 +83,15 @@
       why.textContent = reasons.join(" · ");
       label.append(box, " ", title, why);
       item.append(label);
+      const list_of_facts = document.createElement("dl");
+      list_of_facts.className = "top-pick-facts";
+      for (const [name, value] of facts(row)) {
+        const group = document.createElement("div");
+        group.append(Object.assign(document.createElement("dt"), { textContent: name }),
+          Object.assign(document.createElement("dd"), { textContent: value }));
+        list_of_facts.append(group);
+      }
+      item.append(list_of_facts);
       const link = row.querySelector("a.inline-action-link[href^='http']");
       if (link) {
         const open = document.createElement("a");

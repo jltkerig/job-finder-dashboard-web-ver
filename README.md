@@ -42,6 +42,23 @@ profile and settings are kept in `data/jobfinder.sqlite`, which is never uploade
   file already imported unchanged is skipped. Each job's company website is looked up for about 20 seconds after
   the upload; the cron job finishes the rest a few a minute.
 
+## What changed in 0.9.0
+
+Brought in line with the desktop app's Dashboard and imports (desktop v1.1.240):
+
+- **Saved jobs:** a cleaner row (title, then company and place, then status chips) with a Listing button, one
+  "Job Listing" button when the career page and listing are the same address, and a **Date applied** field. Marking a
+  job Applied fills in today's date; you can change it any time. The date is kept in the job's `listing_details`.
+- **Filters and delete:** filter by **Applied (any stage)** or **Not applied**; tick saved jobs (or "Select all") and
+  delete them together after an "Are you sure?".
+- **Top 10 Picks:** jobs you kept are not picked again, and each pick shows the listing's facts.
+- **Imports:** a repost of a job you saved or applied to is linked instead of added; a closed job in an upload marks
+  the saved job Closed even when filters skip it; a job already imported and unchanged is left alone.
+- **Old results:** unsaved results are deleted 14 days after this site first saved them (saved, applied and rejected
+  jobs stay).
+- **Not on the web version yet:** the Apply Queue (with Combine and Download), because it is built on the desktop's
+  local Claude Code runs.
+
 ## Connect Claude to the Résumé Builder
 
 Instead of a connector installed on your PC, Claude adds the site by its address:

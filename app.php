@@ -84,6 +84,7 @@ $routes = [
     'GET /job-title-suggestions' => 'actions/lookups.php',
     'GET /skill-related' => 'actions/lookups.php',
     'POST /save-kept' => 'actions/listings.php',
+    'POST /delete-kept-many' => 'actions/listings.php',
     'POST /settings/password' => 'actions/password.php',
     'POST /settings/blocked-domains' => 'actions/blocklists.php',
     'POST /settings/blocked-companies' => 'actions/blocklists.php',

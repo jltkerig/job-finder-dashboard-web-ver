@@ -86,3 +86,31 @@ body.login-page main.login-box { margin-bottom: 8vh; }
 
 /* The sign-in page doesn't load static/css/style.css, so widths include padding here too (keeps the inputs, box and banner inside the screen) */
 body.login-page *, body.login-page *::before, body.login-page *::after, .cookie-banner, .cookie-banner * { box-sizing: border-box; }
+
+/* Dashboard saved jobs: a cleaner collapsed row, a Listing button, selecting jobs to delete together */
+.summary-notes { font-weight: 600; color: #6b4f00; }
+.applied-on { color: #3d4550; }
+.bulk-bar { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin:0 0 10px; padding:8px 12px; border:1px solid #e3e6ea; border-radius:8px; background:#fafbfc; }
+.bulk-bar .bulk-all { display:flex; align-items:center; gap:6px; font-weight:600; }
+.bulk-pick { display:flex; align-items:center; padding:4px; cursor:pointer; }
+.bulk-pick input { width:18px; height:18px; cursor:pointer; }
+body[data-page="dashboard"] .saved-job-summary { gap:14px; padding:16px 18px; }
+body[data-page="dashboard"] .summary-title strong { font-size:1.08rem; line-height:1.3; }
+body[data-page="dashboard"] .summary-facts { margin-top:4px; font-size:.92rem; color:#4b5563; }
+body[data-page="dashboard"] .summary-facts .summary-company { font-weight:600; color:#1f2933; }
+body[data-page="dashboard"] .summary-status { margin-top:8px; gap:6px 10px; font-size:.82rem; color:#6b7280; }
+body[data-page="dashboard"] .summary-status > span + span::before { content:none; }
+body[data-page="dashboard"] .summary-fit { padding:2px 8px; border-radius:999px; background:#eef0f3; color:#3d4550; font-weight:600; }
+body[data-page="dashboard"] .summary-actions { flex:none; display:flex; align-items:center; gap:8px; }
+body[data-page="dashboard"] .summary-actions .bordered-button { min-height:36px; padding:6px 16px; font-size:.88rem; white-space:nowrap; }
+@media (max-width: 760px) {
+  body[data-page="dashboard"] .saved-job-summary { flex-wrap:wrap; }
+  body[data-page="dashboard"] .summary-actions { order:3; width:100%; padding-left:34px; }
+}
+
+/* Top 10 Picks: each pick shows the listing's facts */
+.top-pick-facts { display:flex; flex-wrap:wrap; gap:4px 16px; margin:6px 0 0; font-size:.82rem; }
+.top-pick-facts div { display:flex; gap:5px; }
+.top-pick-facts dt { color:#646c77; }
+.top-pick-facts dt::after { content:":"; }
+.top-pick-facts dd { margin:0; color:#1f2933; font-weight:600; }

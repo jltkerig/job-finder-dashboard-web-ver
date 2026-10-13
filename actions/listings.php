@@ -55,8 +55,16 @@ switch ($path) {
         unsave_listing($route_id);
         json_out(['status' => 'unsaved', 'company_id' => $route_id]);
 
+    case '/delete-kept-many':
+        $ids = request_json()['ids'] ?? null;
+        if (!is_array($ids) || !array_filter(array_map('intval', $ids)) || count($ids) > 1000) {
+            api_error('E3250', 'Choose at least one saved job to delete.', 400);
+        }
+        json_out(['status' => 'deleted', 'count' => delete_kept_many($ids)]);
+
     case '/update-kept':
-        update_kept($route_id, trim((string) ($_POST['application_status'] ?? 'None')), trim((string) ($_POST['notes'] ?? '')));
+        update_kept($route_id, trim((string) ($_POST['application_status'] ?? 'None')), trim((string) ($_POST['notes'] ?? '')),
+            array_key_exists('applied_on', $_POST) ? trim((string) $_POST['applied_on']) : null);
         // The #job anchor reopens this card on the Dashboard, where saved jobs start collapsed.
         redirect(preg_replace('/#.*$/', '', $_SERVER['HTTP_REFERER'] ?? '/dashboard') . "#job-$route_id");
 
