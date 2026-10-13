@@ -37,6 +37,7 @@ function credibility_badge($score): string
         . $class . '">' . ($score * 10) . '%</span></a>';
 }
 
+$scripts = ['bulk-delete.js', 'applied-date.js'];
 require APP_ROOT . '/templates/_top.php';
 ?>
 <main>
@@ -163,7 +164,7 @@ require APP_ROOT . '/templates/_top.php';
       </div>
       <div class="form-field"><label for="filter-state">State</label><input id="filter-state" name="state" value="<?= h($filters['state']) ?>" placeholder="Filter state" />
       </div>
-      <div class="form-field"><label for="filter-status">Application Status</label><select id="filter-status" name="status"><option value="">All</option><?php foreach (APPLICATION_STATUSES as $option): ?><option value="<?= h($option) ?>"<?= $filters['status'] === $option ? ' selected' : '' ?>><?= h($option) ?></option><?php endforeach; ?></select>
+      <div class="form-field"><label for="filter-status">Application Status</label><select id="filter-status" name="status"><option value="">All</option><option value="__applied"<?= $filters['status'] === '__applied' ? ' selected' : '' ?>>Applied (any stage)</option><option value="__not_applied"<?= $filters['status'] === '__not_applied' ? ' selected' : '' ?>>Not applied</option><?php foreach (APPLICATION_STATUSES as $option): ?><option value="<?= h($option) ?>"<?= $filters['status'] === $option ? ' selected' : '' ?>><?= h($option) ?></option><?php endforeach; ?></select>
       </div>
       <div class="form-field"><label for="filter-sort">Sort</label><select id="filter-sort" name="sort"><?php foreach (['date_desc' => 'Newest', 'date_asc' => 'Oldest', 'company' => 'Company', 'title' => 'Job Title', 'status' => 'Status', 'verified' => 'Last Verified'] as $value => $label): ?><option value="<?= $value ?>"<?= $filters['sort'] === $value ? ' selected' : '' ?>><?= $label ?></option><?php endforeach; ?></select>
       </div>
@@ -174,6 +175,7 @@ require APP_ROOT . '/templates/_top.php';
     </p>
 
 <?php if ($companies): ?>
+    <div class="bulk-bar" id="bulk-bar"><label class="bulk-all"><input type="checkbox" id="bulk-all" /> Select all <?= count($companies) ?> shown</label><span id="bulk-count" class="field-help" role="status">None selected</span><button id="bulk-delete" class="bordered-button destructive-action" type="button" disabled>Delete Selected</button></div>
     <div class="saved-job-grid"><?php foreach ($companies as $company):
         $id = (int) $company['id'];
         $listing_status = strtolower($company['job_open_status'] ?: 'Unknown');
@@ -184,18 +186,25 @@ require APP_ROOT . '/templates/_top.php';
         $fit = $company['job_fit'];
         $fit_text = $fit['score'] !== null ? $fit['score'] . '%' : '?';
         $status_class = str_replace(' ', '-', strtolower($company['application_status'] ?: 'None'));
+        $career_href = ($company['career_url'] && !$is_feed) ? (string) $company['career_url'] : '';
+        $source_href = (string) $company['source_url'];
+        $same_link = $career_href !== '' && $source_href !== '' && rtrim($career_href, '/') === rtrim($source_href, '/');
+        $listing_link = $career_href !== '' ? $career_href : ($source_href !== '' ? $source_href : (string) $company['career_url']);
     ?>
       <article class="saved-job-card" id="job-<?= $id ?>" data-company-id="<?= $id ?>">
         <details class="saved-job-collapse">
           <summary class="saved-job-summary">
+            <label class="bulk-pick" title="Select to delete"><input type="checkbox" class="bulk-check" value="<?= $id ?>" aria-label="Select <?= h($company['career_job_title'] ?: 'this job') ?>" /></label>
             <div class="summary-text">
-              <p class="summary-line summary-title"><strong><?= h($company['career_job_title'] ?: 'Unknown Job') ?></strong><span class="summary-company"><?= h($company['name'] ?: 'Unknown Company') ?></span>
+              <p class="summary-line summary-title"><strong><?= h($company['career_job_title'] ?: 'Unknown Job') ?></strong>
               </p>
-              <p class="summary-line summary-facts"><span><?= h($place) ?><?= h($company['state'] ?: 'Location unknown') ?></span><?php if ($company['drive']): ?><span title="Estimated from your home ZIP, driving at 6 a.m."><?= h($company['drive']['text']) ?></span><?php elseif ($company['distance_miles'] !== null): ?><span><?= number_format((float) $company['distance_miles']) ?> mi</span><?php endif; ?><?php if ($company['work_arrangement'] && strtolower($company['work_arrangement']) !== strtolower((string) $company['state'])): ?><span><?= h($company['work_arrangement']) ?></span><?php endif; ?><span>Job Fit <?= $fit_text ?></span>
+              <p class="summary-line summary-facts"><span class="summary-company"><?= h($company['name'] ?: 'Unknown Company') ?></span><span><?= h($place) ?><?= h($company['state'] ?: 'Location unknown') ?></span><?php if ($company['drive']): ?><span title="Estimated from your home ZIP, driving at 6 a.m."><?= h($company['drive']['text']) ?></span><?php elseif ($company['distance_miles'] !== null): ?><span><?= number_format((float) $company['distance_miles']) ?> mi</span><?php endif; ?><?php if ($company['work_arrangement'] && strtolower($company['work_arrangement']) !== strtolower((string) $company['state'])): ?><span><?= h($company['work_arrangement']) ?></span><?php endif; ?>
               </p>
-              <p class="summary-line summary-status"><span class="application-indicator status-<?= h($status_class) ?>"><?= h(in_array($company['application_status'], ['Saved', 'None', null], true) ? 'Not applied' : $company['application_status']) ?></span><span class="job-open-state"><span class="status-dot <?= $listing_status === 'closed' ? 'closed' : ($listing_status === 'open' ? 'open' : 'unknown') ?>" data-tooltip="<?= $listing_status === 'open' ? 'This listing appears to still be active.' : ($listing_status === 'closed' ? 'This listing appears to no longer be active.' : 'The current listing status could not be confirmed.') ?>"></span><?= h($company['job_open_status'] ?: 'Unknown') ?></span><span>Found <?= h(local_time($company['date_found'], 'M d, Y') ?: '?') ?></span><?php if ($company['notes']): ?><span class="summary-notes" title="<?= h(mb_substr($company['notes'], 0, 200)) ?>">Notes</span><?php endif; ?>
+              <p class="summary-line summary-status"><span class="application-indicator status-<?= h($status_class) ?>"><?= h(in_array($company['application_status'], ['Saved', 'None', null], true) ? 'Not applied' : $company['application_status']) ?></span><?php if ($company['applied_on'] !== ''): ?><span class="applied-on" title="Date you applied. Change it under Your Application below.">Applied <?= h($company['applied_label']) ?></span><?php endif; ?><span class="summary-fit" title="Job Fit">Fit <?= $fit_text ?></span><span class="job-open-state"><span class="status-dot <?= $listing_status === 'closed' ? 'closed' : ($listing_status === 'open' ? 'open' : 'unknown') ?>" data-tooltip="<?= $listing_status === 'open' ? 'This listing appears to still be active.' : ($listing_status === 'closed' ? 'This listing appears to no longer be active.' : 'The current listing status could not be confirmed.') ?>"></span><?= h($company['job_open_status'] ?: 'Unknown') ?></span><span>Found <?= h(local_time($company['date_found'], 'M d, Y') ?: '?') ?></span><?php if ($company['notes']): ?><span class="summary-notes" title="<?= h(mb_substr($company['notes'], 0, 200)) ?>">Notes</span><?php endif; ?>
               </p>
-            </div><span class="summary-chevron" aria-hidden="true"></span>
+            </div>
+            <div class="summary-actions"><?php if ($listing_link !== ''): ?><a class="bordered-button summary-listing-link" href="<?= h($listing_link) ?>" target="_blank" rel="noopener noreferrer" title="Open the job listing">Listing</a><?php endif; ?></div>
+            <span class="summary-chevron" aria-hidden="true"></span>
           </summary>
           <div class="saved-job-body">
             <dl class="job-facts">
@@ -208,7 +217,7 @@ require APP_ROOT . '/templates/_top.php';
               <div><dt>Source</dt><dd><?= h($company['source_type'] ?: 'Brave Search') ?></dd></div>
               <div><dt>Last Verified</dt><dd><?= h(local_time($company['last_checked'], 'M d, Y') ?: 'Never') ?></dd></div>
             </dl>
-            <div class="job-links"><?php if ($company['career_url'] && !$is_feed): ?><a class="bordered-button" href="<?= h($company['career_url']) ?>" target="_blank" rel="noopener noreferrer">Career Page</a><?php endif; ?><?php if ($company['source_url']): ?><a class="bordered-button" href="<?= h($company['source_url']) ?>" target="_blank" rel="noopener noreferrer"><?= h($is_feed ? 'View on ' . $company['source_type'] : 'Listing') ?></a><?php endif; ?><button class="bordered-button details-action" type="button" data-details-target="dashboard-details-<?= $id ?>">View Details</button>
+            <div class="job-links"><?php if ($same_link): ?><a class="bordered-button" href="<?= h($career_href) ?>" target="_blank" rel="noopener noreferrer">Job Listing</a><?php else: ?><?php if ($career_href !== ''): ?><a class="bordered-button" href="<?= h($career_href) ?>" target="_blank" rel="noopener noreferrer">Employer Career Page</a><?php endif; ?><?php if ($source_href !== ''): ?><a class="bordered-button" href="<?= h($source_href) ?>" target="_blank" rel="noopener noreferrer"><?= h($is_feed ? 'View on ' . $company['source_type'] : 'Job Listing') ?></a><?php endif; ?><?php endif; ?><button class="bordered-button details-action" type="button" data-details-target="dashboard-details-<?= $id ?>">View Details</button>
             </div>
             <div id="dashboard-details-<?= $id ?>" class="card-details" hidden>
               <div class="detail-section"><strong>Listing Details</strong><span><strong>Domain:</strong> <?php if ($domain_url): ?><a href="<?= h($domain_url) ?>" target="_blank" rel="noopener noreferrer"><?= h($domain) ?></a><?php else: ?>Unknown<?php endif; ?></span><span><strong>Country:</strong> <?= h($company['country'] ?: 'Unknown') ?></span><span><strong>Found:</strong> <?= h(local_time($company['date_found']) ?: 'Unknown') ?></span><?php if ($company['result_updated_at']): ?><span><strong>Updated:</strong> <?= h(local_time($company['result_updated_at'])) ?></span><?php endif; ?><?php if ($company['last_checked']): ?><span><strong>Last verified:</strong> <?= h(local_time($company['last_checked'])) ?></span><?php endif; ?>
@@ -226,6 +235,7 @@ require APP_ROOT . '/templates/_top.php';
                 <h4>Your Application</h4>
                 <form action="/update-kept/<?= $id ?>" method="post" class="saved-job-editor"><?= csrf_field() ?>
                   <label for="status-<?= $id ?>">Status</label><select id="status-<?= $id ?>" name="application_status"><?php foreach (APPLICATION_STATUSES as $option): ?><option value="<?= h($option) ?>"<?= $company['application_status'] === $option ? ' selected' : '' ?>><?= h($option) ?></option><?php endforeach; ?></select>
+                  <label for="applied-on-<?= $id ?>">Date applied</label><input id="applied-on-<?= $id ?>" name="applied_on" type="date" value="<?= h($company['applied_on']) ?>" title="Saved when you mark the job Applied. Change it here any time." />
                   <label for="notes-<?= $id ?>">Notes</label><textarea id="notes-<?= $id ?>" name="notes" rows="4" placeholder="Add notes about this job..."><?= h($company['notes']) ?></textarea>
                   <button class="bordered-button primary-action" type="submit">Save Changes</button>
                 </form>

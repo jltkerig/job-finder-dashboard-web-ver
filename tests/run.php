@@ -251,6 +251,78 @@ check('not a capture file', str_contains(import_capture_files([['x.json', '{"a":
 check('company lookups waiting', count(capture_lookups_pending()) === 3);
 check('description wording read', arrangement_from_description('in our office 3 days a week') === 'Hybrid'
     && arrangement_from_description('This is a remote position.') === 'Remote' && location_from_description('Greater Boston area') === 'Boston, MA');
+echo "\nDashboard: applied date, filters, mass delete, old jobs\n";
+save_company(job(['name' => 'Delta Corp', 'title' => 'Print Designer', 'source_url' => 'https://delta.example/jobs/1',
+    'career_url' => 'https://delta.example/jobs/1', 'domain' => 'delta.example']));
+$delta = (int) value("SELECT id FROM companies WHERE name = 'Delta Corp'");
+keep_listings([$delta]);
+$kept_row = function (int $id): array {
+    foreach (get_kept_companies() as $company) {
+        if ((int) $company['id'] === $id) {
+            return $company;
+        }
+    }
+    return [];
+};
+update_kept($delta, 'Applied', 'sent');
+check('marking Applied saves today', $kept_row($delta)['applied_on'] === date('Y-m-d'));
+update_kept($delta, 'Applied', 'sent', '2026-10-05');
+check('the date can be changed', $kept_row($delta)['applied_on'] === '2026-10-05' && $kept_row($delta)['applied_label'] === 'Oct 05, 2026');
+update_kept($delta, 'Interview', 'sent');
+check('the date stays when a later status is chosen', $kept_row($delta)['applied_on'] === '2026-10-05');
+update_kept($delta, 'Interview', 'sent', '');
+check('the date can be cleared', $kept_row($delta)['applied_on'] === '');
+update_kept($delta, 'Applied', 'sent');
+check('becoming Applied again uses today', $kept_row($delta)['applied_on'] === date('Y-m-d'));
+update_kept($delta, 'Applied', 'sent', 'not a date');
+check('a bad date is ignored', $kept_row($delta)['applied_on'] === '');
+q("UPDATE companies SET application_status = 'Applied', listing_details = '{}' WHERE id = ?", [$delta]);
+update_kept($delta, 'Applied', 'again');
+check('a job Applied before dates existed is not given today', $kept_row($delta)['applied_on'] === '');
+update_kept($delta, 'Applied', 'again', '2026-09-30');
+check('and takes a date you enter', $kept_row($delta)['applied_on'] === '2026-09-30');
+
+save_company(job(['name' => 'Echo Ltd', 'title' => 'Layout Designer', 'source_url' => 'https://echo.example/jobs/1',
+    'career_url' => 'https://echo.example/jobs/1', 'domain' => 'echo.example']));
+$echo = (int) value("SELECT id FROM companies WHERE name = 'Echo Ltd'");
+keep_listings([$echo]);
+$ids = fn(array $list) => array_map(fn($c) => (int) $c['id'], $list);
+check('Applied (any stage) filter', in_array($delta, $ids(get_kept_companies('__applied')), true) && !in_array($echo, $ids(get_kept_companies('__applied')), true));
+check('Not applied filter', in_array($echo, $ids(get_kept_companies('__not_applied')), true) && !in_array($delta, $ids(get_kept_companies('__not_applied')), true));
+check('one status still filters exactly', $ids(get_kept_companies('Saved')) === [$echo]);
+
+save_company(job(['name' => 'Foxtrot Inc', 'title' => 'Sign Designer', 'source_url' => 'https://foxtrot.example/jobs/1',
+    'career_url' => 'https://foxtrot.example/jobs/1', 'domain' => 'foxtrot.example']));
+$foxtrot = (int) value("SELECT id FROM companies WHERE name = 'Foxtrot Inc'");  // never saved
+check('mass delete removes only saved jobs', delete_kept_many([$delta, $echo, $foxtrot]) === 2
+    && !value('SELECT COUNT(*) FROM companies WHERE id IN (?, ?)', [$delta, $echo]) && (int) value('SELECT COUNT(*) FROM companies WHERE id = ?', [$foxtrot]) === 1);
+check('mass delete of nothing', delete_kept_many([]) === 0);
+
+save_company(job(['name' => 'Golf LLC', 'title' => 'Brand Designer', 'source_url' => 'https://golf.example/jobs/1',
+    'career_url' => 'https://golf.example/jobs/1', 'domain' => 'golf.example']));
+save_company(job(['name' => 'Hotel Co', 'title' => 'Motion Designer', 'source_url' => 'https://hotel.example/jobs/1',
+    'career_url' => 'https://hotel.example/jobs/1', 'domain' => 'hotel.example']));
+$golf = (int) value("SELECT id FROM companies WHERE name = 'Golf LLC'");
+$hotel = (int) value("SELECT id FROM companies WHERE name = 'Hotel Co'");
+keep_listings([$hotel]);
+q('UPDATE companies SET date_found = ? WHERE id IN (?, ?, ?)', [now_utc(-15 * 86400), $golf, $hotel, $foxtrot]);
+reject_listing($foxtrot, 'closed');
+check('Closed is an allowed rejection reason', value('SELECT rejection_reason FROM companies WHERE id = ?', [$foxtrot]) === 'closed');
+check('old unsaved jobs are deleted', tidy_old_jobs() === 1 && !value('SELECT COUNT(*) FROM companies WHERE id = ?', [$golf]));
+check('old saved and rejected jobs stay', (int) value('SELECT COUNT(*) FROM companies WHERE id = ?', [$hotel]) === 1
+    && (int) value('SELECT COUNT(*) FROM companies WHERE id = ?', [$foxtrot]) === 1);
+
+// A repost of a job you saved, and a closed job, and a job that is only seen again
+$pixel = (int) value("SELECT id FROM companies WHERE source_url LIKE '%linkedin.com/jobs/view/111%'");
+keep_listings([$pixel]);
+$repost = import_capture_files([['repost.json', $capture('linkedin', [$job(['location' => '', 'url' => 'https://www.linkedin.com/jobs/view/999/'])])]]);
+check('a repost of a saved job is linked, not added', $repost['counts']['linked'] === 1 && $repost['counts']['added'] === 0
+    && !value("SELECT COUNT(*) FROM companies WHERE source_url LIKE '%linkedin.com/jobs/view/999%'"));
+$closed_import = import_capture_files([['closed.json', $capture('linkedin', [$job(['title' => 'Accountant', 'closed' => true,
+    'url' => 'https://www.linkedin.com/jobs/view/444/'])])]]);
+check('a closed job marks the saved job Closed even when filters skip it', value("SELECT job_open_status FROM companies WHERE source_url LIKE '%linkedin.com/jobs/view/444%'") === 'Closed');
+$again = import_capture_files([['again.json', $capture('linkedin', [$job([]), $job(['title' => 'Web Designer II', 'url' => 'https://www.linkedin.com/jobs/view/777/'])])]]);
+check('a job already imported and unchanged is left alone', $again['counts']['added'] === 1 && str_contains(json_encode($again['log']), 'Already imported'));
 echo "\nsign-in\n";
 set_setting('password_hash', password_hash('correct horse battery', PASSWORD_DEFAULT));
 $_SERVER['REMOTE_ADDR'] = '203.0.113.5';
