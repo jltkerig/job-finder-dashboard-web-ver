@@ -83,6 +83,7 @@ require APP_ROOT . '/templates/_top.php';
       <label class="companies-website-only"><input id="companies-website-only" type="checkbox" /> Only with a website</label>
       <button class="bordered-button secondary-action" id="companies-show-hidden" type="button" hidden>Show hidden</button>
     </div>
+    <div class="companies-kind-tags" id="companies-kind-tags" role="group" aria-label="Show only these kinds of place" hidden></div>
     <div class="table-wrapper companies-table-wrapper">
       <table class="companies-table">
         <thead><tr><th>Company</th><th>Type</th><th>Address</th><th id="companies-miles-header">Miles</th><th>Website</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
