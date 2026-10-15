@@ -396,6 +396,7 @@ final class CaptureImport
             'description' => mb_substr($description, 0, 20000), 'closes' => mb_substr((string) ($job['closes'] ?? ''), 0, 10),
             'matched_title' => $matched, 'location_unknown' => $location === '', 'location_from_description' => $described !== '',
             'capture_fp' => $fingerprint,
+            ...(!empty($job['easy_apply']) ? ['easy_apply' => true] : []),  // LinkedIn's own Easy Apply button (never lost once seen)
             'remote_limited_to' => array_values($outcome['remote_limited_to']),
             'evidence' => array_merge(["Seen on $source_type", $applied ? 'you applied' : 'matching title'], $described !== '' ? ['place read from the description'] : []),
         ]);

@@ -20,8 +20,12 @@ if ($path === '/profile/save-title') {
     json_out(['status' => 'saved', 'profile_version' => profile_version(get_user_profile())]);
 }
 
-$read_list = function (string $key): array {
-    $value = json_decode((string) ($_POST[$key] ?? '[]'), true);
+// A list the form does not carry (an older page left open) is null: what is saved stays as it is.
+$read_list = function (string $key): ?array {
+    if (!array_key_exists($key, $_POST)) {
+        return null;
+    }
+    $value = json_decode((string) $_POST[$key], true);
     return is_array($value) ? $value : [];
 };
 $titles = [];
@@ -56,7 +60,7 @@ save_user_profile([
     'last_name' => mb_substr(trim((string) ($_POST['last_name'] ?? '')), 0, 100),
     'state' => mb_substr(trim((string) ($_POST['state'] ?? '')), 0, 100),
     'job_titles' => $titles,
-    'cities' => $read_list('cities_json'),
+    'cities' => $read_list('cities_json') ?? [],
     'home_location' => mb_substr(trim((string) ($_POST['home_location'] ?? '')), 0, 150),
     'home_zip' => $home_zip,
     'primary_job_title' => $primary,
@@ -70,7 +74,7 @@ save_user_profile([
 ]);
 // Changed skills: saved listings are re-read so they also list skills the current skills list recognizes.
 $before = array_map('mb_strtolower', $saved['skills']);
-$after = array_values(array_unique(array_map('mb_strtolower', array_map('strval', $skills))));
+$after = $skills === null ? $before : array_values(array_unique(array_map('mb_strtolower', array_map('strval', $skills))));
 sort($before);
 sort($after);
 redirect($before !== $after ? '/dashboard?fit_updated=' . refresh_job_fit() : '/dashboard');

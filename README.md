@@ -42,6 +42,31 @@ profile and settings are kept in `data/jobfinder.sqlite`, which is never uploade
   file already imported unchanged is skipped. Each job's company website is looked up for about 20 seconds after
   the upload; the cron job finishes the rest a few a minute.
 
+## What changed in 1.1.273
+
+The web version caught up to the desktop Job Finder's v1.1.273 (it was at 1.1.240):
+
+- **Companies page** (`/companies`): businesses, offices, plants and schools near a place (OpenStreetMap, read through
+  Nominatim, one question a second, answers kept 6 hours), the employers from your own searches, and **My Companies**
+  (kept in the settings table). Add a company with Street, City, State and ZIP boxes (the Street box suggests addresses
+  as you type, through Photon), a website, a job board (a link or just a name), a phone number and notes. The
+  employers in your work history join the list once each. **Recruiters and staffing** is a kind of place.
+  What you save for an employer from your résumé (address, phone, website) is written to that job in your Profile,
+  and what the Profile has shows on the page (`includes/companies.php`).
+- **Job Apply Stats** on the Dashboard: Applied In Total, each stage, and Applied By Month. Applications made outside
+  Job Finder can be listed in the `applied_elsewhere` setting (a JSON list of `{"company", "title", "applied_on"}`).
+- **Education from your résumé:** the schools under its education heading are saved when none are saved yet
+  (`includes/education.php`), and the upload review lists them too. A profile form that lacks the skills, jobs or
+  schools boxes no longer clears them.
+- **Search page:** job titles are bubbles under an Add Title box (related titles in blue), Open All Details in the filter
+  bar, a tighter panel, and Clear Results / Refreshing tidied. Saved, applied and queued jobs (and copies of them on other
+  boards) leave the results. The skipped-pages list moved to Tuning. LinkedIn Easy Apply jobs show a badge.
+- **Boards:** the State of Maryland's job openings (JobAps, `includes/search/jobaps.php`: the portal's RSS feed, the
+  working title in "CLASS (Working title)", counties turned into their seats so distances work) and Rippling boards.
+
+Not in the web version: the Apply Queue (and so Combine, the queue's Reject button and "saved on LinkedIn" queueing),
+parallel board reading and log rotation (the desktop's own process features).
+
 ## What changed in 1.1.240
 
 The web version now uses the desktop Job Finder's version number: this release is the desktop's v1.1.240 (it was

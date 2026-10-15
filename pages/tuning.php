@@ -13,6 +13,7 @@ if ($health) {
 }
 $saved = !empty($_GET['saved']);
 $error = (string) ($_GET['error'] ?? '');
+$skipped = recent_skips();
 $brave = brave_counts();
 $reset = brave_next_reset();
 $days = (int) ceil(($reset - time()) / 86400);
@@ -76,6 +77,15 @@ require APP_ROOT . '/templates/_top.php';
           </tbody>
         </table>
       </div>
+    </details>
+    <details class="settings-panel history-collapse" id="skipped-pages" data-remember="jobFinder.skippedPagesOpen">
+  <summary>
+        <h2>Skipped Pages (<?= count($skipped) ?> Recent Checks)
+        </h2><span class="summary-chevron" aria-hidden="true"></span>
+      </summary>
+      <?php if ($skipped): ?><ul class="skipped-list"><?php foreach ($skipped as $item): ?>
+        <li><strong><?= h($item['reason']) ?></strong><?php if ($item['title']): ?> · <?= h($item['title']) ?><?php endif; ?> <a href="<?= h($item['url']) ?>" target="_blank" rel="noopener noreferrer">Source</a></li><?php endforeach; ?>
+      </ul><?php else: ?><p class="field-help">Nothing was skipped in the recent searches.</p><?php endif; ?>
     </details>
     <details class="settings-panel history-collapse" id="search-settings" data-remember="jobFinder.searchSettingsOpen"<?= $saved || $error !== '' ? ' data-open-now' : '' ?>>
   <summary>

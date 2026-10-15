@@ -1058,7 +1058,7 @@ header, .site-footer { background:#1f2937; color:#f5f7fa; border-color:#394657; 
 .footer-social svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:none; }
 .footer-tech { margin-top:12px; padding-top:12px; border-top:1px solid #435164; color:#cbd5e1; text-align:left; line-height:1.5; }
 .profile-layout { grid-template-columns:minmax(180px,1fr) minmax(0,3fr); }
-.profile-layout .profile-summary-card { order:1; }
+.profile-layout > .profile-summary-card, .profile-layout > .profile-side { order:1; }
 .profile-layout .profile-panel { order:2; }
 .saved-job-grid { display:grid; }
 .saved-job-card { min-width:0; }
@@ -1086,7 +1086,7 @@ header, .site-footer { background:#1f2937; color:#f5f7fa; border-color:#394657; 
   .site-footer { padding:20px 16px; }
   .footer-main { align-items:flex-start; flex-direction:column; }
   .profile-layout { grid-template-columns:1fr; }
-  .profile-layout .profile-summary-card { order:0; }
+  .profile-layout > .profile-summary-card, .profile-layout > .profile-side { order:0; }
   .profile-layout .profile-panel { order:1; }
   .credibility-legend { display:flex; }
   .saved-job-card .compact-editor > button { width:100%; }
@@ -1203,6 +1203,10 @@ body[data-page="search"] #results-table .listing-arrangement { display:block; ma
 /* Search results: title, state, type, status and sort filters */
 .result-guide { color:#394c60; background:#e8f0f7; border-left:4px solid #315475; border-radius:6px; padding:10px 14px; font-size:.86rem; line-height:1.45; }
 .job-meta { display:block; margin-top:5px; font-size:.76rem; color:#42586e; line-height:1.35; }
+.skipped-list { max-height:260px; overflow:auto; margin:10px 0 0; padding-left:20px; line-height:1.5; font-size:.85rem; }
+#clear-results-button { margin-left:auto; }
+#results-table .refresh-action:disabled { font-size:.6rem !important; white-space:nowrap; padding-left:4px !important; padding-right:4px !important; }
+#results-table .refresh-action:disabled::after { display:none; }
 .skipped-results { margin:0 0 16px; padding:12px 14px; border:1px solid #c7d3df; border-radius:8px; background:#f7fafc; color:#243e56; }
 .skipped-results summary { cursor:pointer; font-weight:700; }
 .skipped-results ul { max-height:230px; overflow:auto; padding-left:20px; line-height:1.5; font-size:.83rem; overflow-wrap:anywhere; }
@@ -1334,6 +1338,12 @@ body[data-page="rejected"] .rejected-card .card-actions > button { flex:1 1 180p
 .skill-chip-list { display:flex; flex-wrap:wrap; gap:7px; margin:12px 0; }
 .skill-chip { display:inline-flex; align-items:center; gap:6px; padding:5px 8px; border:1px solid #bdcad8; border-radius:20px; background:#fff; color:#263748; font-size:.84rem; }
 .skill-chip button { border:0; background:transparent; color:#23364b; cursor:pointer; font-size:1.2rem; line-height:1; }
+/* LinkedIn's Easy Apply mark: its blue and its "in" square (the look of the Easy Apply button on its job tracker). */
+.easy-apply-badge { display:inline-flex; align-items:center; gap:5px; margin-left:8px; padding:2px 10px 2px 7px; border-radius:999px;
+  background:#0a66c2; color:#fff; font-size:.76rem; font-weight:700; line-height:1.4; vertical-align:middle; white-space:nowrap; }
+.easy-apply-badge svg { flex:none; }
+.top-pick-stats .easy-apply-badge { margin-left:0; }
+.skill-chip-found { border-color:#3d6fb4; background:#e8f0fb; box-shadow:0 0 0 3px rgba(61,111,180,.25); }
 .profile-avatar { padding:0; overflow:hidden; cursor:pointer; }
 .profile-avatar img { width:100%; height:100%; object-fit:cover; }
 .profile-summary-card strong,.profile-summary-card span { overflow-wrap:anywhere; }
@@ -1440,10 +1450,22 @@ body[data-page="dashboard"] .saved-job-card { display: block; padding: 0; }
 
 /* Profile: even 18px spacing between the grey boxes, and a name card sized to its contents. */
 .profile-form .profile-subsection { margin: 0; }
-.profile-layout .profile-summary-card { align-self: start; justify-content: flex-start; min-height: 0; }
+.profile-layout .profile-summary-card { justify-content: flex-start; min-height: 0; }
+.profile-layout > .profile-summary-card { align-self: start; }
+/* The name card and the Job Apply Stats box stack in one column that stays in view while the form scrolls. */
+.profile-side { display: flex; flex-direction: column; gap: 18px; align-self: start; min-width: 0; }
 @media (min-width: 761px) {
-	.profile-layout .profile-summary-card { position: sticky; top: 84px; }
+	.profile-layout > .profile-summary-card, .profile-side { position: sticky; top: 84px; }
 }
+.profile-stats-card { background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 16px; }
+.profile-stats-card h2 { margin: 0 0 8px; font-size: 1rem; text-align: center; }
+.details-all-field .bordered-button { min-width: 158px; white-space: nowrap; }
+.profile-stats-card h3 { margin: 16px 0 6px; font-size: .9rem; text-align: center; }
+.profile-stats-card dl { margin: 0; }
+.profile-stats-card dl > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 7px 0; border-top: 1px solid #e3e6ea; font-size: .9rem; }
+.profile-stats-card dt { color: #1f2937; }
+.profile-stats-card dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; color: #111827; }
+.profile-stats-card .stat-total { font-size: 1rem; font-weight: 700; }
 .profile-subsection h3 label { font: inherit; color: inherit; cursor: text; }
 /* The city row moved out of .form-field into a grey box: give it the same input look. */
 .profile-subsection .city-add-row input, .profile-subsection .city-add-row select { width: 100%; padding: 11px 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #111827; font: inherit; }
@@ -1809,6 +1831,8 @@ body[data-page="search"] .results-toolbar > .compact-field:first-of-type { flex:
 body[data-page="search"] .results-toolbar .compact-field > label { display:block; margin:0 0 3px; font-size:.74rem; font-weight:700; color:#4b5563; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 body[data-page="search"] .results-toolbar .compact-field input[type="search"],
 body[data-page="search"] .results-toolbar .compact-field select { height:36px !important; min-height:36px !important; padding:6px 10px !important; font-size:.9rem !important; }
+body[data-page="search"] .results-toolbar > .details-all-field { flex:0 0 auto; min-width:0; }
+body[data-page="search"] .results-toolbar > .details-all-field .bordered-button { min-width:0; height:36px; padding:0 14px; }
 body[data-page="search"] .results-toolbar .display-options { flex-basis:100%; }
 body[data-page="search"] .results-toolbar .display-options > summary { cursor:pointer; width:max-content; font-size:.84rem; font-weight:700; color:#374151; }
 body[data-page="search"] .results-toolbar .display-options[open] > summary { margin-bottom:8px; }
@@ -2026,3 +2050,180 @@ body[data-page="search"] #results-table .details-blocks .bordered-button { min-h
 .remote-states { display:block; }
 #results-table.compact-rows .remote-states { display:inline; }
 #results-table.compact-rows .remote-states::before { content:" · "; }
+
+/* From the desktop app (v1.1.241 - v1.1.273): Companies page, bubbles, filter bar, apply stats and more */
+.top-pick { display:grid; grid-template-columns:20px 1fr auto; gap:10px; align-items:start; padding:12px 14px; border:1px solid #e3e6ea; border-radius:8px; background:#fafbfc; }
+@media (max-width: 640px) { .top-pick { grid-template-columns:20px 1fr; } .top-pick-actions { grid-column:2; flex-direction:row; align-items:center; } }
+/* The skills the posting lists, as dark bubbles (static/js/listing-preview.js): a tick = already yours, + adds it */
+.job-posting-skills { margin-top:12px; }
+.job-posting-skills h5 { margin:10px 0 6px; font-size:.85rem; color:#3d4550; }
+.job-posting-skills .skill-tally { font-weight:400; color:#6b7480; }
+.skill-bubbles { display:flex; flex-wrap:wrap; gap:6px; }
+.skill-bubble { border:0; border-radius:999px; padding:5px 12px; background:#1f2a3d; color:#fff; font:inherit; font-size:.82rem; font-weight:600; cursor:pointer; }
+.skill-bubble:hover:not(:disabled) { background:#2d3d5a; }
+.skill-bubble:focus-visible { outline:2px solid #2a6fd6; outline-offset:2px; }
+.skill-bubble.have, .skill-bubble:disabled { background:#4a5568; cursor:default; opacity:.85; }
+.skill-status { margin:8px 0 0; }
+body[data-page="search"] #results-table tr.result-row td.row-actions .row-action-grid { display:grid !important; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.apply-queue-files { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin-top:6px; font-size:.85rem; }
+/* Search results: the red/green/grey Open / Closed / Unknown dot under each job title */
+#results-table small.job-open-state { display:flex; align-items:center; gap:6px; margin:4px 0 0; font-size:.83rem; font-weight:600; }
+/* Top 10 pick buttons: two columns (Keep | Apply, Details | Refresh, Reject | Closed), the icon right of each word */
+.top-pick-buttons { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:6px; }
+.top-pick-buttons .bordered-button { width:100%; min-width:0; gap:6px; white-space:nowrap; }
+.top-pick-buttons .btn-icon { font-size:.95em; line-height:1; }
+.top-pick-title .status-dot { width:10px; height:10px; margin-left:4px; vertical-align:middle; }
+
+/* Search results: icons right of each button word, in two columns (Keep | Apply, Details | Refresh, Reject | Closed) */
+#results-table .keep-action::after, #results-table .apply-action::after, #results-table .details-action::after,
+#results-table .refresh-action::after, #results-table .reject-action::after, #results-table .closed-action::after { margin-left:6px; }
+#results-table .keep-action::after { content:"⭐"; }
+#results-table .keep-action.is-saved::after, #results-table .apply-action:disabled::after { content:"✔️"; }
+#results-table .apply-action::after { content:"📨"; }
+#results-table .details-action::after { content:"🔍"; }
+#results-table .refresh-action::after { content:"🔄"; }
+#results-table .reject-action::after { content:"🚫"; }
+#results-table .closed-action::after { content:"🔒"; }
+@media (min-width:0px) { body[data-page="search"] #results-table.compact-rows tbody tr.result-row { min-height:152px; } }
+#results-table .job-open-state .status-dot { margin-right:7px; vertical-align:middle; flex:none; }
+
+/* Search results: "Open listing" sits at the top right above the buttons, as on a Top 10 pick */
+body[data-page="search"] #results-table.compact-rows td[data-label="Listing"]::before { content:none; display:none; }
+body[data-page="search"] #results-table td[data-label="Listing"] .inline-action-link { font-size:.85rem; white-space:nowrap; }
+@media (min-width:761px) {
+  body[data-page="search"] #results-table.compact-rows td[data-label="Listing"] { position:absolute; top:12px; right:20px; width:228px; padding:0; border:0; background:none; text-align:right; font-size:.85rem; display:flex; justify-content:flex-end; align-items:baseline; gap:8px; }
+  body[data-page="search"] #results-table.compact-rows td[data-label="Save"] { top:38px; }
+  body[data-page="search"] #results-table.compact-rows td[data-label="Actions"] { top:80px; }
+  body[data-page="search"] #results-table.compact-rows tbody tr.result-row { min-height:176px; }
+}
+@media (max-width:760px) {
+  body[data-page="search"] #results-table.compact-rows td[data-label="Listing"] { order:19; flex-basis:100%; text-align:right; padding:10px 0 0; border:0; background:none; display:flex; justify-content:flex-end; align-items:baseline; gap:8px; }
+}
+
+/* Top 10 picks: styled like the listing cards (static/js/top-picks-facts.js) */
+.top-picks-list { gap:12px; }
+.top-pick { align-items:start; padding:16px 20px; border:1px solid #dfe3e8; border-radius:12px; background:#fff; box-shadow:0 1px 2px rgba(16,24,40,.05); }
+.top-pick-title { font-size:1.05rem; font-weight:700; color:#111827; }
+.top-pick-line { display:flex; flex-wrap:wrap; align-items:baseline; margin-top:4px; font-size:.9rem; color:#374151; }
+.top-pick-line > * + *::before { content:"\00b7"; margin:0 8px; color:#9ca3af; font-weight:400; }
+.top-pick-line .top-pick-company { display:inline; font-weight:700; color:#1f2937; font-size:inherit; }
+.top-pick-domain { display:block; margin-top:6px; font-size:.8rem; color:#6b7280; }
+.top-pick-verification { margin-left:8px; font-size:.75rem; }
+.top-pick-stats { display:flex; flex-wrap:wrap; gap:6px 8px; margin-top:10px; }
+.top-pick-stat { display:inline-flex; align-items:center; gap:6px; padding:3px 4px 3px 10px; border:1px solid #e5e7eb; border-radius:999px; background:#f9fafb; font-size:.78rem; font-weight:600; color:#4b5563; }
+.top-pick-stat .stat-plain { padding-right:8px; color:#374151; }
+.top-pick-stat .job-fit, .top-pick-stat .credibility-badge { min-width:0; padding:1px 8px; border-radius:999px; font-size:.78rem; }
+.top-pick-chips { margin-top:10px; }
+.top-pick-refreshed { margin:8px 0 0; font-size:.82rem; font-weight:600; color:#1a7f37; }
+.top-pick-buttons .top-pick-block { grid-column:1 / -1; }
+/* Re-sorting the Apply Queue moves its rows: they must not be scroll anchors, or the page follows a row that moved */
+#apply-queue .apply-queue-list { overflow-anchor:none; }
+
+/* Companies page (static/js/companies.js): businesses near a place */
+.visually-hidden { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+.companies-form { display:flex; flex-wrap:wrap; gap:14px 18px; align-items:flex-end; }
+.companies-place { flex:1 1 280px; min-width:220px; }
+.companies-miles { flex:0 0 140px; }
+.companies-kinds { flex:1 1 100%; display:flex; flex-wrap:wrap; gap:6px 18px; margin:0; padding:10px 14px; border:1px solid #d4d8dd; border-radius:8px; }
+.companies-kinds legend { padding:0 6px; font-weight:700; font-size:.88rem; }
+.companies-kind { display:inline-flex; align-items:center; gap:6px; font-size:.92rem; }
+.companies-saved { margin:0 0 14px; }
+.chip-button { margin:0 6px 0 0; padding:3px 11px; border:1px solid #c7cbd1; border-radius:999px; background:#f6f7f8; font:inherit; font-size:.85rem; cursor:pointer; }
+.chip-button:hover { background:#eaecef; }
+/* Your places: white on dark, like the menu */
+.companies-saved-place { background:#1f2937; border-color:#1f2937; color:#fff; font-weight:600; }
+.companies-saved-place:hover, .companies-saved-place:focus-visible { background:#374151; border-color:#374151; color:#fff; }
+.companies-kinds-tools { display:inline-flex; gap:6px; margin-right:6px; }
+.companies-kinds-tools .chip-button { margin:0; padding:1px 10px; font-size:.8rem; }
+.companies-add { margin-top:14px; border:1px solid #d4d8dd; border-radius:8px; padding:10px 14px; background:#fafbfc; }
+.companies-add summary { cursor:pointer; font-weight:700; }
+.companies-add-form { display:grid; grid-template-columns:repeat(12, minmax(0, 1fr)); gap:12px 16px; align-items:start; margin-top:12px; }
+.companies-add-form .form-field { margin:0; min-width:0; grid-column:span 4; }
+.companies-add-form .form-field input, .companies-add-form .form-field textarea { width:100%; box-sizing:border-box; }
+.companies-add-form .companies-add-address { grid-column:span 6; }
+.companies-add-form .form-field:has(#companies-add-city) { grid-column:span 3; }
+.companies-add-form .form-field:has(#companies-add-state) { grid-column:span 1; }
+.companies-add-form .form-field:has(#companies-add-zip) { grid-column:span 2; }
+.companies-add-form .companies-add-notes { grid-column:span 8; }
+.companies-add-actions { grid-column:1 / -1; }
+.companies-add-notes textarea { padding:7px 10px; border:1px solid #c4c8ce; border-radius:6px; font:inherit; resize:vertical; }
+.companies-add-actions { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+.companies-add-help { margin:12px 0 0; }
+/* The address suggestions under the Address box (static/js/address-suggest.js) */
+.address-suggest-wrap { position:relative; }
+.address-suggest { position:absolute; z-index:20; left:0; right:0; top:100%; margin:2px 0 0; padding:4px 0; list-style:none; background:#fff; border:1px solid #c4c8ce; border-radius:6px; box-shadow:0 6px 18px rgba(0,0,0,.14); max-height:260px; overflow-y:auto; }
+.address-suggest li { display:flex; flex-direction:column; gap:1px; padding:6px 10px; cursor:pointer; }
+.address-suggest li.is-active, .address-suggest li:hover { background:#eef3f9; }
+.address-suggest small { color:#69717d; }
+@media (max-width: 760px) {
+  .companies-add-form { grid-template-columns:1fr; }
+  .companies-add-form .form-field { grid-column:auto !important; }
+}
+.companies-mine-badge { display:inline-block; margin-left:8px; padding:1px 8px; border-radius:999px; background:#1f2937; color:#fff; font-size:.72rem; font-weight:700; vertical-align:middle; }
+.companies-notes { display:block; margin-top:2px; color:#59636e; white-space:pre-line; }
+.companies-results { margin-top:16px; }
+.companies-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; margin:0 0 10px; }
+.companies-filter input { min-width:260px; padding:7px 10px; border:1px solid #c4c8ce; border-radius:6px; font:inherit; }
+.companies-website-only { display:inline-flex; align-items:center; gap:6px; font-size:.92rem; }
+.companies-table { width:100%; border-collapse:collapse; font-size:.92rem; }
+.companies-table th, .companies-table td { padding:8px 10px; border-bottom:1px solid #e6e8eb; text-align:left; vertical-align:top; }
+.companies-table th { font-size:.8rem; text-transform:uppercase; letter-spacing:.04em; color:#59636e; }
+.companies-miles-cell { white-space:nowrap; font-variant-numeric:tabular-nums; }
+.companies-phone { color:#59636e; }
+.companies-row-actions { text-align:right !important; white-space:nowrap; width:1%; }
+.companies-row-actions > * + * { margin-left:6px; }
+.companies-row-actions .bordered-button { min-height:30px; padding:3px 10px; font-size:.82rem; }
+.is-hidden-company { opacity:.5; }
+.companies-status { margin:12px 0; }
+.companies-error { color:#b42318; font-weight:600; }
+@media (max-width: 760px) {
+  .companies-table th:nth-child(3), .companies-table td:nth-child(3) { display:none; }
+}
+
+/* Six menu items (Companies was added): wrap onto a second row on a middling window instead of running off the page. */
+.nav-inner { flex-wrap: wrap; }
+@media (min-width: 641px) {
+  .nav-link { min-width: 96px; padding-left: 14px; padding-right: 14px; }
+}
+.companies-jobs-link { font-size:.85rem; font-weight:600; }
+.companies-jobs-text { font-size:.85rem; color:#59636e; }
+.companies-origin { margin:10px 0 0; }
+.companies-mine { margin:16px 0 0; padding:14px 16px; border:1px solid #d4d8dd; border-radius:8px; background:#fff; }
+.companies-mine h2 { margin:0 0 8px; font-size:1.15rem; }
+.companies-mine-table th:nth-child(2), .companies-mine-table td:nth-child(2) { display:none; }
+.companies-mine-table .companies-mine-badge { display:none; }
+
+.companies-edit-row > td { padding:10px 14px; background:#fafbfc; border-top:0; }
+.companies-edit-row .companies-add-form { margin-top:0; }
+
+/* Search for Jobs, tighter: less padding and spacing around the boxes, smaller dark bubbles; button and input sizes stay */
+body[data-page="search"] .search-panel { padding:14px 18px 16px; margin-bottom:18px; }
+body[data-page="search"] .search-panel-heading { margin-bottom:8px; }
+body[data-page="search"] .search-panel-heading h2 { margin:0; font-size:1.25rem; }
+body[data-page="search"] .job-search-form { gap:10px 18px; margin-bottom:10px; }
+body[data-page="search"] .job-search-form .form-field > label + .field-help { margin:1px 0 5px; }
+body[data-page="search"] .job-search-form .field-help { line-height:1.3; }
+body[data-page="search"] .city-search-field .city-list-below { margin:6px 0 0; gap:5px; }
+body[data-page="search"] .city-search-field > .field-help { margin:6px 0 0; }
+body[data-page="search"] .city-chip, body[data-page="search"] .skill-chip { gap:5px; margin:0; padding:2px 5px 2px 9px; font-size:.8rem; line-height:1.25; }
+body[data-page="search"] .city-remove, body[data-page="search"] .skill-chip button { width:16px; height:16px; min-width:0; min-height:0; font-size:.85rem; line-height:1; }
+body[data-page="search"] .skill-chip-list { gap:5px; margin:6px 0 0; }
+body[data-page="search"] .job-title-suggestions { margin-top:5px; }
+body[data-page="search"] .search-controls { gap:8px; }
+body[data-page="search"] .capture-prompt:not([hidden]) { margin-top:10px; padding:8px 12px; }
+body[data-page="search"] .section-heading-row { margin:6px 0 8px; }
+/* The Add Location and Add Term buttons are as tall as the boxes beside them */
+body[data-page="search"] .city-add-row, body[data-page="search"] .skill-add-row { align-items:stretch; }
+body[data-page="search"] .city-add-row > .bordered-button, body[data-page="search"] .skill-add-row > .bordered-button { height:auto; min-height:0; align-self:stretch; margin:0; }
+
+/* Job title bubbles: the title box is a box plus an Add button, like the cities; every bubble on the search panel
+   (titles, towns, ignored words, and the suggestions in blue) has the same size and text */
+body[data-page="search"] .job-title-field .city-add-row { display:flex; gap:10px; align-items:stretch; max-width:100%; }
+body[data-page="search"] .job-title-field .city-add-row > input { flex:1 1 auto; min-width:0; }
+body[data-page="search"] .job-title-field .city-add-row > .bordered-button { flex:none; margin:0; }
+body[data-page="search"] .job-title-field .city-list-below { margin:6px 0 0; gap:5px; }
+body[data-page="search"] .job-title-suggestions { margin-top:6px; gap:5px; }
+body[data-page="search"] .city-chip, body[data-page="search"] .skill-chip, body[data-page="search"] .job-suggestion-button {
+  display:inline-flex; align-items:center; gap:5px; margin:0; padding:2px 5px 2px 9px; font-size:.8rem; font-weight:400; line-height:1.25; border-radius:999px; }
+body[data-page="search"] .job-suggestion-button { padding:2px 9px; background:#e6f0ff; border:1px solid #9bbcf2; color:#1d4f9c; }
+body[data-page="search"] .job-suggestion-button:hover { background:#d3e5ff; }

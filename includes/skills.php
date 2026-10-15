@@ -334,6 +334,8 @@ function resume_suggestions(string $text): array
         }
     }
     $parts = $name === '' ? [] : explode(' ', $name);
+    require_once __DIR__ . '/education.php';
     return ['first_name' => $parts[0] ?? '', 'last_name' => implode(' ', array_slice($parts, 1)),
-        'home_location' => $location, 'skills' => detect_skills($text), 'work_history' => $history];
+        'home_location' => $location, 'skills' => detect_skills($text), 'work_history' => $history,
+        'education' => parse_education($text)];
 }
