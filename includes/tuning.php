@@ -19,6 +19,7 @@ const TUNING_FIELDS = [
 
 // key => [label, help, default]
 const TUNING_SWITCHES = [
+    'brave_search_enabled' => ['Search the web with Brave Search', 'Each web query uses one Brave credit. Switch this off to search only employer career sites, job sites and remote feeds (no credits are used).', true],
     'usa_only' => ['U.S. jobs only', 'Skip jobs that are outside the United States or unverified.', true],
     'exclude_internships' => ['Skip internships and co-ops', 'Leave out jobs titled intern, internship or co-op.', true],
     'related_titles' => ['Also match closely related titles', 'Recognise titles such as Multimedia Designer or Production Artist when you typed Designer or Production Specialist.', true],

@@ -153,3 +153,12 @@ check('jobaps: the State of Maryland is a default employer', (bool) array_filter
 check('jobaps: its name', board_pretty_name(['system' => 'jobaps', 'agency' => 'MD']) === 'State of Maryland');
 check('rippling: boards are recognised', identify_board('https://ats.rippling.com/example-co/jobs/0a1b2c3d-1111-2222-3333-444455556666')
     === ['system' => 'rippling', 'slug' => 'example-co'] && identify_board('https://ats.rippling.com/en-GB/example-co/jobs')['slug'] === 'example-co');
+
+// --- Brave Search can be switched off ---
+require_once APP_ROOT . '/includes/search/brave.php';
+$_saved_tuning = read_tuning_settings();
+set_setting_json('tuning', array_merge($_saved_tuning, ['brave_search_enabled' => false]));
+check('brave: switched off, no search may be made', str_contains((string) brave_blocked_reason(), 'switched off'));
+set_setting_json('tuning', array_merge($_saved_tuning, ['brave_search_enabled' => true]));
+check('brave: switched on, the usual reasons apply', !str_contains((string) brave_blocked_reason(), 'switched off'));
+set_setting_json('tuning', $_saved_tuning);
