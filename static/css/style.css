@@ -2227,3 +2227,6 @@ body[data-page="search"] .city-chip, body[data-page="search"] .skill-chip, body[
   display:inline-flex; align-items:center; gap:5px; margin:0; padding:2px 5px 2px 9px; font-size:.8rem; font-weight:400; line-height:1.25; border-radius:999px; }
 body[data-page="search"] .job-suggestion-button { padding:2px 9px; background:#e6f0ff; border:1px solid #9bbcf2; color:#1d4f9c; }
 body[data-page="search"] .job-suggestion-button:hover { background:#d3e5ff; }
+
+.companies-kind-tags { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 10px; }
+.companies-kind-tag.is-active { background:#1f2937; border-color:#1f2937; color:#fff; }
