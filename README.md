@@ -49,9 +49,9 @@ profile and settings are kept in `data/jobfinder.sqlite`, which is never uploade
 - **1.1.276:** the Open All Details button sits level with the filter boxes.
 - **1.1.277:** the Résumé Builder's person cards wrap their dropdowns on a narrow screen.
 
-## What changed in 1.1.281
+## What changed in 1.1.281 - 1.1.283
 
-The web version caught up to the desktop Job Finder's v1.1.281 on the Companies page and the footer:
+The web version caught up to the desktop Job Finder's v1.1.283 on the Companies page and the footer:
 
 - **Tags filter the results.** Every kind of place is a tag from the start (with a count after a search); picking tags
   narrows the results already found, with no new search. The text filter box is gone.
@@ -60,6 +60,9 @@ The web version caught up to the desktop Job Finder's v1.1.281 on the Companies 
 - **Saved Companies** (the Save button on a result) are kept in the settings table.
 - **Results stay.** The last search and the hidden results are kept in the browser and on the server, so a refresh or
   clearing the browser keeps them. Changing the town in the box measures the results again from it (no new search).
+- **Eight more tags** (Technology and data, Arts and entertainment, Accounting and tax, Print and signs, Engineering and
+  architecture, Marketing and media, Churches and nonprofits, Transport and shipping). Every kind is searched, so each tag has
+  results; the first search takes about two minutes (one question a second) and the answers are kept 6 hours.
 - **Footer** lists the geocoding, address, job feed and career page sources, and the Figma link.
 
 ## What changed in 1.1.273
