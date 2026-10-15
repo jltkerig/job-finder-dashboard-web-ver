@@ -2230,3 +2230,7 @@ body[data-page="search"] .job-suggestion-button:hover { background:#d3e5ff; }
 
 .companies-kind-tags { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 10px; }
 .companies-kind-tag.is-active { background:#1f2937; border-color:#1f2937; color:#fff; }
+
+/* The Open All Details button sits on the same line as the filter boxes (bottom edges level), the same height as them */
+body[data-page="search"] .results-toolbar > .details-all-field { align-self:flex-end; }
+body[data-page="search"] .results-toolbar > .details-all-field .bordered-button { height:36px; min-height:36px; line-height:1; padding-top:0; padding-bottom:0; }
