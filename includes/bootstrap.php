@@ -4,7 +4,7 @@
 declare(strict_types=1);
 
 const APP_ROOT = __DIR__ . '/..';
-const APP_VERSION = '1.1.240';  // the same number as the desktop Job Finder it matches (dashboard.py APP_VERSION)
+const APP_VERSION = '1.1.273';  // the same number as the desktop Job Finder it matches (dashboard.py APP_VERSION)
 const DATA_DIR = APP_ROOT . '/resources';     // bundled reference data (O*NET, Census places and ZIPs)
 
 // Choices for a saved job's Application Status, in the order the drop-downs show them.

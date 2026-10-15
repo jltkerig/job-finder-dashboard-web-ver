@@ -93,6 +93,39 @@ function get_companies(): array
     return $visible;
 }
 
+const APPLIED_STAGES = ['Applied', 'Talking With Recruiter', 'Interview'];
+
+/** (company, title) for spotting one job found on several boards: the company's first real word and the plain title. */
+function duplicate_key(array $company): ?string
+{
+    $filler = ['the', 'inc', 'llc', 'ltd', 'co', 'corp', 'company', 'group', 'government', 'gov', 'of'];
+    preg_match_all('/[a-z0-9]+/', mb_strtolower((string) ($company['name'] ?? '')), $m);
+    $words = array_values(array_diff($m[0], $filler));
+    $name = $words ? (strlen($words[0]) <= 2 ? implode('', array_slice($words, 0, 2)) : $words[0]) : '';
+    $title = preg_replace('/\[[^\]]*\]|\((?:remote|hybrid|on-?site)\)/', ' ', mb_strtolower((string) ($company['career_job_title'] ?? '')));
+    preg_match_all('/[a-z0-9]+/', $title, $t);
+    $title = implode(' ', $t[0]);
+    return $name !== '' && $title !== '' ? "$name|$title" : null;
+}
+
+/** The Search page's results without the jobs you saved (Keep), applied to or added to the Apply Queue, or their copies
+ * on other boards: those live on the Dashboard. $everything is the list the copies are looked for in. */
+function hide_dashboard_jobs(array $companies, array $everything): array
+{
+    $mine = [];
+    $is_mine = fn($c) => !empty($c['is_kept']) || in_array($c['application_status'] ?? '', APPLIED_STAGES, true)
+        || !empty($c['details']['apply_queued']);
+    foreach ($everything as $company) {
+        if ($is_mine($company) && ($key = duplicate_key($company)) !== null) {
+            $mine[$key] = true;
+        }
+    }
+    return array_values(array_filter($companies, function ($c) use ($is_mine, $mine) {
+        $key = duplicate_key($c);
+        return !$is_mine($c) && ($key === null || !isset($mine[$key]));
+    }));
+}
+
 function get_kept_companies(string $status = '', string $state = '', string $title = '', string $sort = 'date_desc'): array
 {
     $where = ['is_kept = 1', 'is_rejected = 0'];
@@ -455,4 +488,52 @@ function search_skips_page(string $query, int $page): array
 function recent_skips(int $limit = 20): array
 {
     return rows("SELECT url, title, reason FROM search_skips WHERE reason <> 'Passed' ORDER BY checked_at DESC LIMIT $limit");
+}
+
+/** LinkedIn's Easy Apply mark, in the look LinkedIn gives the button on its job tracker: its blue, with its "in" square. */
+function easy_apply_badge(): string
+{
+    return '<span class="easy-apply-badge" title="LinkedIn Easy Apply: you apply on LinkedIn without leaving it"><svg aria-hidden="true" viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M15 2v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1M5 6H3v7h2zm.25-2A1.25 1.25 0 1 0 4 5.25 1.25 1.25 0 0 0 5.25 4M13 9.29c0-2.2-.73-3.49-2.86-3.49A2.71 2.71 0 0 0 7.89 7V6H6v7h2V9.73a1.73 1.73 0 0 1 1.54-1.92h.12C10.82 7.8 11 8.94 11 9.73V13h2z"/></svg>Easy Apply</span>';
+}
+
+/** The Job Apply Stats: jobs applied to by month (the last 6), those before that, and those with no date saved. Jobs
+ * applied to outside Job Finder (the "applied_elsewhere" setting) count in their months too. */
+function applied_by_month(?DateTimeImmutable $today = null): array
+{
+    $today = $today ?? new DateTimeImmutable('today');
+    $shown = [];
+    $year = (int) $today->format('Y');
+    $month = (int) $today->format('n');
+    for ($i = 0; $i < 6; $i++) {
+        $shown[] = [sprintf('%04d-%02d', $year, $month), (new DateTimeImmutable(sprintf('%04d-%02d-01', $year, $month)))->format('M Y')];
+        if (--$month === 0) {
+            $month = 12;
+            $year--;
+        }
+    }
+    $oldest = $shown[5][0];
+    $dates = [];
+    $marks = implode(', ', array_fill(0, count(APPLIED_STAGES), '?'));
+    foreach (rows("SELECT listing_details FROM companies WHERE is_kept = 1 AND is_rejected = 0 AND application_status IN ($marks)", APPLIED_STAGES) as $row) {
+        $details = json_decode((string) ($row['listing_details'] ?? ''), true);
+        $dates[] = clean_applied_date(is_array($details) ? ($details['applied_on'] ?? '') : '');
+    }
+    require_once APP_ROOT . '/includes/companies.php';
+    foreach (applied_elsewhere() as $entry) {
+        $dates[] = $entry['applied_on'];
+    }
+    $counts = [];
+    $earlier = $undated = 0;
+    foreach ($dates as $date) {
+        $key = substr($date, 0, 7);
+        if ($key === '') {
+            $undated++;
+        } elseif ($key < $oldest) {
+            $earlier++;
+        } else {
+            $counts[$key] = ($counts[$key] ?? 0) + 1;
+        }
+    }
+    return ['months' => array_map(fn($m) => ['key' => $m[0], 'label' => $m[1], 'count' => $counts[$m[0]] ?? 0], $shown),
+        'earlier' => $earlier, 'undated' => $undated];
 }

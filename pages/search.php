@@ -7,10 +7,10 @@ require_once APP_ROOT . '/includes/search/state.php';
 
 tidy_closed_jobs();
 $companies = get_companies();
+$companies = hide_dashboard_jobs($companies, $companies);  // saved, applied and queued jobs live on the Dashboard
 $profile = get_user_profile();
 add_job_fit($companies, $profile['skills']);
 $latest_search_at = get_search_history(1)[0]['searched_at'] ?? null;
-$skipped = recent_skips();
 $run = search_state();
 
 $title = 'Search';
@@ -21,7 +21,7 @@ $subtitle_class = 'app-version';
 $body_attrs = ' data-scraper-running="' . (search_running($run) ? 'true' : 'false') . '" data-scraper-mode="'
     . h(search_running($run) ? $run['mode'] : '') . '" data-work-preferences="' . json_attr($profile['work_preferences']) . '"';
 $before_nav = "<div id=\"search-progress-bar\" class=\"search-progress-bar\" hidden>\n</div>";
-$scripts = ['capture-upload.js', 'columns.js', 'top-picks.js'];
+$scripts = ['capture-upload.js', 'columns.js', 'job-title-bubbles.js', 'reject-reason.js', 'top-picks.js', 'details-all.js'];
 
 function credibility_class($score): string
 {
@@ -61,9 +61,11 @@ require APP_ROOT . '/templates/_top.php';
         </div>
       </div>
       <form id="job-search-form" class="job-search-form">
-        <div class="form-field"><label for="job-title">Job Titles</label>
+        <div class="form-field job-title-field"><label for="job-title-add">Job Titles</label>
           <p class="field-help">Separate multiple titles with commas. Related titles appear automatically after you pause typing.
-          </p><input id="job-title" name="job_title" type="text" data-title-suggest="list" placeholder="e.g. Web Designer, UI Designer" value="<?= h(implode(', ', $profile['job_titles'])) ?>" required />
+          </p><input id="job-title" name="job_title" type="hidden" value="<?= h(implode(', ', $profile['job_titles'])) ?>" />
+          <div class="city-add-row"><input id="job-title-add" type="text" data-title-suggest="single" maxlength="120" placeholder="e.g. Web Designer" autocomplete="off" aria-label="Add a job title" /><button class="bordered-button secondary-action" id="add-job-title" type="button">Add Title</button></div>
+          <div id="job-title-list" class="city-list city-list-below"></div>
           <div id="job-title-suggestions" class="job-title-suggestions" hidden aria-live="polite">
           </div>
         </div>
@@ -96,15 +98,7 @@ require APP_ROOT . '/templates/_top.php';
     <div class="section-heading-row">
       <h2>Results
       </h2>
-    </div><?php if ($skipped): ?>
-    <details class="skipped-results">
-      <summary>Why were some pages skipped? (<?= count($skipped) ?> recent checks)
-      </summary>
-      <ul><?php foreach ($skipped as $item): ?>
-        <li><strong><?= h($item['reason']) ?></strong><?php if ($item['title']): ?> · <?= h($item['title']) ?><?php endif; ?> <a href="<?= h($item['url']) ?>" target="_blank" rel="noopener noreferrer">Source</a>
-        </li><?php endforeach; ?>
-      </ul>
-    </details><?php endif; ?>
+    </div>
     <?php if ($companies): ?>
     <section class="results-toolbar" aria-label="Results filters">
       <div class="toolbar-title"><span class="filter-icon" aria-hidden="true">⌕</span><strong>Filters</strong>
@@ -124,6 +118,8 @@ require APP_ROOT . '/templates/_top.php';
       <div class="form-field compact-field"><label for="result-new-filter">Found</label><select id="result-new-filter"><option value="all">All results</option><option value="new">New since last search</option></select>
       </div>
       <div class="form-field compact-field"><label for="result-sort">Sort</label><select id="result-sort"><option value="default">Newest</option><option value="company">Company A–Z</option><option value="job">Job title A–Z</option><option value="distance">Distance</option><option value="career-credibility">Career credibility</option><option value="usa-credibility">USA credibility</option></select>
+      </div>
+      <div class="form-field compact-field details-all-field"><button id="details-all-button" class="bordered-button secondary-action" type="button" title="Open or close the Details of every result shown and of the Top 10 picks">Open All Details</button>
       </div>
       <details class="display-options"><summary>Rows and Columns</summary>
       <div class="form-field compact-field compact-rows-field"><span class="field-label">Rows</span><label class="compact-rows-toggle"><input type="checkbox" id="compact-rows-toggle" checked /> Compact rows</label></div>
@@ -172,7 +168,7 @@ require APP_ROOT . '/templates/_top.php';
       <tr class="result-row" data-company-id="<?= $id ?>" data-company="<?= h($company['name']) ?>" data-job="<?= h($company['career_job_title']) ?>" data-state="<?= h($company['state']) ?>" data-city="<?= h($company['city']) ?>" data-distance="<?= $company['distance_miles'] !== null ? h($company['distance_miles']) : 99999 ?>" data-status="<?= h($listing_status) ?>" data-work-arrangement="<?= h($company['work_arrangement']) ?>" data-career-credibility="<?= (int) $career ?>" data-usa-credibility="<?= (int) $usa ?>" data-job-fit="<?= $company['job_fit']['score'] ?? '' ?>" data-saved="<?= $company['is_kept'] ? 'true' : 'false' ?>" data-schedule="<?= h($schedule) ?>" data-search-run="<?= $is_new ?>" data-new="<?= $is_new ?>">
         <td data-label="Save"><button class="bordered-button keep-action<?= $company['is_kept'] ? ' is-saved' : '' ?>" type="button" data-company-id="<?= $id ?>"><?= $company['is_kept'] ? 'Saved' : 'Keep' ?></button></td>
         <td data-label="Company"><?= h($company['name'] ?: 'Unknown') ?></td>
-        <td data-label="Job"><strong><?= h($company['career_job_title'] ?: 'Unknown') ?></strong><?php if ($schedule !== '' || $salary !== ''): ?><small class="job-meta"><?= h(ucwords(str_replace('_', ' ', strtolower($schedule)))) ?><?= $schedule !== '' && $salary !== '' ? ' · ' : '' ?><?= h($salary) ?></small><?php endif; ?><?php if (!empty($d['also_on'])): ?><small class="job-meta">Also on: <?= implode(', ', array_map(fn($l) => '<a href="' . h($l['url']) . '" target="_blank" rel="noopener noreferrer">' . h($l['site']) . '</a>', $d['also_on'])) ?></small><?php endif; ?></td>
+        <td data-label="Job"><strong><?= h($company['career_job_title'] ?: 'Unknown') ?></strong><?= !empty($d['easy_apply']) ? easy_apply_badge() : '' ?><?php if ($schedule !== '' || $salary !== ''): ?><small class="job-meta"><?= h(ucwords(str_replace('_', ' ', strtolower($schedule)))) ?><?= $schedule !== '' && $salary !== '' ? ' · ' : '' ?><?= h($salary) ?></small><?php endif; ?><?php if (!empty($d['also_on'])): ?><small class="job-meta">Also on: <?= implode(', ', array_map(fn($l) => '<a href="' . h($l['url']) . '" target="_blank" rel="noopener noreferrer">' . h($l['site']) . '</a>', $d['also_on'])) ?></small><?php endif; ?></td>
         <td data-label="Work Location"<?= $company['work_arrangement'] ? '' : ' class="is-empty"' ?>><?= h($company['work_arrangement'] ?: '—') ?><?php if (!empty($d['remote_limited_to'])): ?><small class="remote-states"><?= h(implode(', ', $d['remote_limited_to'])) ?> only</small><?php endif; ?></td>
         <td data-label="Domain"><?php if ($domain_url): ?><a href="<?= h($domain_url) ?>" target="_blank" rel="noopener noreferrer"<?= !empty($d['verification']) ? ' title="' . h($d['verification']) . '"' : '' ?>><?= h($domain) ?></a><?php else: ?>Unknown<?php endif; ?><?php if (!empty($d['verification'])): ?><br><small class="verification" title="Whether this posting was found on the company's own website or hiring board"><?= h($d['verification']) ?></small><?php endif; ?></td>
         <td data-label="Career Credibility"><a class="credibility-link" href="/credibility-scores" aria-label="How career credibility is calculated"><span class="credibility-badge credibility-<?= credibility_class($career) ?>"><?= (int) $career * 10 ?>%</span></a></td>

@@ -7,6 +7,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const toastRegion = document.getElementById("toast-region");
   let currentUpdateController = null;
   let requestReplacement = async () => {};
+  // A replacement search only runs for a listing that is one of the Top 10 picks; any other result just goes.
+  const requestReplacementIfTopPick = (companyId) => { if (document.getElementById(`top-pick-${companyId}`)) requestReplacement(); };
 
   const CITY_STATE_OPTIONS = [
     "Birmingham, AL","Huntsville, AL","Mobile, AL","Montgomery, AL","Anchorage, AK","Fairbanks, AK","Phoenix, AZ","Tucson, AZ","Mesa, AZ","Little Rock, AR","Fayetteville, AR",
@@ -101,7 +103,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await readJsonResponse(response, "Could not save this result.", "E1201"); if (!response.ok) throw new Error(serverMessage(data, "Could not save this result.", "E1201"));
       button.classList.remove("is-saving"); button.classList.add("is-saved"); button.textContent = "Saved"; button.disabled = false;
       const row = button.closest(".result-row"); if (row) row.dataset.saved = "true";
-      showToast("Added to Dashboard", "success");
+      // A saved job lives on the Dashboard's Saved Jobs, so it fades off the results (and stays off on reload).
+      if (page === "search") window.removeResultRows([companyId]);
+      showToast("Added to Saved Jobs on the Dashboard", "success");
     } catch (error) { button.disabled = false; button.classList.remove("is-saving"); button.textContent = "Keep"; showToast(error.message, "danger"); }
   }
   async function unsaveListing(button) {
@@ -125,22 +129,61 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   $$(".reject-action").forEach((button) => button.addEventListener("click", async () => {
     const companyId = button.dataset.companyId, companyName = button.dataset.companyName || "this listing";
-    if (!confirm(`Reject ${companyName}? This hides it from search. You can restore it from Settings.`)) return;
+    const inRow = button.closest(".result-row");
+    // A result row has the "If rejecting, why?" picker on its Details tab; a saved job on the Dashboard asks in a dialog.
+    let reason = inRow?.nextElementSibling?.querySelector(".reject-reason")?.value || "other";
+    if (!inRow && window.askRejectReason) {
+      reason = await window.askRejectReason(companyName);
+      if (!reason) return;
+    } else if (!confirm(`Reject ${companyName}? This hides it from search. You can restore it from Settings.`)) return;
     button.disabled = true; button.classList.add("is-removing"); button.textContent = "Removed";
     try {
-      const reason=button.closest(".result-row")?.nextElementSibling?.querySelector(".reject-reason")?.value||"other";
       const response = await fetch(`/reject-listing/${companyId}`, { method: "POST", headers: { "X-CSRF-Token": csrfToken, "X-Requested-With": "fetch", "Content-Type":"application/json", Accept: "application/json" }, body: JSON.stringify({reason}) });
       const data = await readJsonResponse(response, "Could not reject the listing.", "E3202"); if (!response.ok) throw new Error(serverMessage(data, "Could not reject the listing.", "E3202"));
+      window.ApplyQueueDrop?.([companyId, ...(data.also_rejected || [])]);  // a rejected job leaves the Apply Queue too
       const item = button.closest(".result-row, .saved-job-card"); if (item) { item.classList.add("is-removing"); setTimeout(() => { if (item.matches("tr")) { const next = item.nextElementSibling; if (next?.classList.contains("details-row")) next.remove(); } item.remove(); updateClientResults(); }, 330); }
-      if(page==="search")requestReplacement();
+      if(page==="search")requestReplacementIfTopPick(companyId);
       showToast("Moved to Settings", "danger", "Undo", async () => { try { await restoreRejected(companyId); sessionStorage.setItem("jobFinderToast", JSON.stringify({ message: "Listing restored", type: "success" })); window.location.reload(); } catch (error) { showToast(error.message, "danger"); } }, 6500);
     } catch (error) { button.disabled = false; button.classList.remove("is-removing"); button.textContent = "Reject Listing"; showToast(error.message, "danger"); }
+  }));
+  // Closed: the job is no longer open. Rejects it with the reason "closed", the same as Closed on a Top 10 pick.
+  $$(".closed-action").forEach((button) => button.addEventListener("click", async () => {
+    const companyId = button.dataset.companyId; if (!companyId || button.disabled) return;
+    button.disabled = true;
+    try {
+      const response = await fetch(`/reject-listing/${companyId}`, { method: "POST", headers: { "X-CSRF-Token": csrfToken, "X-Requested-With": "fetch", "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ reason: "closed" }) });
+      const data = await readJsonResponse(response, "Could not mark the listing closed.", "E3202"); if (!response.ok) throw new Error(serverMessage(data, "Could not mark the listing closed.", "E3202"));
+      fadeResultRows((row) => row.dataset.companyId === String(companyId));
+      window.ApplyQueueDrop?.([companyId, ...(data.also_rejected || [])]);
+      if (page === "search") requestReplacementIfTopPick(companyId);
+      showToast("Marked closed and moved to Settings", "info", "Undo", async () => { try { await restoreRejected(companyId); sessionStorage.setItem("jobFinderToast", JSON.stringify({ message: "Listing restored", type: "success" })); window.location.reload(); } catch (error) { showToast(error.message, "danger"); } }, 6500);
+    } catch (error) { button.disabled = false; showToast(error.message, "danger"); }
+  }));
+
+  // Refresh: reads this one posting again (the same check as Refresh on a Top 10 pick); a job found closed turns red.
+  $$(".refresh-action").forEach((button) => button.addEventListener("click", async () => {
+    const companyId = button.dataset.companyId; if (!companyId || button.disabled) return;
+    const row = button.closest(".result-row"), label = button.textContent;
+    button.disabled = true; button.textContent = "Refreshing…";
+    try {
+      const response = await fetch("/top-picks/requirements", { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify({ company_ids: [companyId], refresh: true }) });
+      const data = await readJsonResponse(response, "Could not refresh this listing.", "E3230"); if (!response.ok) throw new Error(serverMessage(data, "Could not refresh this listing.", "E3230"));
+      const found = (data.gaps || {})[companyId] || {};
+      if (found.closed && row) {
+        row.dataset.status = "closed";
+        const state = row.querySelector(".job-open-state"), dot = state?.querySelector(".status-dot");
+        if (dot) { dot.className = "status-dot closed"; dot.dataset.tooltip = "This listing appears to no longer be active."; dot.setAttribute("aria-label", "Closed"); }
+      }
+      document.dispatchEvent(new CustomEvent("listing-refreshed", { detail: { id: companyId } }));
+      showToast(found.closed ? "That posting has closed." : found.unread ? "Couldn't read the posting, so nothing changed." : "Refreshed: the posting was read again.", found.closed ? "danger" : "info");
+    } catch (error) { showToast(error.message, "danger"); }
+    button.disabled = false; button.textContent = label;
   }));
   $$(".restore-action").forEach((button) => button.addEventListener("click", async () => { if (!confirm(`Restore ${button.dataset.companyName || "this listing"}?`)) return; button.disabled = true; try { const data = await restoreRejected(button.dataset.companyId); button.closest(".saved-job-card")?.remove(); showToast(data.kept ? "Restored to Dashboard" : "Restored to search results", "success"); } catch (error) { button.disabled = false; showToast(error.message, "danger"); } }));
   $$(".block-action").forEach((button) => button.addEventListener("click", async () => {
     const companyId = button.dataset.companyId, domain = button.dataset.domain || "this domain"; if (!companyId || !confirm(`Block ${domain} from future searches? This blocks the entire website, not just this listing.`)) return;
     button.disabled = true; try { const response = await fetch(`/block-domain/${companyId}`, { method: "POST", headers: { "X-CSRF-Token": csrfToken, "X-Requested-With": "fetch", Accept: "application/json" } }); const data = await readJsonResponse(response, "Could not block the domain.", "E3211"); if (!response.ok) throw new Error(serverMessage(data, "Could not block the domain.", "E3211")); button.textContent = "Blocked";
-      if(page==="search") { fadeResultRows(row => (row.dataset.companyId === String(companyId)) || (row.querySelector('td[data-label="Domain"]')?.textContent||"").trim().toLowerCase().endsWith(data.domain.toLowerCase())); requestReplacement(); }
+      if(page==="search") { fadeResultRows(row => (row.dataset.companyId === String(companyId)) || (row.querySelector('td[data-label="Domain"]')?.textContent||"").trim().toLowerCase().endsWith(data.domain.toLowerCase())); requestReplacementIfTopPick(companyId); }
       showToast(`${data.domain || domain} blocked from future searches`, "info"); } catch (error) { button.disabled = false; showToast(error.message, "danger"); }
   }));
 
@@ -153,7 +196,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const data=await readJsonResponse(response,"Could not block the company.","E3221");
       if(!response.ok)throw new Error(serverMessage(data,"Could not block the company.","E3221"));
       button.textContent="Company Blocked";
-      if(page==="search") { fadeResultRows(row => (row.dataset.company||"").toLowerCase() === (data.company||name).toLowerCase()); requestReplacement(); }
+      if(page==="search") { fadeResultRows(row => (row.dataset.company||"").toLowerCase() === (data.company||name).toLowerCase()); requestReplacementIfTopPick(companyId); }
       showToast(`${data.company||name} blocked from future searches`,"info");
     }catch(error){button.disabled=false;showToast(error.message,"danger");}
   }));
@@ -166,6 +209,8 @@ document.addEventListener("DOMContentLoaded", () => {
       updateClientResults();
     },330);
   }
+  // For the other scripts on the page (Top 10 picks): take these jobs' rows out of the results.
+  window.removeResultRows = (ids) => { const wanted = new Set((ids || []).map(String)); fadeResultRows((row) => wanted.has(String(row.dataset.companyId))); };
 
   const STATE_NAMES = {"AK":"Alaska","AL":"Alabama","AR":"Arkansas","AZ":"Arizona","CA":"California","CO":"Colorado","CT":"Connecticut","DC":"District of Columbia","DE":"Delaware","FL":"Florida","GA":"Georgia","HI":"Hawaii","IA":"Iowa","ID":"Idaho","IL":"Illinois","IN":"Indiana","KS":"Kansas","KY":"Kentucky","LA":"Louisiana","MA":"Massachusetts","MD":"Maryland","ME":"Maine","MI":"Michigan","MN":"Minnesota","MO":"Missouri","MS":"Mississippi","MT":"Montana","NC":"North Carolina","ND":"North Dakota","NE":"Nebraska","NH":"New Hampshire","NJ":"New Jersey","NM":"New Mexico","NV":"Nevada","NY":"New York","OH":"Ohio","OK":"Oklahoma","OR":"Oregon","PA":"Pennsylvania","RI":"Rhode Island","SC":"South Carolina","SD":"South Dakota","TN":"Tennessee","TX":"Texas","UT":"Utah","VA":"Virginia","VT":"Vermont","WA":"Washington","WI":"Wisconsin","WV":"West Virginia","WY":"Wyoming"};
   const STATE_CODES = Object.fromEntries(Object.entries(STATE_NAMES).map(([code,name])=>[name.toLowerCase(),code]));
@@ -382,8 +427,23 @@ document.addEventListener("DOMContentLoaded", () => {
       await Promise.all(skills.slice(0, 12).map(skill => loadRelated(skill)));
       showSkillSuggestions();
     }
-    function addSkill(skill) { const value = (skill || "").trim().slice(0, 80); if (value && !skills.some(s => s.toLowerCase() === value.toLowerCase())) { skills.push(value); renderSkills(); } }
-    $("#add-skill").addEventListener("click", () => { addSkill($("#new-skill").value); $("#new-skill").value = ""; typedMatches = []; showSkillSuggestions(); });
+    // announce: for a skill typed or pasted into the box, say so when it is already listed (and show which chip it is)
+    // instead of quietly adding nothing.
+    function addSkill(skill, announce) {
+      const value = (skill || "").replace(/[​-‍﻿]/g, "").trim().slice(0, 80);
+      if (!value) return;
+      const at = skills.findIndex(s => s.toLowerCase() === value.toLowerCase());
+      if (at === -1) { skills.push(value); renderSkills(); return; }
+      if (!announce) return;
+      const chip = skillsList.children[at];
+      if (chip) {
+        chip.scrollIntoView({ block: "nearest" });
+        chip.classList.add("skill-chip-found");
+        setTimeout(() => chip.classList.remove("skill-chip-found"), 2500);
+      }
+      showToast(`${skills[at]} is already in your skills.`, "info");
+    }
+    $("#add-skill").addEventListener("click", () => { addSkill($("#new-skill").value, true); $("#new-skill").value = ""; typedMatches = []; showSkillSuggestions(); });
     $("#new-skill").addEventListener("keydown", event => { if (event.key === "Enter") { event.preventDefault(); $("#add-skill").click(); } });
     $("#new-skill").addEventListener("input", () => {
       clearTimeout(typedTimer);
@@ -457,13 +517,24 @@ document.addEventListener("DOMContentLoaded", () => {
           ["Email", "supervisor_email", "e.g. name@company.com"], ["Phone", "supervisor_phone", "Their own number, if you have it"]]));
         const actions = el("div", "work-actions");
         const remove = el("button", "bordered-button destructive-action", "Remove Job"); remove.type = "button";
-        remove.addEventListener("click", () => { history.splice(index, 1); renderHistory(); });
+        remove.addEventListener("click", () => keepPage(() => { history.splice(index, 1); renderHistory(); }));
         const done = el("button", "bordered-button secondary-action", "Done"); done.type = "button";
         done.addEventListener("click", () => { details.open = false; details.scrollIntoView({ block: "nearest" }); });
         actions.append(remove, done); fields.append(actions); details.append(fields); historyList.append(details);
       }); historyField.value = JSON.stringify(history);
     }
-    $("#add-work-history").addEventListener("click", () => { history.push({role:"",company:"",dates:"",description:""}); renderHistory(); historyList.lastElementChild.open = true; });
+    // Adding or removing a card changes the page's height above the saved jobs. Browsers that keep a visible element in
+    // place (scroll anchoring) would then scroll the page down to the listings, so the scroll position is put back.
+    // reveal() then brings a card that was just added into view, moving the page only as far as needed.
+    const keepPage = (change, reveal) => {
+      const top = window.scrollY;
+      change();
+      window.scrollTo(0, top);
+      requestAnimationFrame(() => { window.scrollTo(0, top); if (reveal) reveal(); });
+    };
+    $("#add-work-history").addEventListener("click", () => keepPage(
+      () => { history.push({role:"",company:"",dates:"",description:""}); renderHistory(); historyList.lastElementChild.open = true; },
+      () => historyList.lastElementChild?.scrollIntoView({ block: "nearest" })));
     // No work history saved yet: fill the form in from the uploaded résumé. Nothing is saved until Save Profile.
     const historyNote = $("#work-history-note");
     if (historyNote && !history.length) {
@@ -478,6 +549,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const educationField = $("#education-json"), educationList = $("#education-list");
     let education = []; try { education = JSON.parse(educationField.value); } catch {}
     let degrees = []; try { degrees = JSON.parse(educationList.dataset.degrees || "[]"); } catch {}
+    // No schools saved yet: fill the form in from the uploaded résumé. Nothing is saved until Save Profile.
+    const educationNote = $("#education-note");
+    if (educationNote && !education.length) {
+      let fromResume = []; try { fromResume = JSON.parse(educationNote.dataset.schools || "[]"); } catch {}
+      if (Array.isArray(fromResume) && fromResume.length) {
+        education = fromResume.map(school => ({ school: school.school || "", degree: school.degree || "", major: school.major || "", minor: school.minor || "",
+          start_date: school.start_date || "", end_date: school.end_date || "", gpa: school.gpa || "" }));
+        educationNote.textContent = `Filled in from your résumé (${educationNote.dataset.source || "uploaded résumé"}): check each school, remove any you don't want, then Save Profile.`;
+        educationNote.hidden = false;
+      }
+    }
     function renderEducation() {
       educationList.replaceChildren();
       if (!education.length) educationList.append(el("p", "work-empty", "No schools added yet."));
@@ -516,13 +598,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const dateBlock = el("fieldset", "work-dates-editor"); dateBlock.append(el("legend", "", "Time There"), months); fields.append(dateBlock);
         const actions = el("div", "work-actions");
         const remove = el("button", "bordered-button destructive-action", "Remove School"); remove.type = "button";
-        remove.addEventListener("click", () => { education.splice(index, 1); renderEducation(); });
+        remove.addEventListener("click", () => keepPage(() => { education.splice(index, 1); renderEducation(); }));
         const done = el("button", "bordered-button secondary-action", "Done"); done.type = "button";
         done.addEventListener("click", () => { details.open = false; });
         actions.append(remove, done); fields.append(actions); details.append(fields); educationList.append(details);
       }); educationField.value = JSON.stringify(education);
     }
-    $("#add-education").addEventListener("click", () => { education.push({ school: "", degree: "", major: "", minor: "", start_date: "", end_date: "", gpa: "" }); renderEducation(); educationList.lastElementChild.open = true; });
+    $("#add-education").addEventListener("click", () => keepPage(
+      () => { education.push({ school: "", degree: "", major: "", minor: "", start_date: "", end_date: "", gpa: "" }); renderEducation(); educationList.lastElementChild.open = true; },
+      () => educationList.lastElementChild?.scrollIntoView({ block: "nearest" })));
     renderSkills(); renderHistory(); renderEducation();
     $("#home-location").addEventListener("input", () => { const value = $("#home-location").value.trim(); $("#profile-state").value = value.includes(",") ? value.split(",").pop().trim() : ""; });
     const resumeFile = $("#resume-file"), resumeDialog = $("#resume-review"), resumeContent = $("#resume-review-content");
@@ -539,7 +623,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const data = await readJsonResponse(response, "Could not read résumé.", "E3313");
         if (!response.ok) throw new Error(data.message || "Could not read résumé.");
         suggestions = data.suggestions; resumeContent.replaceChildren();
-        const fields = [["Name", "name", [suggestions.first_name, suggestions.last_name].filter(Boolean).join(" ")], ["Home City, State", "location", suggestions.home_location], ["Skills", "skills", (suggestions.skills || []).join(", ")], ["Work history", "history", (suggestions.work_history || []).map(j => `${j.role} · ${j.company} · ${j.dates}`).join("\n")]];
+        const fields = [["Name", "name", [suggestions.first_name, suggestions.last_name].filter(Boolean).join(" ")], ["Home City, State", "location", suggestions.home_location], ["Skills", "skills", (suggestions.skills || []).join(", ")], ["Work history", "history", (suggestions.work_history || []).map(j => `${j.role} · ${j.company} · ${j.dates}`).join("\n")], ["Education", "education", (suggestions.education || []).map(s => [s.school, [s.degree, s.major].filter(Boolean).join(", ")].filter(Boolean).join(" · ")).join("\n")]];
         fields.forEach(([label, key, value]) => {
           const row = document.createElement("label"); row.className = "resume-suggestion";
           const checkbox = document.createElement("input"); checkbox.type = "checkbox"; checkbox.dataset.field = key; checkbox.checked = Boolean(value); checkbox.disabled = !value;
@@ -554,6 +638,17 @@ document.addEventListener("DOMContentLoaded", () => {
       if (selected.has("location") && !$("#home-location").value) { $("#home-location").value = suggestions.home_location || ""; $("#home-location").dispatchEvent(new Event("input")); }
       if (selected.has("skills")) { (suggestions.skills || []).forEach(addSkill); }
       if (selected.has("history")) { (suggestions.work_history || []).forEach(job => { if (!history.some(existing => existing.role.toLowerCase() === job.role.toLowerCase() && existing.company.toLowerCase() === job.company.toLowerCase())) history.push(job); }); renderHistory(); }
+      if (selected.has("education")) {
+        // A school already listed (same name, and the same degree when both name one) is not added again.
+        (suggestions.education || []).forEach(school => {
+          const name = (school.school || "").trim().toLowerCase();
+          if (!education.some(have => (have.school || "").trim().toLowerCase() === name && (!have.degree || !school.degree || have.degree === school.degree))) {
+            education.push({ school: school.school || "", degree: school.degree || "", major: school.major || "", minor: school.minor || "",
+              start_date: school.start_date || "", end_date: school.end_date || "", gpa: school.gpa || "" });
+          }
+        });
+        renderEducation();
+      }
       resumeDialog.close(); showToast("Suggestions added for review. Save Profile to keep them.", "success");
     });
     const avatarInput = $("#avatar-file"), cropDialog = $("#avatar-crop"), canvas = $("#avatar-canvas"), ctx = canvas.getContext("2d"), zoom = $("#avatar-zoom");
@@ -610,6 +705,7 @@ document.addEventListener("DOMContentLoaded", () => {
         showToast("Searching for a replacement listing…","info");
       } catch(error) { showToast(error.message||"Could not start replacement search.","danger"); }
     };
+    window.requestReplacementSearch = requestReplacement; // Top 10's own Reject / Closed / Block use it
     async function startAction(url,mode,payload=null){
       setActivity(true,mode);
       currentMode=mode;

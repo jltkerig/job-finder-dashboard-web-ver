@@ -1,6 +1,6 @@
 <?php
 // Employers' own career sites and hiring boards: Workday, Oracle, iCIMS, SuccessFactors, UltiPro, Greenhouse, Lever,
-// Ashby, BambooHR, SmartRecruiters, ADP, Paylocity, Workable, NEOGOV, Recruitee and Teamtailor. Each publishes its
+// Ashby, BambooHR, SmartRecruiters, ADP, Paylocity, Workable, NEOGOV, JobAps (the State of Maryland), Rippling, Recruitee and Teamtailor. Each publishes its
 // openings without a login. Also recognising a board from a page address, boards found in web searches, and
 // finding a job on the company's own board from its name. Ported from the desktop app's employer_jobs.py,
 // ats_discovery.py, ats_lookup.py and ats_feeds.py.
@@ -10,6 +10,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/listings.php';
 require_once __DIR__ . '/location.php';
 require_once __DIR__ . '/http.php';
+require_once __DIR__ . '/jobaps.php';
 
 const EMPLOYER_SOURCE = 'Employer careers';
 const MAX_KEYWORDS = 16;
@@ -94,7 +95,7 @@ function board_search(array $config, string $keyword, array &$memo): array
 {
     $system = $config['system'];
     // Boards that publish every opening in one request: read once per search, then title matching picks.
-    if (in_array($system, ['greenhouse', 'lever', 'ashby', 'bamboohr', 'recruitee', 'teamtailor', 'ultipro', 'adp', 'paylocity'], true)) {
+    if (in_array($system, ['greenhouse', 'lever', 'ashby', 'bamboohr', 'recruitee', 'teamtailor', 'ultipro', 'adp', 'paylocity', 'jobaps', 'rippling'], true)) {
         if (!isset($memo['all'])) {
             $memo['all'] = board_whole($config);
         }
@@ -245,6 +246,13 @@ function board_whole(array $config): array
 {
     $list = fn(array $jobs, callable $make) => array_values(array_map($make, $jobs));
     switch ($config['system']) {
+        case 'jobaps':
+            return jobaps_listings($config);
+        case 'rippling':
+            $jobs = employer_json("https://api.rippling.com/platform/api/ats/v1/board/{$config['slug']}/jobs");
+            return array_is_list($jobs) ? $list(array_filter($jobs, fn($j) => is_array($j) && !empty($j['uuid'])),
+                fn($j) => ['title' => trim((string) ($j['name'] ?? '')), 'id' => strtolower((string) $j['uuid']), 'path' => strtolower((string) $j['uuid']),
+                    'location' => (string) ($j['workLocation']['label'] ?? ''), 'raw' => $j]) : [];
         case 'greenhouse':
             $jobs = employer_json("https://boards-api.greenhouse.io/v1/boards/{$config['slug']}/jobs", ['content' => 'true'])['jobs'] ?? [];
             return $list($jobs, fn($j) => ['title' => $j['title'] ?? '', 'id' => (string) ($j['id'] ?? ''), 'path' => (string) ($j['id'] ?? ''),
@@ -371,6 +379,25 @@ function board_detail(array $employer, array $listing): ?array
     $config = $employer;
     $raw = $listing['raw'] ?? [];
     switch ($config['system']) {
+        case 'jobaps':
+            return jobaps_detail($employer, $listing);
+        case 'rippling':
+            $info = [];
+            try {
+                $info = employer_json("https://api.rippling.com/platform/api/ats/v1/board/{$config['slug']}/jobs/{$raw['uuid']}");
+            } catch (Throwable $error) {
+                // the list alone still gives a title, a place and a link
+            }
+            $info = is_array($info) ? $info : [];
+            $places = array_values(array_filter(array_map('strval', $info['workLocations'] ?? []))) ?: [(string) ($raw['workLocation']['label'] ?? '')];
+            $words = $info['description'] ?? [];
+            $employment = strtoupper((string) ($info['employmentType']['label'] ?? ''));
+            $opening = make_opening($employer, (string) $listing['title'], (string) ($raw['url'] ?? "https://ats.rippling.com/{$config['slug']}/jobs/{$listing['id']}"),
+                $places, (string) (($words['role'] ?? '') . ($words['company'] ?? '')), substr((string) ($info['createdOn'] ?? ''), 0, 10),
+                str_ends_with($employment, '_FT') ? 'FULL_TIME' : (str_ends_with($employment, '_PT') ? 'PART_TIME' : ''),
+                array_filter($places, fn($p) => stripos($p, 'hybrid') !== false) ? 'Hybrid' : null);
+            $opening['company'] = (string) ($info['companyName'] ?? '') ?: $employer['name'];
+            return $opening;
         case 'workday':
             $base = "https://{$config['host']}/wday/cxs/{$config['tenant']}/{$config['site']}";
             $response = employer_get($base . $listing['path']);
@@ -617,6 +644,13 @@ function board_status(array $config, string $url): string
                 }
                 $code = employer_get("https://apply.workable.com/api/v2/accounts/{$config['slug']}/jobs/{$m[1]}")['status'];
                 return $code === 200 ? 'Open' : (in_array($code, [404, 410], true) ? 'Closed' : 'Unknown');
+            case 'jobaps':
+                $number = jobaps_job_number($url);
+                $listed = board_whole($config);
+                if ($number === '' || !$listed) {
+                    return 'Unknown';  // an empty feed is more likely a portal problem than every job closing at once
+                }
+                return in_array($number, array_column($listed, 'id'), true) ? 'Open' : 'Closed';
             case 'icims':
             case 'successfactors':
             case 'ultipro':
@@ -639,11 +673,12 @@ function board_status(array $config, string $url): string
                 $ids = array_column(board_whole($config), 'id');
                 $patterns = ['greenhouse' => '/gh_jid=(\d+)|\/jobs\/(\d+)/', 'lever' => '/\/([0-9a-f]{8}-[0-9a-f-]{27})/',
                     'ashby' => '/\/([0-9a-f]{8}-[0-9a-f-]{27})/', 'bamboohr' => '/\/careers\/(\d+)|[?&]id=(\d+)/',
-                    'paylocity' => '/\/Details\/(\d+)/i', 'teamtailor' => '/\/jobs\/(\d+)/'];
+                    'paylocity' => '/\/Details\/(\d+)/i', 'teamtailor' => '/\/jobs\/(\d+)/',
+                    'rippling' => '/\/jobs\/([0-9a-f]{8}-[0-9a-f-]{27})/i'];
                 if (!isset($patterns[$config['system']]) || !preg_match($patterns[$config['system']], $url, $m)) {
                     return 'Unknown';
                 }
-                $wanted = ($m[2] ?? '') !== '' ? $m[2] : $m[1];
+                $wanted = strtolower(($m[2] ?? '') !== '' ? $m[2] : $m[1]);
                 foreach ($ids as $id) {
                     if ((string) $id === $wanted || str_contains((string) $id, $wanted)) {
                         return 'Open';
@@ -710,6 +745,15 @@ function identify_board(?string $url): ?array
         && !in_array(strtolower($parts[1]), ['home', 'search', 'jobs', 'api'], true)) {
         return ['system' => 'neogov', 'agency' => strtolower($parts[1])];
     }
+    if (in_array($host, ['jobapscloud.com', 'www.jobapscloud.com', 'jobaps.com', 'www.jobaps.com'], true) && $parts
+        && preg_match('/^[A-Za-z0-9]{2,16}$/', $parts[0]) && !in_array($first, array_merge($not_board, ['css', 'js', 'mainshared', 'sup', 'images']), true)) {
+        return ['system' => 'jobaps', 'agency' => strtoupper($parts[0])] + (strtoupper($parts[0]) === 'MD' ? ['state' => 'MD'] : []);
+    }
+    if ($host === 'ats.rippling.com') {
+        // ats.rippling.com/<company>/jobs[/<id>], sometimes with a language first (/en-GB/<company>/jobs)
+        $rest = $parts && preg_match('/^[a-z]{2}(?:-[A-Za-z]{2})?$/', $parts[0]) && count($parts) > 1 ? array_slice($parts, 1) : $parts;
+        return $rest && !in_array(strtolower($rest[0]), array_merge($not_board, ['jobs']), true) ? ['system' => 'rippling', 'slug' => $rest[0]] : null;
+    }
     if ($host === 'apply.workable.com') {
         return $parts && !in_array($first, array_merge($not_board, ['j']), true) ? ['system' => 'workable', 'slug' => $parts[0]] : null;
     }
@@ -729,6 +773,9 @@ function identify_board(?string $url): ?array
 function board_pretty_name(array $config): string
 {
     $raw = $config['slug'] ?? $config['company'] ?? $config['agency'] ?? $config['tenant'] ?? '';
+    if ($config['system'] === 'jobaps' && strtoupper((string) ($config['agency'] ?? '')) === 'MD') {
+        return 'State of Maryland';
+    }
     if ($config['system'] === 'icims') {
         $raw = preg_replace('/^(?:careers|jobs|career)-/', '', explode('.', $config['host'])[0]);
     }
@@ -759,11 +806,15 @@ function load_employers(): array
     $found = array_filter(setting_json('discovered_employers', []), fn($c) => is_array($c)
         && !(($c['searches'] ?? 0) >= MIN_SEARCHES_BEFORE_DROP && empty($c['matches'])));
     usort($found, fn($a, $b) => ($b['matches'] ?? 0) <=> ($a['matches'] ?? 0));
+    if (!array_filter($configs, fn($c) => is_array($c) && ($c['system'] ?? '') === 'jobaps')) {
+        // The State of Maryland's own job portal is part of the default list (added to a list saved before it existed).
+        $configs[] = ['name' => 'State of Maryland', 'system' => 'jobaps', 'agency' => 'MD', 'state' => 'MD', 'domain' => 'maryland.gov'];
+    }
     $all = array_merge($configs, array_map(fn($c) => $c + ['discovered' => true], $found));
     $out = [];
     $seen = [];
     $systems = ['workday', 'oracle', 'icims', 'successfactors', 'ultipro', 'greenhouse', 'lever', 'ashby', 'bamboohr',
-        'smartrecruiters', 'adp', 'paylocity', 'workable', 'neogov', 'recruitee', 'teamtailor'];
+        'smartrecruiters', 'adp', 'paylocity', 'workable', 'neogov', 'recruitee', 'teamtailor', 'jobaps', 'rippling'];
     foreach ($all as $config) {
         if (!is_array($config) || ($config['enabled'] ?? true) === false || !in_array($config['system'] ?? '', $systems, true) || empty($config['name'])) {
             continue;
@@ -866,6 +917,8 @@ function employer_for_url(string $url, array $employers): ?array
             'ultipro' => $host === strtolower($employer['host'] ?? 'recruiting.ultipro.com') && stripos(parse_url($url, PHP_URL_PATH) . '/', "/{$employer['tenant']}/") !== false,
             'neogov' => str_ends_with($host, 'governmentjobs.com') && stripos(parse_url($url, PHP_URL_PATH) . '/', "/careers/{$employer['agency']}/") !== false,
             'adp' => $host === strtolower($employer['host'] ?? 'workforcenow.adp.com') && str_contains($url, "cid={$employer['cid']}"),
+            'jobaps' => str_ends_with($host, 'jobapscloud.com') && stripos(parse_url($url, PHP_URL_PATH) . '/', '/' . $employer['agency'] . '/') === 0
+                || str_ends_with($host, 'jobapscloud.com') && stripos((string) parse_url($url, PHP_URL_PATH), '/' . $employer['agency'] . '/') !== false,
             default => false,
         };
         if ($owns) {

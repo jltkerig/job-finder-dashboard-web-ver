@@ -12,12 +12,29 @@ $filters = [
 ];
 $companies = get_kept_companies($filters['status'], $filters['state'], $filters['title'], $filters['sort']);
 $profile = get_user_profile();
+require_once APP_ROOT . '/includes/education.php';
+if (!$profile['education']) {
+    // No schools saved yet: the ones the uploaded résumé lists are saved, so every page shows the same education.
+    try {
+        require_once APP_ROOT . '/includes/resume/store.php';
+        $saved_schools = save_schools_if_none(parse_education(current_resume_text()));
+        if ($saved_schools) {
+            $profile['education'] = $saved_schools;
+        }
+    } catch (Throwable $error) {
+        error_log('Education from the résumé: ' . $error->getMessage());
+    }
+}
 add_job_fit($companies, $profile['skills']);
 add_drive_times($companies, $profile['home_zip'], home_state());
 require_once APP_ROOT . '/includes/resume/store.php';
+require_once APP_ROOT . '/includes/companies.php';
 $application_files = files_by_job(); // résumés and cover letters made for each job
 $demanded_skills = array_map(fn($pair) => ['skill' => $pair[0], 'count' => $pair[1]], listing_skill_demand($profile['skills']));
 $search_history = get_search_history();
+$counts = get_dashboard_counts();
+$applied_months = applied_by_month();
+$applied_elsewhere_count = count(applied_elsewhere());
 $skill_suggestions = profile_skill_suggestions($profile);
 $fit_updated = isset($_GET['fit_updated']) ? (int) $_GET['fit_updated'] : null;
 $profile_changed = !empty($_GET['profile_changed']);
@@ -37,7 +54,7 @@ function credibility_badge($score): string
         . $class . '">' . ($score * 10) . '%</span></a>';
 }
 
-$scripts = ['bulk-delete.js', 'applied-date.js'];
+$scripts = ['bulk-delete.js', 'applied-date.js', 'reject-reason.js'];
 require APP_ROOT . '/templates/_top.php';
 ?>
 <main>
@@ -147,8 +164,26 @@ require APP_ROOT . '/templates/_top.php';
           </div>
         </form>
       </section>
+      <div class="profile-side">
       <aside class="profile-summary-card"><button class="profile-avatar" id="change-avatar" type="button" aria-label="Upload or change profile photo"><?php if ($profile['avatar_data']): ?><img src="<?= h($profile['avatar_data']) ?>" alt="" /><?php elseif ($profile['first_name']): ?><?= h(mb_strtoupper(mb_substr($profile['first_name'], 0, 1))) ?><?php else: ?>U<?php endif; ?></button><input id="avatar-file" type="file" accept="image/png,image/jpeg,image/webp" hidden /><small>Click photo to change</small><strong><?= h(trim($profile['first_name'] . ' ' . $profile['last_name']) ?: 'Username') ?></strong><span><?= h($profile['primary_job_title'] ?: 'Add a primary job title') ?></span><span><?= h($profile['home_location'] ?: 'Add your location') ?></span>
       </aside>
+      <aside class="profile-stats-card" aria-labelledby="apply-stats-heading">
+        <?php $stage = ['applied' => (int) ($counts['applied'] ?? 0) + $applied_elsewhere_count, 'recruiter' => (int) ($counts['recruiter'] ?? 0), 'interview' => (int) ($counts['interview'] ?? 0)]; ?>
+        <h2 id="apply-stats-heading">Job Apply Stats</h2>
+        <dl>
+          <div class="stat-total"><dt>Applied In Total</dt><dd data-stat="total"><?= $stage['applied'] + $stage['recruiter'] + $stage['interview'] ?></dd></div>
+          <div><dt>Applied</dt><dd data-stat="applied"><?= $stage['applied'] ?></dd></div>
+          <div><dt>Talking With Recruiter</dt><dd><?= $stage['recruiter'] ?></dd></div>
+          <div><dt>Interview</dt><dd><?= $stage['interview'] ?></dd></div>
+        </dl>
+        <h3>Applied By Month</h3>
+        <dl>
+          <?php foreach ($applied_months['months'] as $month): ?><div><dt><?= h($month['label']) ?></dt><dd data-stat="month-<?= h($month['key']) ?>"><?= (int) $month['count'] ?></dd></div>
+          <?php endforeach; ?><?php if ($applied_months['earlier']): ?><div><dt>Earlier</dt><dd><?= (int) $applied_months['earlier'] ?></dd></div><?php endif; ?>
+          <?php if ($applied_months['undated']): ?><div><dt>No Date Saved</dt><dd><?= (int) $applied_months['undated'] ?></dd></div><?php endif; ?>
+        </dl>
+      </aside>
+      </div>
     </div>
 
     <div class="section-heading-row">

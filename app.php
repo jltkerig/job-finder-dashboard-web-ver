@@ -70,6 +70,11 @@ if ($method === 'POST') {
 $routes = [
     'GET /' => 'pages/search.php',
     'GET /dashboard' => 'pages/dashboard.php',
+    'GET /companies' => 'pages/companies.php',
+    'GET /companies/search' => 'actions/companies.php',
+    'GET /companies/mine' => 'actions/companies.php',
+    'POST /companies/mine' => 'actions/companies.php',
+    'GET /companies/address-suggest' => 'actions/companies.php',
     'GET /rejected-listings' => 'pages/settings.php',
     'GET /tuning' => 'pages/tuning.php',
     'GET /credibility-scores' => 'pages/scores.php',
@@ -106,6 +111,13 @@ if ($handler === null && $method === 'POST'
     $handler = 'actions/listings.php';
     $path = '/' . $m[1];
     $route_id = (int) $m[2];
+}
+
+// Your own companies: /companies/mine/<id> saves an edit, /companies/mine/<id>/delete removes one.
+if ($handler === null && $method === 'POST' && preg_match('#^/companies/mine/([0-9a-f]{6,32})(/delete)?$#', $path, $m)) {
+    $handler = 'actions/companies.php';
+    $route_key = $m[1];
+    $path = isset($m[2]) ? '/companies/mine/delete' : '/companies/mine/update';
 }
 
 // Résumé Builder's own addresses: /resume-builder/build/<file> is a page; the rest are its buttons and files.
