@@ -10,7 +10,8 @@
   const results = document.getElementById("companies-results");
   const body = document.getElementById("companies-body");
   const count = document.getElementById("companies-count");
-  const filter = document.getElementById("companies-filter");
+  // The text box that used to filter results is gone: the kind tags filter them. An older cached page's box is removed.
+  document.getElementById("companies-filter")?.closest("label")?.remove();
   const websiteOnly = document.getElementById("companies-website-only");
   const showHidden = document.getElementById("companies-show-hidden");
   const searchButton = document.getElementById("companies-search");
@@ -20,6 +21,21 @@
   const mineEmpty = document.getElementById("companies-mine-empty");
   const mineWrapper = document.getElementById("companies-mine-table-wrapper");
   const mineMilesHeader = document.getElementById("companies-mine-miles-header");
+  // The results filters sit up top with the search; the kinds of place list is gone (every default kind is searched,
+  // and the tags under the results narrow them). A page from the older cached template is rearranged here.
+  (function arrange() {
+    const kinds = form.querySelector(".companies-kinds");
+    if (kinds) kinds.hidden = true; // its boxes are still read, so the usual kinds are searched
+    const actions = form.querySelector(".companies-actions");
+    if (!form.querySelector(".companies-filters")) {
+      const bar = document.createElement("div");
+      bar.className = "companies-filters";
+      for (const node of [websiteOnly, showHidden]) bar.append(node.closest("label") || node);
+      (kinds || actions).before(bar);
+    }
+    const tags = document.getElementById("companies-kind-tags");
+    if (tags && !form.contains(tags)) (kinds || actions).before(tags); // an older cached page has them under the results
+  })();
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || "";
   const HIDDEN_KEY = "jobFinder.hiddenCompanies";
   let companies = [];
@@ -34,11 +50,19 @@
   };
   const writeHidden = (set) => {
     try { localStorage.setItem(HIDDEN_KEY, JSON.stringify([...set].slice(-2000))); } catch { /* remembering is a convenience */ }
+    keepOnServer({ hidden: [...set].slice(-2000) });
   };
   // A company is told apart by its name and address, so it stays hidden whichever town you search from.
   const keyOf = (company) => `${company.name}|${company.address}`.toLowerCase();
   // Nearest first; a company with no map point (one you entered without a place) goes after the measured ones.
   const byDistance = (a, b) => (a.miles ?? 1e9) - (b.miles ?? 1e9) || a.name.localeCompare(b.name);
+
+  // A copy of the last search and the hidden list is also kept by the server, so clearing the browser's data keeps them.
+  function keepOnServer(part) {
+    fetch("/companies/page-state", {
+      method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify(part),
+    }).catch(() => { /* the browser's own copy still works */ });
+  }
 
   function say(message, isError) {
     status.textContent = message || "";
@@ -83,15 +107,26 @@
     dockForm();
     addForm.reset();
     addId.value = "";
+    fromSaved = "";
     addSave.textContent = "Add company";
     addCancel.hidden = true;
   }
 
-  function editCompany(company, tr) {
+  // A search result or a saved company can be edited too (to add its job board, say): saving puts it in My Companies,
+  // and a saved one leaves Saved Companies when it does.
+  let fromSaved = "";
+  const ADDRESS = /^(.*?),\s*([^,]+),\s*([A-Za-z]{2})\s*(\d{5}(?:-\d{4})?)?$/;
+  function editCompany(company, tr, saved) {
     dockForm();
-    for (const name of FIELDS) field(name).value = company[name] || "";
-    addId.value = company.id.replace(/^mine\//, "");
-    addSave.textContent = "Save changes";
+    const isMine = Boolean(company.mine);
+    const parts = isMine || company.street !== undefined ? company : (() => {
+      const m = ADDRESS.exec(company.address || "");
+      return m ? { street: m[1], city: m[2], state: m[3].toUpperCase(), zip: m[4] || "" } : { street: company.address || "" };
+    })();
+    for (const name of FIELDS) field(name).value = (name in parts ? parts[name] : company[name]) || "";
+    addId.value = isMine ? company.id.replace(/^mine\//, "") : "";
+    fromSaved = saved ? company.id : "";
+    addSave.textContent = isMine ? "Save changes" : "Add to My Companies";
     addCancel.hidden = false;
     addStatus.textContent = "";
     const editRow = document.createElement("tr");
@@ -153,6 +188,8 @@
     }
   }
 
+  document.addEventListener("edit-saved-company", (event) => editCompany(event.detail.company, event.detail.tr, true));
+
   if (addForm) {
     addForm.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -162,6 +199,10 @@
       addStatus.textContent = "Saving…";
       try {
         const reply = await post(editing ? `/companies/mine/${encodeURIComponent(editing)}` : "/companies/mine", data);
+        if (fromSaved) {
+          await post(`/companies/saved/${encodeURIComponent(fromSaved)}/delete`).catch(() => {});
+          document.dispatchEvent(new CustomEvent("saved-companies-changed"));
+        }
         const synced = reply.jobs_synced || 0;
         const message = (editing ? `Saved ${reply.company.name}.` : `Added ${reply.company.name}.`)
           + (synced ? ` The job${synced === 1 ? "" : "s"} you had there ${synced === 1 ? "is" : "are"} updated in your Profile too, so the Résumé Builder shows it.` : "")
@@ -257,6 +298,7 @@
       save.disabled = saved;
       save.title = saved ? "In Saved Companies" : "Keep this company in Saved Companies";
       actions.append(save);
+      actions.append(button("Edit", "companies-edit", () => editCompany(company, tr)));
       actions.append(button(hidden.has(keyOf(company)) ? "Unhide" : "Hide", "companies-hide", () => {
         const set = readHidden();
         if (set.has(keyOf(company))) set.delete(keyOf(company)); else set.add(keyOf(company));
@@ -287,49 +329,46 @@
     }
   }
 
-  // One tag per kind of place found, with how many; click tags to show only those kinds (click again to undo).
+  // The kinds of place: one tag for each, always listed. After a search each shows how many were found. Picking tags
+  // narrows the results already found to those kinds (none picked: all of them); it does not start a new search.
   function renderKindTags(hidden) {
     if (!kindTags) return;
-    const found = new Map();  // kind -> [label, count]
+    const found = new Map(); // kind -> how many
     for (const company of companies) {
       if (!company.mine && hidden.has(keyOf(company)) && !revealHidden) continue;
-      (company.kinds || []).forEach((kind, index) => {
-        const entry = found.get(kind) || [(company.kindLabels || [])[index] || kind, 0];
-        entry[1] += 1;
-        found.set(kind, entry);
-      });
+      for (const kind of company.kinds || []) found.set(kind, (found.get(kind) || 0) + 1);
     }
-    for (const kind of [...activeKinds]) if (!found.has(kind)) activeKinds.delete(kind);
-    kindTags.hidden = found.size < 2;
+    const kinds = [...form.querySelectorAll('input[name="kinds"]')].map((box) => ({
+      key: box.value, label: (box.closest("label")?.textContent || box.value).trim(),
+    }));
+    kindTags.hidden = false;
     kindTags.replaceChildren();
-    if (found.size < 2) return;
-    const all = document.createElement("button");
-    all.type = "button";
-    all.className = `chip-button companies-kind-tag${activeKinds.size ? "" : " is-active"}`;
-    all.textContent = "All kinds";
-    all.addEventListener("click", () => { activeKinds.clear(); render(); });
-    kindTags.append(all);
-    for (const [kind, [label, total]] of [...found.entries()].sort((a, b) => b[1][1] - a[1][1])) {
+    const make = (text, active, onClick, dim) => {
       const tag = document.createElement("button");
       tag.type = "button";
-      tag.className = `chip-button companies-kind-tag${activeKinds.has(kind) ? " is-active" : ""}`;
-      tag.setAttribute("aria-pressed", String(activeKinds.has(kind)));
-      tag.textContent = `${label} (${total})`;
-      tag.addEventListener("click", () => { if (activeKinds.has(kind)) activeKinds.delete(kind); else activeKinds.add(kind); render(); });
+      tag.className = `chip-button companies-kind-tag${active ? " is-active" : ""}${dim ? " is-empty" : ""}`;
+      tag.setAttribute("aria-pressed", String(active));
+      tag.textContent = text;
+      tag.addEventListener("click", onClick);
       kindTags.append(tag);
+    };
+    make("All kinds", activeKinds.size === 0, () => { activeKinds.clear(); render(); });
+    const searched = companies.length > 0;
+    for (const { key, label } of kinds) {
+      const count = found.get(key) || 0;
+      make(searched ? `${label} (${count})` : label, activeKinds.has(key),
+        () => { if (activeKinds.has(key)) activeKinds.delete(key); else activeKinds.add(key); render(); }, searched && count === 0);
     }
   }
 
   function render() {
     const hidden = readHidden();
-    const words = filter.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
     const visible = companies.filter((company) => {
       const isHidden = !company.mine && hidden.has(keyOf(company));
       if (isHidden && !revealHidden) return false;
       if (activeKinds.size && !(company.kinds || []).some((kind) => activeKinds.has(kind))) return false;
       if (websiteOnly.checked && !company.website) return false;
-      const haystack = `${company.name} ${company.type} ${company.address} ${company.place || ""} ${company.notes || ""}`.toLowerCase();
-      return words.every((word) => haystack.includes(word));
+      return true;
     });
     body.replaceChildren(...visible.map((company) => row(company, hidden)));
     renderKindTags(hidden);
@@ -343,7 +382,10 @@
   // One kind of place at a time: OpenStreetMap's free service is slow with a big question and refuses quick repeats, so
   // each kind is its own small question. Results appear as they arrive, and one kind failing does not lose the others.
   async function search() {
-    const boxes = [...form.querySelectorAll('input[name="kinds"]:checked')];
+    // The usual kinds are searched (the boxes' own defaults); the tags only narrow what comes back.
+    const allBoxes = [...form.querySelectorAll('input[name="kinds"]')];
+    allBoxes.forEach((box) => { box.checked = box.defaultChecked; });
+    const boxes = allBoxes.filter((box) => box.checked);
     if (!boxes.length) { say("Choose at least one kind of place.", true); return; }
     searchButton.disabled = true;
     companies = [];
@@ -366,6 +408,7 @@
           throw new Error(data.message || "The search did not work.");
         }
         shown = data.place;
+        measuredFrom = place.value.trim();
         milesHeader.textContent = `Miles from ${shown}`;
         const kindLabel = box.closest("label").textContent.trim();
         for (const company of data.companies || []) {
@@ -387,6 +430,7 @@
       }
     }
     searchButton.disabled = false;
+    rememberResults(shown);
     loadMine();  // the miles in your own box are from this place too
     if (problem) { say(problem, true); return; }
     if (!companies.length && failed.length === boxes.length) {
@@ -401,13 +445,79 @@
     render();
   }
 
+  // The results are kept in this browser, so a refresh shows them again (a new search replaces them).
+  const RESULTS_KEY = "jobFinder.companyResults";
+  function rememberResults(shown) {
+    try {
+      localStorage.setItem(RESULTS_KEY, JSON.stringify({ place: place.value.trim(), shown, miles: miles.value, companies }));
+    } catch { /* remembering is a convenience */ }
+    keepOnServer({ results: { place: place.value.trim(), shown, miles: miles.value, companies } });
+  }
+  function restoreResults(fromServer) {
+    try {
+      const saved = fromServer || JSON.parse(localStorage.getItem(RESULTS_KEY) || "null");
+      if (!saved || !Array.isArray(saved.companies) || !saved.companies.length) return;
+      companies = saved.companies;
+      if (saved.place) place.value = saved.place;
+      if (saved.miles) miles.value = saved.miles;
+      milesHeader.textContent = saved.shown ? `Miles from ${saved.shown}` : "Miles";
+      say(`Your last search, around ${saved.shown || saved.place}. Press Search to look again.`);
+      render();
+    } catch { /* an unreadable copy is ignored */ }
+  }
+
+  // A new place in the box keeps the results already found and measures them again from it (no new search).
+  let measuredFrom = place.value.trim();
+  const miles_between = (a, b) => {
+    const rad = Math.PI / 180;
+    const h = Math.sin((b.lat - a.lat) * rad / 2) ** 2
+      + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin((b.lon - a.lon) * rad / 2) ** 2;
+    return 3958.8 * 2 * Math.asin(Math.sqrt(h));
+  };
+  place.addEventListener("change", async () => {
+    const text = place.value.trim();
+    if (!text || text === measuredFrom) return;
+    try {
+      const response = await fetch(`/companies/place?${new URLSearchParams({ place: text })}`, { cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok) { say(data.message || "That place wasn't found.", true); return; }
+      measuredFrom = text;
+      for (const company of companies) {
+        if (company.lat != null && company.lon != null) {
+          company.miles = Math.round(miles_between(data.center, { lat: Number(company.lat), lon: Number(company.lon) }) * 10) / 10;
+        }
+      }
+      companies.sort(byDistance);
+      milesHeader.textContent = `Miles from ${data.place}`;
+      rememberResults(data.place);
+      if (companies.length) say(`Measured again from ${data.place}. Search again to look for places around there.`);
+      render();
+      loadMine();
+      document.dispatchEvent(new CustomEvent("saved-companies-changed"));
+    } catch (error) {
+      say("Could not measure from that place just now.", true);
+    }
+  });
+  restoreResults();
+  measuredFrom = place.value.trim();
+  // Cleared browser data: the server's copy of the last search and the hidden list come back.
+  fetch("/companies/page-state", { cache: "no-store" }).then((r) => r.json()).then((state) => {
+    if (Array.isArray(state.hidden) && state.hidden.length && !readHidden().size) {
+      try { localStorage.setItem(HIDDEN_KEY, JSON.stringify(state.hidden)); } catch { /* ok */ }
+      render();
+    }
+    if (!companies.length && state.results) {
+      restoreResults(state.results);
+      measuredFrom = place.value.trim();
+    }
+  }).catch(() => { /* not available: the page works without it */ });
   loadMine();
+  renderKindTags(readHidden()); // every kind of place is listed from the start
   // All / None: the long list of kinds is quicker to start from one end.
   const setKinds = (on) => form.querySelectorAll('input[name="kinds"]').forEach((box) => { box.checked = on; });
   document.getElementById("companies-kinds-all")?.addEventListener("click", () => setKinds(true));
   document.getElementById("companies-kinds-none")?.addEventListener("click", () => setKinds(false));
   form.addEventListener("submit", (event) => { event.preventDefault(); search(); });
-  filter.addEventListener("input", render);
   websiteOnly.addEventListener("change", render);
   showHidden.addEventListener("click", () => { revealHidden = !revealHidden; render(); });
 })();

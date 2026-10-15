@@ -364,6 +364,7 @@ check('visitor address not faked from outside Cloudflare', client_ip() === '198.
 $_SERVER['REMOTE_ADDR'] = '162.158.1.1';
 check('visitor address from Cloudflare', client_ip() === '203.0.113.9');
 require __DIR__ . '/desktop_1_1_273.php';  // what came over from the desktop's v1.1.241 - v1.1.273
+require __DIR__ . '/desktop_1_1_281.php';  // Saved Companies and the Companies page's remembered state (v1.1.274 - v1.1.281)
 @unlink($db);
 @unlink($test_config);
 echo $failed ? "\n$failed failed\n" : "\nall passed\n";

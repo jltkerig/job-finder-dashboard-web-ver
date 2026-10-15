@@ -4,6 +4,7 @@
 
 declare(strict_types=1);
 require_once APP_ROOT . '/includes/companies.php';
+require_once APP_ROOT . '/includes/companies_saved.php';
 
 $profile = get_user_profile();
 $state = (string) ($profile['state'] ?? '');
@@ -89,6 +90,40 @@ switch ($path) {
             api_error('E3512', 'That company is no longer in your list.', 404);
         }
         json_out(['status' => 'ok']);
+
+    case '/companies/place':
+        // Where a town or ZIP code is, so the page can measure the results it already has from a new place.
+        $found = resolve_company_place((string) ($_GET['place'] ?? ''), $profile);
+        if ($found === null) {
+            api_error('E3502', 'That place wasn\'t found. Use a town and state such as Bel Air, MD, or a 5-digit ZIP code.', 404);
+        }
+        json_out(['status' => 'ok', 'place' => $found[1], 'center' => ['lat' => $found[0][0], 'lon' => $found[0][1]]]);
+
+    case '/companies/saved':
+        if ($method === 'GET') {
+            $found = resolve_company_place((string) ($_GET['place'] ?? ''), $profile);
+            $companies = saved_companies_everything($found ? $found[0] : null);
+            json_out(['status' => 'ok', 'place' => $found ? $found[1] : '', 'count' => count($companies), 'companies' => $companies]);
+        }
+        try {
+            [$entry, $added] = saved_company_add(company_request_fields(), $state);
+        } catch (InvalidArgumentException $error) {
+            api_error('E3521', $error->getMessage(), 400);
+        }
+        json_out(['status' => 'ok', 'company' => saved_company_result($entry), 'already' => !$added]);
+
+    case '/companies/saved/delete':
+        if (!saved_company_delete($route_key)) {
+            api_error('E3522', 'That company is no longer in your saved list.', 404);
+        }
+        json_out(['status' => 'ok']);
+
+    case '/companies/page-state':
+        if ($method === 'POST') {
+            companies_page_state_save(company_request_fields());
+            json_out(['status' => 'ok']);
+        }
+        json_out(['status' => 'ok'] + companies_page_state());
 
     case '/companies/address-suggest':
         $typed = trim((string) ($_GET['q'] ?? ''));
