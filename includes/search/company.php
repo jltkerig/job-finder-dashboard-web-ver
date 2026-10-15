@@ -140,7 +140,9 @@ function score_career_page(Page $page): array
 /** The company name without a leading legal-entity code ("003 Humana Inc." -> "Humana Inc."). */
 function tidy_company_name(?string $name): string
 {
-    return trim(preg_replace('/^\s*0\d{1,4}\s+(?=[A-Za-z])/', '', (string) $name));
+    $cleaned = trim(preg_replace('/^\s*0\d{1,4}\s+(?=[A-Za-z])/', '', (string) $name));
+    // A sentence from a page (a fit chart's explanation) is not a company name.
+    return mb_strlen($cleaned) > 120 || count(preg_split('/\s+/', $cleaned)) > 12 ? '' : $cleaned;
 }
 
 function clean_company_name(?string $name, string $domain): ?string
