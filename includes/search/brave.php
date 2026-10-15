@@ -71,6 +71,10 @@ function brave_record_search(?int $now = null): void
 /** Why no more Brave searches may be made right now, or null when one may. */
 function brave_blocked_reason(): ?string
 {
+    require_once __DIR__ . '/../tuning.php';
+    if (!tuning('brave_search_enabled')) {
+        return 'Brave Search is switched off on the Tuning page, so no web search credits are used.';
+    }
     if (brave_key() === '') {
         return 'Brave Search has no API key yet (add it to config.php).';
     }
