@@ -120,6 +120,9 @@ switch ($path) {
 
     case '/companies/page-state':
         if ($method === 'POST') {
+            if ((int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > 8000000) {
+                api_error('E3531', 'That is too much to keep.', 413);
+            }
             companies_page_state_save(company_request_fields());
             json_out(['status' => 'ok']);
         }

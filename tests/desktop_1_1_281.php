@@ -22,3 +22,6 @@ $state = companies_page_state();
 check('page state: results and hidden list are both kept', ($state['results']['companies'][0]['name'] ?? '') === 'Sample' && $state['hidden'] === ['sample|1 main st']);
 companies_page_state_save(['results' => 'nope', 'hidden' => 'nope']);
 check('page state: junk is ignored', companies_page_state() === $state);
+
+check('a sentence is not a company name', tidy_company_name('This chart is used to compare your background against this job to help to determine if you would be a good fit') === ''
+    && tidy_company_name('Acme Inc') === 'Acme Inc');
