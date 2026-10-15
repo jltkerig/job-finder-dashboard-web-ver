@@ -42,6 +42,13 @@ profile and settings are kept in `data/jobfinder.sqlite`, which is never uploade
   file already imported unchanged is skipped. Each job's company website is looked up for about 20 seconds after
   the upload; the cron job finishes the rest a few a minute.
 
+## What changed since 1.1.273
+
+- **1.1.274:** Companies results can be filtered by kind of place with tags.
+- **1.1.275:** Brave Search can be switched off on the Tuning page (no credits are used while it is off).
+- **1.1.276:** the Open All Details button sits level with the filter boxes.
+- **1.1.277:** the Résumé Builder's person cards wrap their dropdowns on a narrow screen.
+
 ## What changed in 1.1.273
 
 The web version caught up to the desktop Job Finder's v1.1.273 (it was at 1.1.240):
