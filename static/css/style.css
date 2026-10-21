@@ -1695,3 +1695,21 @@ body[data-page="search"] .results-toolbar > .details-all-field .bordered-button 
 .companies-info { display:grid; grid-template-columns:max-content 1fr; gap:4px 16px; margin:8px 0 0; }
 .companies-info dt { font-weight:600; }
 .companies-info dd { margin:0; overflow-wrap:anywhere; }
+
+/* Dashboard: the Search page's Results filters on Saved Jobs and Applied Jobs. */
+.saved-job-card[hidden] { display: none !important; }
+.dash-toolbar { position: relative; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 12px; padding: 12px 16px 14px; margin: 0 0 16px; }
+.dash-toolbar .toolbar-title { flex-basis: 100%; margin: 0; padding-right: 140px; font-size: .95rem; }
+.dash-toolbar .results-count { position: absolute; top: 12px; right: 46px; margin: 0; font-size: .9rem; }
+.dash-toolbar > .compact-field { flex: 1 1 140px; min-width: 130px; margin: 0; align-self: start; }
+.dash-toolbar > .compact-field:has([data-f="text"]) { flex: 2 1 240px; }
+.dash-toolbar > .compact-field:has([data-f="state"]) { flex: 0 0 110px; min-width: 100px; }
+.dash-toolbar > .compact-field:has([data-f="sort"]) { flex: 0 0 260px; }
+.dash-toolbar .compact-field > label { display: block; margin: 0 0 3px; font-size: .74rem; font-weight: 700; color: #4b5563; white-space: normal; }
+.dash-toolbar .compact-field input[type="search"], .dash-toolbar .compact-field select { width: 100%; min-width: 0; height: 36px; min-height: 36px; padding: 6px 10px; font-size: .9rem; }
+.dash-toolbar > .dash-actions { flex: 0 0 auto; min-width: 0; align-self: flex-end; display: flex; flex-wrap: wrap; gap: 8px; }
+.dash-toolbar > .dash-actions .bordered-button { min-width: 0; height: 36px; min-height: 36px; padding: 0 14px; line-height: 1; }
+.credibility-legend + .dash-toolbar { margin-top: 0; }
+body[data-page="dashboard"] .credibility-legend { margin: 8px 0 14px; justify-content: flex-start; width: 100%; }
+.saved-job-grid + .applied-jobs-panel, .empty-dashboard + .applied-jobs-panel { margin-top: 32px; }
+.applied-jobs-panel + .history-panel { margin-top: 32px; }

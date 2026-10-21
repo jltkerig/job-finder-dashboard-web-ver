@@ -7,7 +7,7 @@
   const count = document.getElementById("bulk-count");
   const remove = document.getElementById("bulk-delete");
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || "";
-  const boxes = () => [...document.querySelectorAll(".bulk-check")];
+  const boxes = () => [...document.querySelectorAll(".bulk-check")].filter((box) => !box.closest("[hidden]"));  // not the ones a filter hides
   const chosen = () => boxes().filter((box) => box.checked);
 
   function update() {
@@ -17,6 +17,7 @@
     remove.disabled = picked === 0;
     all.checked = total > 0 && picked === total;
     all.indeterminate = picked > 0 && picked < total;
+    if (all.nextSibling) all.nextSibling.textContent = ` Select all ${total} shown`;
   }
 
   all.addEventListener("change", () => {
@@ -47,5 +48,6 @@
     }
   });
 
+  document.addEventListener("dashboard-filtered", update);
   update();
 })();

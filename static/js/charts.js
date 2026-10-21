@@ -673,7 +673,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }));
   const dashboardRefresh = $("#refresh-dashboard"), dashboardRefreshStatus = $("#dashboard-refresh-status");
   if(dashboardRefresh){
-    const ids = $$(".saved-job-card").map(card=>Number(card.dataset.companyId)).filter(Number.isSafeInteger);
+    const ids = $$("#saved-jobs-grid .saved-job-card").filter(card=>!card.hidden).map(card=>Number(card.dataset.companyId)).filter(Number.isSafeInteger);  // the shown Saved Jobs
     dashboardRefresh.addEventListener("click", async () => {
       if(!ids.length){ dashboardRefreshStatus.textContent="No saved listings match these filters.";dashboardRefreshStatus.hidden=false;return; }
       dashboardRefresh.disabled=true;dashboardRefreshStatus.hidden=false;dashboardRefreshStatus.textContent=`Starting refresh for ${ids.length} saved listing${ids.length===1?"":"s"} shown below…`;
