@@ -1,8 +1,8 @@
 <?php
 // The start of every page: <head>, the menu and the page header. Set $title, $page, $heading (optional),
 // $subtitle (optional), $body_attrs (optional, already escaped) before including it.
-$menu = ['/' => ['Search', 'search'], '/dashboard' => ['Dashboard', 'dashboard'], '/companies' => ['Companies', 'companies'], '/resume-builder' => ['Résumé Builder', 'resume'],
-    '/rejected-listings' => ['Settings', 'settings'], '/tuning' => ['Tuning', 'tuning']];
+$menu = ['/' => ['Search', 'search'], '/companies' => ['Companies', 'companies'], '/dashboard' => ['Dashboard', 'dashboard'], '/resume-builder' => ['Résumé Builder', 'resume'],
+    '/rejected-listings' => ['Settings', 'settings'], '/tuning' => ['Tuning', 'tuning'], '/job-skill-fitting' => ['Skill Fitting', 'skill-fitting']];
 ?><!doctype html>
 <html lang="en">
 <head>

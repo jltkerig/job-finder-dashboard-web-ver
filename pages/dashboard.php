@@ -20,6 +20,8 @@ if (!$profile['education']) {
     }
 }
 add_job_fit($companies, $profile['skills']);
+require_once APP_ROOT . '/includes/skill_fitting.php';
+add_skill_fit($companies, $profile['skills'], load_skill_weights());  // the filters' Job Fit Minus Titles sort
 add_drive_times($companies, $profile['home_zip'], home_state());
 // Applied jobs (any stage) are listed under Saved Jobs in their own panel, as on the desktop.
 $applied_companies = array_values(array_filter($companies, fn($c) => in_array($c['application_status'], APPLIED_STATUSES, true)));
@@ -49,7 +51,7 @@ function credibility_badge($score): string
 }
 
 require_once APP_ROOT . '/templates/_dash_filter.php';
-$scripts = ['dashboard-filters.js', 'bulk-delete.js', 'applied-date.js', 'reject-reason.js'];
+$scripts = ['dashboard-filters.js', 'bulk-delete.js', 'applied-date.js', 'reject-reason.js', 'clear-closed.js'];
 require APP_ROOT . '/templates/_top.php';
 ?>
 <main>
@@ -188,7 +190,7 @@ require APP_ROOT . '/templates/_top.php';
       </div><?php endif; ?>
     </div>
     <?= dash_legend('saved') ?>
-    <?= dash_toolbar('saved', '#saved-jobs-grid', '.saved-job-card', $companies, '<div class="form-field compact-field dash-actions"><button class="bordered-button secondary-action" id="refresh-dashboard" type="button" data-total="' . count($companies) . '">Refresh Saved Listings</button></div>') ?>
+    <?= dash_toolbar('saved', '#saved-jobs-grid', '.saved-job-card', $companies, '<div class="form-field compact-field dash-actions"><button class="bordered-button secondary-action" id="refresh-dashboard" type="button" data-total="' . count($companies) . '">Refresh Saved Listings</button><button class="bordered-button secondary-action" id="clear-closed" type="button">Clear closed jobs</button></div>') ?>
     <p id="dashboard-refresh-status" class="field-help" role="status" hidden>
     </p>
 

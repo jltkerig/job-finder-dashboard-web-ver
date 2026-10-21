@@ -22,7 +22,7 @@ function dash_item_attrs(array $c): string
         'work-arrangement' => (string) ($c['work_arrangement'] ?? ''),
         'career-credibility' => (string) ((int) ($c['career_credibility'] ?? 0)),
         'usa-credibility' => (string) ((int) ($c['usa_credibility'] ?? 0)),
-        'skill-fit' => '',
+        'skill-fit' => isset($c['skill_fit']['score']) ? (string) $c['skill_fit']['score'] : '',
         'job-fit' => $fit_score,
         'fit-count' => (string) $fit_count,
         'schedule' => (string) ($c['details']['schedule'] ?? ''),
@@ -80,7 +80,7 @@ function dash_toolbar(string $key, string $target, string $item_selector, array 
       </div>
       <div class="form-field compact-field"><label for="{$k}-schedule">Work Type</label><select id="{$k}-schedule" data-f="schedule"><option value="all">All work types</option><option value="part">Part-time</option><option value="full">Full-time</option><option value="contract">Contract</option><option value="freelance">Freelance / Gig</option><option value="unknown">Unspecified</option></select>
       </div>
-      <div class="form-field compact-field"><label for="{$k}-sort">Sort</label><select id="{$k}-sort" data-f="sort"><option value="default">Newest</option><option value="oldest">Oldest</option><option value="company">Company A–Z</option><option value="job">Job title A–Z</option><option value="distance">Distance</option><option value="job-fit">Job fit</option><option value="career-credibility">Career credibility</option><option value="usa-credibility">USA credibility</option></select>
+      <div class="form-field compact-field"><label for="{$k}-sort">Sort</label><select id="{$k}-sort" data-f="sort"><option value="default">Newest</option><option value="oldest">Oldest</option><option value="company">Company A–Z</option><option value="job">Job title A–Z</option><option value="distance">Distance</option><option value="job-fit">Job fit</option><option value="skill-fit">Job Fit Minus Titles</option><option value="career-credibility">Career credibility</option><option value="usa-credibility">USA credibility</option></select>
       </div>{$extra}
       <div class="results-count" id="{$k}-count" data-count>
       </div>

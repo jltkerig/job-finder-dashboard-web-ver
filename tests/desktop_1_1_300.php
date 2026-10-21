@@ -105,3 +105,48 @@ check('search: a listing\'s Source links to the page the job was found on', str_
     && str_contains(file_get_contents(APP_ROOT . '/templates/_job_card.php'), "<dt>Source</dt><dd><?php \$source_name"));
 check('iCIMS: a job is checked on its framed page, so the empty shell does not read as closed', str_contains(file_get_contents(APP_ROOT . '/includes/search/employers.php'), "?in_iframe=1"));
 check('clean-up: a rejected job is kept when closed jobs are tidied', (bool) preg_match('/is_rejected = 0 AND is_kept = 0 AND application_status NOT IN/', file_get_contents(APP_ROOT . '/includes/listings.php')));
+
+// ---- Job Skill Fitting, notes with links, Clear closed jobs (v1.1.297 - v1.1.300) ----
+require_once APP_ROOT . '/includes/skill_fitting.php';
+
+$fit = skill_fit_score(['HTML', 'CSS'], ['HTML', 'CSS', 'Python', 'SQL']);
+check('skill fit: the score is the share of the job\'s skills you have', $fit['score'] === 50 && $fit['matched'] === ['HTML', 'CSS'] && $fit['missing'] === ['Python', 'SQL']);
+check('skill fit: aliases count as the same skill', skill_fit_score(['JS'], ['JavaScript', 'HTML'])['matched'] === ['JavaScript']);
+check('skill fit: a listing with too few skills is not scored', skill_fit_score(['HTML'], ['HTML'])['score'] === null);
+check('skill fit: malformed saved skills are empty', skill_fit_parse('not json') === [] && skill_fit_parse(null) === [] && skill_fit_parse('["HTML"]') === ['HTML']);
+$ranked = skill_fit_rank(['HTML', 'CSS'], [
+    ['career_job_title' => 'Half', 'listing_skills' => json_encode(['HTML', 'Python'])],
+    ['career_job_title' => 'All', 'listing_skills' => json_encode(['HTML', 'CSS'])],
+    ['career_job_title' => 'Thin', 'listing_skills' => json_encode(['HTML'])]]);
+check('skill fit: best fit first, unscored jobs left out', array_column($ranked, 'career_job_title') === ['All', 'Half']);
+check('skill fit: a Core skill counts triple and a Nice one half', skill_fit_score(['HTML'], ['HTML', 'Python'])['score'] === 50
+    && skill_fit_score(['HTML'], ['HTML', 'Python'], ['HTML' => 'core'])['score'] === 75 && skill_fit_score(['HTML'], ['HTML', 'Python'], ['HTML' => 'nice'])['score'] === 33);
+$rows = [['listing_skills' => json_encode(['HTML', 'Python']), 'job_fit' => ['score' => 7]], ['listing_skills' => null]];
+add_skill_fit($rows, ['HTML'], ['HTML' => 'core']);
+check('skill fit: weights change the skill fit but not the regular Job Fit', $rows[0]['skill_fit']['score'] === 75 && $rows[0]['job_fit'] === ['score' => 7] && $rows[1]['skill_fit']['score'] === null);
+check('skill fit: weights follow aliases and ignore bad values', skill_fit_score(['JS'], ['JavaScript', 'HTML'], ['JS' => 'core', 'HTML' => 'huge'])['score'] === 75);
+save_skill_weights(['HTML' => 'core', 'CSS' => 'normal', 'PHP' => 'nice', 'Go' => 'huge']);
+check('skill fit: only the skills you changed from Normal are kept', load_skill_weights() === ['HTML' => 'core', 'PHP' => 'nice']);
+set_setting_json('skill_weights', []);
+
+$note = linkify('Call <b>Sam</b>, see https://example.com/jobs/1.');
+check('notes: web addresses become links and the rest is escaped', str_contains($note, '<a href="https://example.com/jobs/1" target="_blank" rel="noopener noreferrer">')
+    && str_contains($note, '&lt;b&gt;Sam&lt;/b&gt;') && str_ends_with($note, '</a>.'));
+$note_id = (int) value("SELECT id FROM companies ORDER BY id LIMIT 1");
+check('notes: saved with the listing, trimmed and capped', $note_id > 0 && save_listing_notes($note_id, "  see https://example.com  ") === 'see https://example.com'
+    && value('SELECT notes FROM companies WHERE id = ?', [$note_id]) === 'see https://example.com'
+    && save_listing_notes($note_id, '') === '' && value('SELECT notes FROM companies WHERE id = ?', [$note_id]) === null
+    && mb_strlen(save_listing_notes($note_id, str_repeat('x', 6000))) === NOTES_LIMIT);
+q("UPDATE companies SET notes = NULL WHERE id = ?", [$note_id]);
+$before = (int) value('SELECT COUNT(*) FROM companies');
+q("UPDATE companies SET is_kept = 1, job_open_status = 'Closed' WHERE id = ?", [$note_id]);
+$closed_saved = (int) value("SELECT COUNT(*) FROM companies WHERE is_kept = 1 AND job_open_status = 'Closed'");
+$others = $before - $closed_saved;
+check('clear closed jobs: deletes saved jobs whose posting is closed, and only those', $closed_saved >= 1 && delete_closed_kept() === $closed_saved
+    && (int) value("SELECT COUNT(*) FROM companies WHERE is_kept = 1 AND job_open_status = 'Closed'") === 0 && (int) value('SELECT COUNT(*) FROM companies') === $others);
+
+$skill_page = file_get_contents(APP_ROOT . '/pages/skill_fitting.php');
+$top_menu = file_get_contents(APP_ROOT . '/templates/_top.php');
+check('skill fitting: the page, its menu entry and its routes exist', str_contains($skill_page, 'Job Skill Fitting') && str_contains($top_menu, "'/job-skill-fitting' => ['Skill Fitting'")
+    && str_contains(file_get_contents(APP_ROOT . '/app.php'), "'POST /job-skill-fitting/weights'") && str_contains(file_get_contents(APP_ROOT . '/app.php'), "'GET /job-skill-fitting.json'"));
+check('menu: Companies sits right of Search', strpos($top_menu, "'/companies'") < strpos($top_menu, "'/dashboard' =>"));

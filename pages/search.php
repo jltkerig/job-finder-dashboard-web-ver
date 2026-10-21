@@ -10,6 +10,8 @@ $companies = get_companies();
 $companies = hide_dashboard_jobs($companies, $companies);  // saved, applied and queued jobs live on the Dashboard
 $profile = get_user_profile();
 add_job_fit($companies, $profile['skills']);
+require_once APP_ROOT . '/includes/skill_fitting.php';
+add_skill_fit($companies, $profile['skills'], load_skill_weights());  // for the Job Fit Minus Titles sort
 $latest_search_at = get_search_history(1)[0]['searched_at'] ?? null;
 $run = search_state();
 $source_names = array_values(array_unique(array_map(fn($c) => $c['source_type'] ?: 'Brave Search', $companies)));
@@ -23,7 +25,7 @@ $subtitle_class = 'app-version';
 $body_attrs = ' data-scraper-running="' . (search_running($run) ? 'true' : 'false') . '" data-scraper-mode="'
     . h(search_running($run) ? $run['mode'] : '') . '" data-work-preferences="' . json_attr($profile['work_preferences']) . '"';
 $before_nav = "<div id=\"search-progress-bar\" class=\"search-progress-bar\" hidden>\n</div>";
-$scripts = ['capture-upload.js', 'columns.js', 'job-title-bubbles.js', 'reject-reason.js', 'top-picks.js', 'details-all.js', 'search-folds.js'];
+$scripts = ['capture-upload.js', 'columns.js', 'job-title-bubbles.js', 'reject-reason.js', 'top-picks.js', 'details-all.js', 'search-folds.js', 'listing-notes.js'];
 
 function credibility_class($score): string
 {
@@ -119,7 +121,7 @@ require APP_ROOT . '/templates/_top.php';
       </div>
       <div class="form-field compact-field"><label for="result-new-filter">Found</label><select id="result-new-filter"><option value="all">All results</option><option value="new">New since last search</option></select>
       </div>
-      <div class="form-field compact-field"><label for="result-sort">Sort</label><select id="result-sort"><option value="default">Newest</option><option value="company">Company A–Z</option><option value="job">Job title A–Z</option><option value="distance">Distance</option><option value="career-credibility">Career credibility</option><option value="usa-credibility">USA credibility</option></select>
+      <div class="form-field compact-field"><label for="result-sort">Sort</label><select id="result-sort"><option value="default">Newest</option><option value="company">Company A–Z</option><option value="job">Job title A–Z</option><option value="distance">Distance</option><option value="job-fit">Job fit</option><option value="skill-fit">Job Fit Minus Titles</option><option value="career-credibility">Career credibility</option><option value="usa-credibility">USA credibility</option></select>
       </div>
       <div class="form-field compact-field details-all-field"><button id="details-all-button" class="bordered-button secondary-action" type="button" title="Open or close the Details of every result shown and of the Top 10 picks">Open All Details</button>
       </div>
@@ -171,7 +173,7 @@ require APP_ROOT . '/templates/_top.php';
         $salary = (string) ($d['salary'] ?? '');
         $listing_url = $employer_site && $company['career_url'] ? $company['career_url'] : ($company['source_url'] ?: $company['career_url']);
     ?>
-      <tr class="result-row" data-company-id="<?= $id ?>" data-source="<?= h($company['source_type'] ?: 'Brave Search') ?>" data-company="<?= h($company['name']) ?>" data-job="<?= h($company['career_job_title']) ?>" data-state="<?= h($company['state']) ?>" data-city="<?= h($company['city']) ?>" data-distance="<?= $company['distance_miles'] !== null ? h($company['distance_miles']) : 99999 ?>" data-status="<?= h($listing_status) ?>" data-work-arrangement="<?= h($company['work_arrangement']) ?>" data-career-credibility="<?= (int) $career ?>" data-usa-credibility="<?= (int) $usa ?>" data-job-fit="<?= $company['job_fit']['score'] ?? '' ?>" data-saved="<?= $company['is_kept'] ? 'true' : 'false' ?>" data-schedule="<?= h($schedule) ?>" data-search-run="<?= $is_new ?>" data-new="<?= $is_new ?>">
+      <tr class="result-row" data-company-id="<?= $id ?>" data-source="<?= h($company['source_type'] ?: 'Brave Search') ?>" data-company="<?= h($company['name']) ?>" data-job="<?= h($company['career_job_title']) ?>" data-state="<?= h($company['state']) ?>" data-city="<?= h($company['city']) ?>" data-distance="<?= $company['distance_miles'] !== null ? h($company['distance_miles']) : 99999 ?>" data-status="<?= h($listing_status) ?>" data-work-arrangement="<?= h($company['work_arrangement']) ?>" data-career-credibility="<?= (int) $career ?>" data-usa-credibility="<?= (int) $usa ?>" data-job-fit="<?= $company['job_fit']['score'] ?? '' ?>" data-fit-count="<?= count($company['job_fit']['matched']) + count($company['job_fit']['missing']) ?>" data-skill-fit="<?= $company['skill_fit']['score'] ?? '' ?>" data-saved="<?= $company['is_kept'] ? 'true' : 'false' ?>" data-schedule="<?= h($schedule) ?>" data-search-run="<?= $is_new ?>" data-new="<?= $is_new ?>">
         <td data-label="Save"><button class="bordered-button keep-action<?= $company['is_kept'] ? ' is-saved' : '' ?>" type="button" data-company-id="<?= $id ?>"><?= $company['is_kept'] ? 'Saved' : 'Keep' ?></button></td>
         <td data-label="Company"><?= h($company['name'] ?: 'Unknown') ?></td>
         <td data-label="Job"><strong><?= h($company['career_job_title'] ?: 'Unknown') ?></strong><?= !empty($d['easy_apply']) ? easy_apply_badge() : '' ?><?php if ($schedule !== '' || $salary !== ''): ?><small class="job-meta"><?= h(ucwords(str_replace('_', ' ', strtolower($schedule)))) ?><?= $schedule !== '' && $salary !== '' ? ' · ' : '' ?><?= h($salary) ?></small><?php endif; ?><?php if (!empty($d['also_on'])): ?><small class="job-meta">Also on: <?= implode(', ', array_map(fn($l) => '<a href="' . h($l['url']) . '" target="_blank" rel="noopener noreferrer">' . h($l['site']) . '</a>', $d['also_on'])) ?></small><?php endif; ?></td>
@@ -215,7 +217,9 @@ require APP_ROOT . '/templates/_top.php';
                   <?php if ($company['result_updated_at']): ?><div><dt>Updated</dt><dd><?= h(local_time($company['result_updated_at'])) ?></dd></div><?php endif; ?>
                 </dl>
               </section>
-              <?php if ($company['notes']): ?><section class="details-section details-notes"><h4>Notes</h4><p><?= h($company['notes']) ?></p></section><?php endif; ?>
+              <section class="details-section details-notes" data-company-id="<?= $id ?>"><h4>Notes</h4><p class="notes-view"><?php if ($company['notes']): ?><?= linkify($company['notes']) ?><?php else: ?><em>No notes yet.</em><?php endif; ?></p><textarea class="notes-input" rows="4" maxlength="5000" aria-label="Notes" placeholder="Notes and links (web addresses become clickable)" hidden><?= h($company['notes']) ?></textarea>
+                <div class="notes-actions"><button class="bordered-button notes-edit" type="button">Edit</button><button class="bordered-button primary-action notes-save" type="button" hidden>Save</button><span class="notes-status field-help" role="status"></span></div>
+              </section>
               <div class="details-footer">
                 <div class="details-links"><?php if ($company['source_url']): ?><a href="<?= h($company['source_url']) ?>" target="_blank" rel="noopener noreferrer">Original source</a><?php endif; ?><?php if (!empty($d['source']) && $d['source'] !== $company['source_url']): ?><a href="<?= h($d['source']) ?>" target="_blank" rel="noopener noreferrer">Discovery source</a><?php endif; ?></div>
                 <div class="details-blocks"><label class="reject-reason-label">If rejecting, why? <select class="reject-reason"><option value="other">Other reason</option><option value="wrong_role">Wrong role</option><option value="wrong_location">Wrong location</option><option value="not_a_job">Not a job</option><option value="duplicate">Duplicate</option></select></label><?php if (!$is_feed): ?><button class="bordered-button block-action destructive-action" type="button" data-company-id="<?= $id ?>" data-domain="<?= h($domain) ?>" title="Hide this website and all future jobs from it.">Block Domain</button><?php endif; ?><button class="bordered-button block-company-action destructive-action" type="button" data-company-id="<?= $id ?>" data-company-name="<?= h($company['name']) ?>" title="Exclude this company name from future searches.">Block Company</button></div>

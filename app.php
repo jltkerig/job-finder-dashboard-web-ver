@@ -82,6 +82,10 @@ $routes = [
     'POST /companies/page-state' => 'actions/companies.php',
     'GET /rejected-listings' => 'pages/settings.php',
     'GET /tuning' => 'pages/tuning.php',
+    'GET /job-skill-fitting' => 'pages/skill_fitting.php',
+    'GET /job-skill-fitting.json' => 'actions/skill_fitting.php',
+    'POST /job-skill-fitting/weights' => 'actions/skill_fitting.php',
+    'POST /delete-closed-kept' => 'actions/listings.php',
     'GET /credibility-scores' => 'pages/scores.php',
     'GET /resume-builder' => 'pages/resume.php',
     'GET /extension-profile' => 'actions/extension.php',
@@ -112,7 +116,7 @@ $handler = $routes["$method $path"] ?? null;
 $route_id = null;
 // Buttons on one listing: /reject-listing/12 and the like.
 if ($handler === null && $method === 'POST'
-    && preg_match('#^/(reject-listing|restore-rejected|block-domain|block-company|unsave-kept|update-kept|delete-kept)/(\d+)$#', $path, $m)) {
+    && preg_match('#^/(reject-listing|restore-rejected|block-domain|block-company|unsave-kept|update-kept|delete-kept|save-notes)/(\d+)$#', $path, $m)) {
     $handler = 'actions/listings.php';
     $path = '/' . $m[1];
     $route_id = (int) $m[2];

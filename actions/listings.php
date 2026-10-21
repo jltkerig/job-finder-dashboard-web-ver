@@ -55,6 +55,13 @@ switch ($path) {
         unsave_listing($route_id);
         json_out(['status' => 'unsaved', 'company_id' => $route_id]);
 
+    case '/save-notes':
+        $kept = save_listing_notes($route_id, (string) (request_json()['notes'] ?? ''));
+        json_out(['status' => 'saved', 'company_id' => $route_id, 'notes' => $kept, 'html' => linkify($kept)]);
+
+    case '/delete-closed-kept':
+        json_out(['status' => 'deleted', 'count' => delete_closed_kept()]);
+
     case '/delete-kept-many':
         $ids = request_json()['ids'] ?? null;
         if (!is_array($ids) || !array_filter(array_map('intval', $ids)) || count($ids) > 1000) {

@@ -1816,3 +1816,9 @@ body[data-page="search"] .results-toolbar .toolbar-title { padding-right: 140px;
 .results-collapse:not([open]) > summary { cursor: pointer; }
 .results-collapse:not([open]):hover { border-color: #1f2937; box-shadow: 0 1px 4px rgba(31,41,55,.18); }
 .results-collapse:not([open]) > summary .summary-chevron { transform: rotate(45deg); }
+
+.details-notes .notes-input { width:100%; box-sizing:border-box; }
+.details-notes .notes-actions { display:flex; align-items:center; gap:10px; margin-top:8px; }
+.skill-weights { margin: 0 0 18px; padding: 12px 16px; border: 1px solid #d4d8dd; border-radius: 8px; background: #fff; }
+.skill-weights > summary { cursor: pointer; font-weight: 700; }
+.skill-weights label { display: inline-flex; align-items: center; gap: 6px; margin: 6px 14px 6px 0; }

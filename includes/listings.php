@@ -537,3 +537,38 @@ function applied_by_month(?DateTimeImmutable $today = null): array
     return ['months' => array_map(fn($m) => ['key' => $m[0], 'label' => $m[1], 'count' => $counts[$m[0]] ?? 0], $shown),
         'earlier' => $earlier, 'undated' => $undated];
 }
+
+
+// --- Notes on a listing's Details, and the Dashboard's Clear closed jobs ----------------------------------------------
+
+const NOTES_LIMIT = 5000;
+
+/** Note text with each web address made a link (opens in a new tab). Everything else is escaped. */
+function linkify(?string $text): string
+{
+    $text = (string) $text;
+    $out = '';
+    $end = 0;
+    if (preg_match_all('~https?://[^\s<>"\']+~', $text, $matches, PREG_OFFSET_CAPTURE)) {
+        foreach ($matches[0] as [$found, $at]) {
+            $url = rtrim($found, '.,;:!?)');
+            $out .= h(substr($text, $end, $at - $end)) . '<a href="' . h($url) . '" target="_blank" rel="noopener noreferrer">' . h($url) . '</a>';
+            $end = $at + strlen($url);
+        }
+    }
+    return $out . h(substr($text, $end));
+}
+
+/** Saves the notes on a listing; returns what was kept. */
+function save_listing_notes(int $id, string $notes): string
+{
+    $notes = mb_substr(trim($notes), 0, NOTES_LIMIT);
+    q('UPDATE companies SET notes = ? WHERE id = ?', [$notes !== '' ? $notes : null, $id]);
+    return $notes;
+}
+
+/** Deletes every saved job whose posting is closed (the page asks "are you sure?" first). */
+function delete_closed_kept(): int
+{
+    return q("DELETE FROM companies WHERE is_kept = 1 AND job_open_status = 'Closed'")->rowCount();
+}
