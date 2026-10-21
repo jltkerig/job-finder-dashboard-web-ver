@@ -4,6 +4,7 @@
 
 declare(strict_types=1);
 require_once APP_ROOT . '/includes/resume/store.php';
+require_once APP_ROOT . '/includes/resume/presets.php';
 
 try {
     $draft = load_draft($rb_file);
@@ -131,7 +132,9 @@ require APP_ROOT . '/templates/_top.php';
   <label>Date <span class="field-help">empty means today</span><input name="date" value="<?= h($c['date']) ?>" /></label>
   <label>Recipient <span class="field-help">one line each</span>
     <textarea name="recipient" rows="3"><?= h(implode("\n", $c['recipient'])) ?></textarea></label>
-  <label>Greeting <input name="greeting" value="<?= h($c['greeting']) ?>" /></label>
+  <label>Greeting <span class="field-help">pick a suggestion or type your own</span>
+    <select class="greeting-pick" aria-label="Greeting suggestions"><option value="">Suggestions...</option><?php foreach (greeting_options($c['recipient'], (string) $draft['company']) as $greeting): ?><option value="<?= h($greeting) ?>"><?= h($greeting) ?></option><?php endforeach; ?><option value="__none">(no greeting)</option></select>
+    <input name="greeting" value="<?= h($c['greeting']) ?>" /></label>
   <label>Letter <span class="field-help">leave a blank line between paragraphs</span>
     <textarea name="body" rows="18"><?= h(implode("\n\n", $c['paragraphs'])) ?></textarea></label>
   <label>Closing <input name="closing" value="<?= h($c['closing']) ?>" /></label>
@@ -151,5 +154,5 @@ require APP_ROOT . '/templates/_top.php';
 </div>
 </div>
 </main>
-<?php $scripts = ['resume-build.js'];
+<?php $scripts = ['resume-build.js', 'greeting.js'];
 require APP_ROOT . '/templates/_bottom.php';

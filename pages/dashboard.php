@@ -83,9 +83,7 @@ require APP_ROOT . '/templates/_top.php';
             <div class="form-field profile-link-field"><label for="portfolio-url">Portfolio or Website</label><input id="portfolio-url" name="portfolio_url" type="text" inputmode="url" maxlength="255" value="<?= h($profile['portfolio_url']) ?>" placeholder="e.g. yourname.com" autocomplete="url" />
             </div>
           </div>
-          <section class="profile-subsection">
-            <h3>Job Titles
-            </h3>
+          <details class="profile-subsection profile-collapse" open data-section="job-titles"><summary class="profile-collapse-summary"><h3>Job Titles</h3><span class="summary-chevron" aria-hidden="true"></span></summary>
             <div class="form-field"><label for="primary-job-title">Primary Job Title</label><input id="primary-job-title" name="primary_job_title" type="text" data-title-suggest="single" value="<?= h($profile['primary_job_title']) ?>" placeholder="e.g. Web Designer" autocomplete="off" />
             </div>
             <div class="form-field"><label for="job-titles">Other Job Titles to Search For</label>
@@ -96,10 +94,8 @@ require APP_ROOT . '/templates/_top.php';
                 </div>
               </div>
             </div>
-          </section>
-          <section class="profile-subsection">
-            <h3>Work Preferences
-            </h3>
+          </details>
+          <details class="profile-subsection profile-collapse" open data-section="work-preferences"><summary class="profile-collapse-summary"><h3>Work Preferences</h3><span class="summary-chevron" aria-hidden="true"></span></summary>
             <fieldset class="preference-group">
               <legend>Work Type
               </legend>
@@ -112,28 +108,22 @@ require APP_ROOT . '/templates/_top.php';
               <div class="profile-preferences"><?php foreach (['Remote', 'Hybrid', 'Onsite'] as $preference): ?><label><input type="checkbox" name="work_preferences[]" value="<?= h($preference) ?>"<?= in_array($preference, $profile['work_preferences'], true) ? ' checked' : '' ?> /><?= h($preference) ?></label><?php endforeach; ?>
               </div>
             </fieldset>
-          </section>
-          <section class="profile-subsection">
-            <h3>Work History
-            </h3>
+          </details>
+          <details class="profile-subsection profile-collapse" open data-section="work-history"><summary class="profile-collapse-summary"><h3>Work History</h3><span class="summary-chevron" aria-hidden="true"></span></summary>
             <p class="field-help">Add past jobs manually or review suggestions from a résumé.
             </p>
             <p class="field-help" id="work-history-note" data-source="" data-history="[]" hidden>
             </p>
             <div id="work-history-list">
             </div><button class="bordered-button secondary-action" id="add-work-history" type="button">Add Job</button>
-          </section>
-          <section class="profile-subsection">
-            <h3>Education
-            </h3>
+          </details>
+          <details class="profile-subsection profile-collapse" open data-section="education"><summary class="profile-collapse-summary"><h3>Education</h3><span class="summary-chevron" aria-hidden="true"></span></summary>
             <p class="field-help">Schools you attended. GPA and minor are optional.
             </p>
             <div id="education-list" data-degrees="<?= json_attr(EDUCATION_DEGREES) ?>">
             </div><button class="bordered-button secondary-action" id="add-education" type="button">Add School</button>
-          </section>
-          <section class="profile-subsection">
-            <h3>Skills
-            </h3>
+          </details>
+          <details class="profile-subsection profile-collapse" open data-section="skills"><summary class="profile-collapse-summary"><h3>Skills</h3><span class="summary-chevron" aria-hidden="true"></span></summary>
             <p class="field-help">The skills you list here are compared with what each job asks for to work out its Job Fit. Add the ones you really have; suggestions come from your résumé, the jobs Job Finder found and the skills you already added, and appear as you type.
             </p>
             <div id="profile-skill-list" class="skill-chip-list">
@@ -144,17 +134,15 @@ require APP_ROOT . '/templates/_top.php';
             </div>
             <div id="skill-suggestions" class="skill-chip-list" aria-live="polite" data-resume="[]" data-demand="<?= json_attr($demanded_skills) ?>" hidden>
             </div>
-          </section>
-          <section class="profile-subsection">
-            <h3><label for="profile-city-input">Locations</label>
-            </h3>
+          </details>
+          <details class="profile-subsection profile-collapse" open data-section="locations"><summary class="profile-collapse-summary"><h3>Locations</h3><span class="summary-chevron" aria-hidden="true"></span></summary>
             <p class="field-help">Job Finder looks for jobs around each city, out to the distance you pick.
             </p>
             <div class="city-add-row"><input id="profile-city-input" type="text" list="city-state-options" placeholder="e.g. Wilmington, DE" autocomplete="off" /><select id="profile-city-radius"><?php foreach (CITY_RADII as $radius): ?><option value="<?= $radius ?>"<?= $radius === 50 ? ' selected' : '' ?>><?= $radius ?> miles</option><?php endforeach; ?></select><button id="add-profile-city" class="bordered-button secondary-action city-add-button" type="button">Add Location</button>
             </div>
             <div id="profile-city-list" class="city-list city-list-below">
             </div>
-          </section>
+          </details>
           <datalist id="city-state-options">
           </datalist>
           <div class="profile-save-actions"><button class="bordered-button primary-action" type="submit">Save Profile</button><div class="unsaved-note" id="unsaved-note" role="status" hidden><span>Unsaved changes. Click Save Profile to keep them.</span><button class="bordered-button primary-action" type="submit" form="profile-form">Save Profile</button></div><button class="bordered-button secondary-action" id="upload-resume" type="button">Upload Résumé</button><a class="bordered-button secondary-action" href="/extension-profile" title="A file to load in the Web Job Scraper extension (Load profile), so it can mark jobs that fit and show distances">Export for Web Job Scraper</a><input id="resume-file" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden />
@@ -183,12 +171,11 @@ require APP_ROOT . '/templates/_top.php';
       </div>
     </div>
 
-    <div class="section-heading-row">
-      <h2>Saved Jobs
-      </h2><?php if ($companies): ?>
+    <details class="saved-jobs-panel history-collapse" id="saved-jobs-panel" open>
+    <summary class="section-heading-row saved-jobs-summary"><h2>Saved Jobs</h2><span class="summary-chevron" aria-hidden="true"></span></summary>
+    <?php if ($companies): ?>
       <div class="collapse-all-actions"><button class="bordered-button secondary-action" id="expand-all-jobs" type="button">Expand all</button><button class="bordered-button secondary-action" id="collapse-all-jobs" type="button">Collapse all</button>
       </div><?php endif; ?>
-    </div>
     <?= dash_legend('saved') ?>
     <?= dash_toolbar('saved', '#saved-jobs-grid', '.saved-job-card', $companies, '<div class="form-field compact-field dash-actions"><button class="bordered-button secondary-action" id="refresh-dashboard" type="button" data-total="' . count($companies) . '">Refresh Saved Listings</button><button class="bordered-button secondary-action" id="clear-closed" type="button">Clear closed jobs</button></div>') ?>
     <p id="dashboard-refresh-status" class="field-help" role="status" hidden>
@@ -204,11 +191,9 @@ require APP_ROOT . '/templates/_top.php';
       <p>Use the green Keep button on Search results to add jobs here.
       </p><a class="bordered-button button-link" href="/">Search for Jobs</a>
     </div><?php endif; ?>
-    <details class="history-panel history-collapse applied-jobs-panel" id="applied-jobs-panel" open>
-      <summary class="history-summary">
-        <h2>Applied Jobs
-        </h2><span class="summary-chevron" aria-hidden="true"></span>
-      </summary><?php if ($applied_companies): ?>
+    </details>
+    <details class="saved-jobs-panel history-collapse applied-jobs-panel" id="applied-jobs-panel" open>
+    <summary class="section-heading-row saved-jobs-summary"><h2>Applied Jobs</h2><span class="summary-chevron" aria-hidden="true"></span></summary><?php if ($applied_companies): ?>
       <?= dash_legend('applied') ?>
       <?= dash_toolbar('applied', '#applied-jobs-grid', '.saved-job-card', $applied_companies) ?>
       <div class="saved-job-grid" id="applied-jobs-grid"><?php foreach ($applied_companies as $company): $pick = false; include APP_ROOT . '/templates/_job_card.php'; endforeach; ?>

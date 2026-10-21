@@ -150,3 +150,18 @@ $top_menu = file_get_contents(APP_ROOT . '/templates/_top.php');
 check('skill fitting: the page, its menu entry and its routes exist', str_contains($skill_page, 'Job Skill Fitting') && str_contains($top_menu, "'/job-skill-fitting' => ['Skill Fitting'")
     && str_contains(file_get_contents(APP_ROOT . '/app.php'), "'POST /job-skill-fitting/weights'") && str_contains(file_get_contents(APP_ROOT . '/app.php'), "'GET /job-skill-fitting.json'"));
 check('menu: Companies sits right of Search', strpos($top_menu, "'/companies'") < strpos($top_menu, "'/dashboard' =>"));
+
+// ---- Dashboard folds; rule presets and greeting suggestions (v1.1.290 - v1.1.300) ----
+$dash_src = file_get_contents(APP_ROOT . '/pages/dashboard.php');
+check('dashboard: Profile sections, Saved Jobs and Applied Jobs fold, each remembered', substr_count($dash_src, 'profile-collapse" open data-section=') === 6
+    && str_contains($dash_src, 'id="saved-jobs-panel"') && str_contains($dash_src, 'id="applied-jobs-panel"') && str_contains($charts_js, 'savedJobsOpen')
+    && substr_count($dash_src, '<details') === substr_count($dash_src, '</details>'));
+check('dashboard: a collapsed saved job has Delete beside Listing, an applied one does not', str_contains(file_get_contents(APP_ROOT . '/templates/_job_card.php'), '<?php if ($pick): ?><form action="/delete-kept/'));
+require_once APP_ROOT . '/includes/resume/presets.php';
+check('rule presets: both rules boxes offer ready-made rules, grouped under headings', count(RULE_PRESETS['resume']) >= 4 && count(RULE_PRESETS['cover_letter']) >= 5
+    && str_contains(rule_menu('cover_letter', 'cover-letter-rules-box'), 'data-target="cover-letter-rules-box"')
+    && str_contains(rule_menu('resume', 'resume-rules-box'), '<legend>Bullets</legend>') && str_contains(rule_menu('cover_letter', 'x'), 'Do not use em dashes.'));
+check('greetings: a person\'s name is used, a company is not mistaken for one', greeting_options(['Jane Smith', 'Acme Inc'], 'Acme') === ['Hello Jane Smith,', 'Dear Jane Smith,', 'Hi Jane,', 'Hello,', 'Good morning,', 'To the team at Acme,']
+    && greeting_options(['Acme Inc'], '') === ['Hello,', 'Good morning,'] && rule_person_name(['Human Resources']) === '' && rule_person_name(['Sam Lee']) === 'Sam Lee');
+check('rule presets: the Résumé Builder pages load their scripts', str_contains(file_get_contents(APP_ROOT . '/pages/resume.php'), "'rule-presets.js'")
+    && str_contains(file_get_contents(APP_ROOT . '/pages/resume_build.php'), "'greeting.js'"));

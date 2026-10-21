@@ -1822,3 +1822,39 @@ body[data-page="search"] .results-toolbar .toolbar-title { padding-right: 140px;
 .skill-weights { margin: 0 0 18px; padding: 12px 16px; border: 1px solid #d4d8dd; border-radius: 8px; background: #fff; }
 .skill-weights > summary { cursor: pointer; font-weight: 700; }
 .skill-weights label { display: inline-flex; align-items: center; gap: 6px; margin: 6px 14px 6px 0; }
+
+/* Dashboard: Saved Jobs and Applied Jobs are white cards that fold from their heading. */
+.saved-jobs-panel { margin: 16px 0 16px; padding: 12px 18px 14px; background: #fff; border: 1px solid #ddd; border-radius: 12px; }
+.saved-jobs-panel > summary.saved-jobs-summary { list-style: none; cursor: pointer; margin: 0 0 10px; }
+.saved-jobs-panel > summary.saved-jobs-summary::-webkit-details-marker { display: none; }
+.saved-jobs-panel:not([open]) > summary.saved-jobs-summary { margin-bottom: 0; }
+.saved-jobs-panel > summary .summary-chevron { margin-left: auto; }
+.saved-jobs-panel[open] > summary .summary-chevron { transform: rotate(-135deg); }
+.saved-jobs-panel .bulk-bar { margin-top: 0; }
+.saved-jobs-panel .collapse-all-actions { display: flex; gap: 8px; justify-content: flex-end; margin: 0 0 10px; }
+.saved-job-grid + .saved-jobs-panel, .empty-dashboard + .saved-jobs-panel { margin-top: 16px; }
+
+/* Delete on a collapsed saved job, beside Listing. */
+body[data-page="dashboard"] .summary-delete-form { margin: 0; }
+
+/* Profile sections open and close: the heading is the clickable summary. */
+.profile-collapse > summary.profile-collapse-summary { list-style: none; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.profile-collapse > summary.profile-collapse-summary::-webkit-details-marker { display: none; }
+.profile-collapse > summary h3 { margin: 0; }
+.profile-collapse[open] > summary { margin-bottom: 10px; }
+.profile-collapse > summary .summary-chevron { margin-left: auto; }
+.profile-collapse[open] > summary .summary-chevron { transform: rotate(-135deg); }
+.profile-collapse > summary:focus-visible { outline: 3px solid #93c5fd; outline-offset: 4px; border-radius: 6px; }
+
+/* City and skill chips match the suggestion pills: one size and weight on every page. */
+.city-chip, .skill-chip, body[data-page="search"] .city-chip, body[data-page="search"] .skill-chip { box-sizing: border-box; gap: 6px; margin-top: 0; padding: 5px 6px 5px 12px; font-size: .85rem; font-weight: 400; line-height: 1.3; }
+.city-chip span, .skill-chip span { font-size: inherit; font-weight: inherit; }
+body[data-page="search"] .job-suggestion-button { padding: 5px 12px; font-size: .85rem; line-height: 1.3; }
+
+/* Add common rules: dropdown of tick boxes above a rules box */
+.rule-presets { margin: 0 0 10px; }
+.rule-presets > summary { display: inline-block; cursor: pointer; }
+.rule-presets-list { margin-top: 8px; padding: 10px 12px; border: 1px solid #c4c8ce; border-radius: 6px; background: #fff; max-height: 320px; overflow-y: auto; }
+.rule-presets-list fieldset { border: 0; margin: 0 0 10px; padding: 0; }
+.rule-presets-list legend { font-weight: 600; margin-bottom: 4px; }
+.rule-presets-list label { display: flex; gap: 8px; align-items: flex-start; font-weight: normal; margin: 3px 0; }

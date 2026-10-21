@@ -854,6 +854,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const setAll = (open) => cards.forEach((card) => { card.open = open; });
     document.getElementById("expand-all-jobs")?.addEventListener("click", () => setAll(true));
     document.getElementById("collapse-all-jobs")?.addEventListener("click", () => setAll(false));
+    // Each Profile section (Job Titles, Work Preferences, ... Locations) opens and closes; each choice is remembered.
+    document.querySelectorAll("details.profile-collapse[data-section]").forEach((section) => {
+      const key = `jobFinder.profile.${section.dataset.section}.open`;
+      try { section.open = localStorage.getItem(key) !== "0"; } catch {}
+      section.addEventListener("toggle", () => { try { localStorage.setItem(key, section.open ? "1" : "0"); } catch {} });
+    });
+    // Saved Jobs and Applied Jobs can be collapsed as a whole; the choice is remembered, and a link to one job opens it.
+    document.querySelectorAll("#saved-jobs-panel, #applied-jobs-panel").forEach((panel) => {
+      const key = `jobFinder.${panel.id === "saved-jobs-panel" ? "savedJobsOpen" : "appliedJobsOpen"}`;
+      try { panel.open = localStorage.getItem(key) !== "0"; } catch {}
+      panel.addEventListener("toggle", () => { try { localStorage.setItem(key, panel.open ? "1" : "0"); } catch {} });
+      if (/^#job-\d+$/.test(location.hash) && panel.querySelector(location.hash)) panel.open = true;
+    });
     const target = /^#job-\d+$/.test(location.hash) ? document.querySelector(`${location.hash} .saved-job-collapse`) : null;
     if (target) { target.open = true; target.closest(".saved-job-card").scrollIntoView({ block: "start" }); }
 

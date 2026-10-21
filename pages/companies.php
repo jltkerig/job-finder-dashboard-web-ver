@@ -21,7 +21,6 @@ $default_kinds = array_merge([KNOWN_KIND, MINE_KIND], DEFAULT_COMPANY_KINDS);
 
 $title = 'Companies';
 $page = 'companies';
-$subtitle = 'Businesses, offices, plants and schools near a place, whether or not they have a job posted';
 $scripts = ['companies.js', 'address-suggest.js'];
 require APP_ROOT . '/templates/_top.php';
 ?>

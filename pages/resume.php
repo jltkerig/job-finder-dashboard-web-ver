@@ -451,7 +451,7 @@ require APP_ROOT . '/templates/_top.php';
 </details>
 </section>
 
-<?php foreach (['resume' => ['resume-rules', 18, "Technical Skills\n- Use a Technical Skills section instead of a Professional Summary.\n- Never invent metrics.",
+<?php require_once APP_ROOT . '/includes/resume/presets.php'; foreach (['resume' => ['resume-rules', 18, "Technical Skills\n- Use a Technical Skills section instead of a Professional Summary.\n- Never invent metrics.",
     'Your standing instructions for every résumé. Claude reads them before writing, and they win over its built-in rules. To change one for a single job, say so when you ask.'],
     'cover_letter' => ['cover-letter-rules', 14, "Tone\n- Keep it short and low-key.\n- Use specific experience from the résumé.",
     'Your standing instructions for every cover letter, including how to explain an employment gap. Claude reads them before writing.']] as $kind => [$anchor, $rows, $example, $help]): ?>
@@ -461,9 +461,10 @@ require APP_ROOT . '/templates/_top.php';
   <p class="field-help"><?= h($help) ?></p>
   <p class="field-help rules-format"><strong>How to write them:</strong> put each rule on its own line, starting with a dash (-). A line without a dash
     is a heading that groups the rules under it. Leave a blank line between groups. Write them the way you would tell a person; no special symbols are needed.</p>
+  <?= rule_menu($kind, $anchor . '-box') ?>
   <form method="post" action="/resume-builder/writing-rules/<?= $kind ?>" class="writing-rules-form">
     <?= csrf_field() ?>
-    <textarea name="rules" rows="<?= $rows ?>" aria-label="<?= h(RULE_TITLES[$kind]) ?>" placeholder="<?= h($example) ?>"><?= h(load_rules($kind)) ?></textarea>
+    <textarea id="<?= $anchor ?>-box" name="rules" rows="<?= $rows ?>" aria-label="<?= h(RULE_TITLES[$kind]) ?>" placeholder="<?= h($example) ?>"><?= h(load_rules($kind)) ?></textarea>
     <button class="bordered-button primary" type="submit">Save <?= h(RULE_TITLES[$kind]) ?></button>
   </form>
 </details>
@@ -498,5 +499,5 @@ require APP_ROOT . '/templates/_top.php';
 </div>
 </main>
 <?php
-$scripts = ['design.js', 'resume-panels.js'];
+$scripts = ['design.js', 'resume-panels.js', 'rule-presets.js'];
 require APP_ROOT . '/templates/_bottom.php';

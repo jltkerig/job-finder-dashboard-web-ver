@@ -20,7 +20,6 @@ $days = (int) ceil(($reset - time()) / 86400);
 
 $title = 'Tuning';
 $page = 'tuning';
-$subtitle = 'How each source did in the last search, and your recent searches';
 require APP_ROOT . '/templates/_top.php';
 ?>
 <main>
