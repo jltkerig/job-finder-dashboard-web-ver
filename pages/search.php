@@ -12,6 +12,8 @@ $profile = get_user_profile();
 add_job_fit($companies, $profile['skills']);
 $latest_search_at = get_search_history(1)[0]['searched_at'] ?? null;
 $run = search_state();
+$source_names = array_values(array_unique(array_map(fn($c) => $c['source_type'] ?: 'Brave Search', $companies)));
+sort($source_names);
 
 $title = 'Search';
 $page = 'search';
@@ -21,7 +23,7 @@ $subtitle_class = 'app-version';
 $body_attrs = ' data-scraper-running="' . (search_running($run) ? 'true' : 'false') . '" data-scraper-mode="'
     . h(search_running($run) ? $run['mode'] : '') . '" data-work-preferences="' . json_attr($profile['work_preferences']) . '"';
 $before_nav = "<div id=\"search-progress-bar\" class=\"search-progress-bar\" hidden>\n</div>";
-$scripts = ['capture-upload.js', 'columns.js', 'job-title-bubbles.js', 'reject-reason.js', 'top-picks.js', 'details-all.js'];
+$scripts = ['capture-upload.js', 'columns.js', 'job-title-bubbles.js', 'reject-reason.js', 'top-picks.js', 'details-all.js', 'search-folds.js'];
 
 function credibility_class($score): string
 {
@@ -61,22 +63,22 @@ require APP_ROOT . '/templates/_top.php';
         </div>
       </div>
       <form id="job-search-form" class="job-search-form">
-        <div class="form-field job-title-field"><label for="job-title-add">Job Titles</label>
+        <details class="form-field job-title-field search-fold" id="fold-titles" data-list="#job-title-list" data-empty="Add the jobs you want" open><summary><span class="fold-title">Job Titles</span><span class="fold-count"></span><span class="fold-glance"></span></summary><div class="fold-inside"><label for="job-title-add">Job Titles</label>
           <p class="field-help">Separate multiple titles with commas. Related titles appear automatically after you pause typing.
           </p><input id="job-title" name="job_title" type="hidden" value="<?= h(implode(', ', $profile['job_titles'])) ?>" />
           <div class="city-add-row"><input id="job-title-add" type="text" data-title-suggest="single" maxlength="120" placeholder="e.g. Web Designer" autocomplete="off" aria-label="Add a job title" /><button class="bordered-button secondary-action" id="add-job-title" type="button">Add Title</button></div>
           <div id="job-title-list" class="city-list city-list-below"></div>
           <div id="job-title-suggestions" class="job-title-suggestions" hidden aria-live="polite">
           </div>
-        </div>
-        <div class="form-field city-search-field"><label for="search-city-input">City, Zip, Country, State</label>
+        </div></details>
+        <details class="form-field city-search-field search-fold" id="fold-places" data-list="#search-city-list" data-empty="Add a city, zip, country or state"><summary><span class="fold-title">City, Zip, Country, State</span><span class="fold-count"></span><span class="fold-glance"></span></summary><div class="fold-inside"><label for="search-city-input">City, Zip, Country, State</label>
           <p class="field-help">Add a city for a radius search, or enter a full state name for a statewide search. Statewide searches ignore the radius.
           </p>
           <div class="city-add-row"><input id="search-city-input" type="text" list="city-state-options" placeholder="e.g. Wilmington, DE" autocomplete="off" /><select id="search-city-radius" aria-label="Radius"><?php foreach (CITY_RADII as $radius): ?><option value="<?= $radius ?>"<?= $radius === 50 ? ' selected' : '' ?>><?= $radius ?> miles</option><?php endforeach; ?></select><button id="add-search-city" class="bordered-button secondary-action city-add-button" type="button">Add Location</button>
           </div>
           <div id="search-city-list" class="city-list city-list-below">
           </div>
-        </div>
+        </div></details>
         <input id="search-state" name="state" type="hidden" value="<?= h($profile['state']) ?>" />
         <datalist id="city-state-options">
         </datalist>
@@ -95,10 +97,8 @@ require APP_ROOT . '/templates/_top.php';
       </details>
     </div>
 
-    <div class="section-heading-row">
-      <h2>Results
-      </h2>
-    </div>
+    <details class="results-collapse history-collapse" id="results-panel" open>
+    <summary class="section-heading-row results-summary"><h2>Results</h2><span class="summary-chevron" aria-hidden="true"></span></summary>
     <?php if ($companies): ?>
     <section class="results-toolbar" aria-label="Results filters">
       <div class="toolbar-title"><span class="filter-icon" aria-hidden="true">⌕</span><strong>Filters</strong>
@@ -114,6 +114,8 @@ require APP_ROOT . '/templates/_top.php';
       <div class="form-field compact-field"><label for="result-min-credibility" title="Only individual openings at 30%+ count toward the goal. Lower scores are hidden after a search or refresh; choose Show all scores to review them.">Min. Career Credibility</label><select id="result-min-credibility" title="Only individual openings at 30%+ count toward the goal. Lower scores are hidden after a search or refresh; choose Show all scores to review them."><option value="0">30%+ (default)</option><option value="-1">Show all scores</option><option value="3">30%+</option><option value="5">50%+</option><option value="7">70%+</option><option value="9">90%+</option></select>
       </div>
       <div class="form-field compact-field"><label for="result-schedule-filter">Work Type</label><select id="result-schedule-filter"><option value="all">All work types</option><option value="part">Part-time</option><option value="full">Full-time</option><option value="contract">Contract</option><option value="freelance">Freelance / Gig</option><option value="unknown">Unspecified</option></select>
+      </div>
+      <div class="form-field compact-field"><label for="result-source-filter">Source</label><select id="result-source-filter"><option value="all">All sources</option><?php foreach ($source_names as $source_name): ?><option value="<?= h($source_name) ?>"><?= h($source_name) ?></option><?php endforeach; ?></select>
       </div>
       <div class="form-field compact-field"><label for="result-new-filter">Found</label><select id="result-new-filter"><option value="all">All results</option><option value="new">New since last search</option></select>
       </div>
@@ -135,11 +137,15 @@ require APP_ROOT . '/templates/_top.php';
       </div>
     </section>
     <section id="top-picks" class="top-picks" hidden aria-labelledby="top-picks-heading">
-      <div class="top-picks-head"><h2 id="top-picks-heading">Top 10 Picks</h2><button id="top-picks-close" class="bordered-button secondary-action" type="button">Close</button></div>
+      <details class="top-picks-collapse" id="top-picks-panel" open>
+      <summary class="top-picks-head"><h2 id="top-picks-heading">Top 10 Picks</h2><span class="summary-chevron" aria-hidden="true"></span></summary>
       <p class="field-help">Ranked by job fit, credibility and how close the job is, from the results shown (filters apply). Untick any you don't want, then build: they're kept on your Dashboard and one request for Claude is copied to make a résumé and cover letter for each.</p>
       <ol id="top-picks-list" class="top-picks-list"></ol>
-      <div class="top-picks-actions"><span id="top-picks-status" class="field-help" role="status"></span><button id="top-picks-build" class="bordered-button primary-action" type="button">Build résumés and cover letters</button></div>
+      <div class="top-picks-actions"><span id="top-picks-status" class="field-help" role="status"></span><button id="top-picks-build" class="bordered-button primary-action" type="button">Build résumés and cover letters</button><button id="top-picks-close" class="bordered-button secondary-action" type="button">Close</button></div>
+      </details>
     </section>
+    <details class="listings-collapse history-collapse" id="listings-panel" open>
+    <summary class="listings-summary"><h3>Listings</h3><span class="summary-chevron" aria-hidden="true"></span></summary>
     <div class="credibility-legend" aria-label="Credibility score guide"><strong>Scoring:</strong><span class="legend-item" tabindex="0" aria-describedby="credibility-low-help"><i class="legend-dot low"></i>Low<span id="credibility-low-help" class="credibility-tip" role="tooltip">0–40%: limited evidence.</span></span><span class="legend-item" tabindex="0" aria-describedby="credibility-medium-help"><i class="legend-dot medium"></i>Medium<span id="credibility-medium-help" class="credibility-tip" role="tooltip">50–70%: some evidence.</span></span><span class="legend-item" tabindex="0" aria-describedby="credibility-high-help"><i class="legend-dot high"></i>High<span id="credibility-high-help" class="credibility-tip" role="tooltip">80–100%: stronger evidence.</span></span><a href="/credibility-scores">How are scores calculated?</a>
     </div>
 
@@ -165,7 +171,7 @@ require APP_ROOT . '/templates/_top.php';
         $salary = (string) ($d['salary'] ?? '');
         $listing_url = $employer_site && $company['career_url'] ? $company['career_url'] : ($company['source_url'] ?: $company['career_url']);
     ?>
-      <tr class="result-row" data-company-id="<?= $id ?>" data-company="<?= h($company['name']) ?>" data-job="<?= h($company['career_job_title']) ?>" data-state="<?= h($company['state']) ?>" data-city="<?= h($company['city']) ?>" data-distance="<?= $company['distance_miles'] !== null ? h($company['distance_miles']) : 99999 ?>" data-status="<?= h($listing_status) ?>" data-work-arrangement="<?= h($company['work_arrangement']) ?>" data-career-credibility="<?= (int) $career ?>" data-usa-credibility="<?= (int) $usa ?>" data-job-fit="<?= $company['job_fit']['score'] ?? '' ?>" data-saved="<?= $company['is_kept'] ? 'true' : 'false' ?>" data-schedule="<?= h($schedule) ?>" data-search-run="<?= $is_new ?>" data-new="<?= $is_new ?>">
+      <tr class="result-row" data-company-id="<?= $id ?>" data-source="<?= h($company['source_type'] ?: 'Brave Search') ?>" data-company="<?= h($company['name']) ?>" data-job="<?= h($company['career_job_title']) ?>" data-state="<?= h($company['state']) ?>" data-city="<?= h($company['city']) ?>" data-distance="<?= $company['distance_miles'] !== null ? h($company['distance_miles']) : 99999 ?>" data-status="<?= h($listing_status) ?>" data-work-arrangement="<?= h($company['work_arrangement']) ?>" data-career-credibility="<?= (int) $career ?>" data-usa-credibility="<?= (int) $usa ?>" data-job-fit="<?= $company['job_fit']['score'] ?? '' ?>" data-saved="<?= $company['is_kept'] ? 'true' : 'false' ?>" data-schedule="<?= h($schedule) ?>" data-search-run="<?= $is_new ?>" data-new="<?= $is_new ?>">
         <td data-label="Save"><button class="bordered-button keep-action<?= $company['is_kept'] ? ' is-saved' : '' ?>" type="button" data-company-id="<?= $id ?>"><?= $company['is_kept'] ? 'Saved' : 'Keep' ?></button></td>
         <td data-label="Company"><?= h($company['name'] ?: 'Unknown') ?></td>
         <td data-label="Job"><strong><?= h($company['career_job_title'] ?: 'Unknown') ?></strong><?= !empty($d['easy_apply']) ? easy_apply_badge() : '' ?><?php if ($schedule !== '' || $salary !== ''): ?><small class="job-meta"><?= h(ucwords(str_replace('_', ' ', strtolower($schedule)))) ?><?= $schedule !== '' && $salary !== '' ? ' · ' : '' ?><?= h($salary) ?></small><?php endif; ?><?php if (!empty($d['also_on'])): ?><small class="job-meta">Also on: <?= implode(', ', array_map(fn($l) => '<a href="' . h($l['url']) . '" target="_blank" rel="noopener noreferrer">' . h($l['site']) . '</a>', $d['also_on'])) ?></small><?php endif; ?></td>
@@ -186,7 +192,7 @@ require APP_ROOT . '/templates/_top.php';
               <section class="details-section">
                 <h4>About This Listing</h4>
                 <dl class="details-grid">
-                  <div><dt>Source</dt><dd><?= h($company['source_type'] ?: 'Brave Search') ?></dd></div>
+                  <div><dt>Source</dt><dd><?php $source_name = $company['source_type'] ?: 'Brave Search'; ?><?php if ($company['source_url']): ?><a href="<?= h($company['source_url']) ?>" target="_blank" rel="noopener noreferrer"><?= h($source_name) ?></a><?php else: ?><?= h($source_name) ?><?php endif; ?></dd></div>
                   <div><dt>Type</dt><dd><?= h(listing_kind($company)) ?></dd></div>
                   <?php if (!empty($d['posted'])): ?><div><dt>Posted</dt><dd><?= h($d['posted']) ?></dd></div><?php endif; ?>
                   <?php if (!empty($d['location'])): ?><div><dt>Listing location</dt><dd><?= h($d['location']) ?></dd></div><?php endif; ?>
@@ -220,6 +226,7 @@ require APP_ROOT . '/templates/_top.php';
         </tbody>
       </table>
     </div>
+    </details>
     <?php else: ?>
     <div class="empty-dashboard">
       <h3>No Search Results Yet
@@ -227,6 +234,7 @@ require APP_ROOT . '/templates/_top.php';
       <p>Enter a job title and City, State above, then start Job Finder.
       </p>
     </div><?php endif; ?>
+    </details>
   </section>
 </main>
 

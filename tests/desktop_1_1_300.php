@@ -55,3 +55,53 @@ check('companies: My Companies, Add a Company and the results fold, and each rem
     && str_contains($companies_page, 'jobFinder.addCompanyOpen') && str_contains($companies_page, 'id="companies-results-panel"')
     && substr_count($companies_page, '<details') === substr_count($companies_page, '</details>'));
 check('companies: Source pills combine with the type pills', str_contains($companies_js, 'activeSources') && str_contains($companies_js, 'companies-source-tags'));
+
+// ---- Hacker News "Who is hiring?" as a remote feed (v1.1.296) ----
+$hn_comments = [
+    '1' => 'Acme (https://acme.com) | Senior Frontend Developer | REMOTE (US) | Full-time<p>We build things. Apply at <a href="https://acme.com/jobs/1">acme.com/jobs/1</a>',
+    '2' => 'Beta Studio | Graphic Designer / Motion Designer | REMOTE | $90k',
+    '3' => 'Gamma | Backend Engineer, Data Engineer | REMOTE (US) | Full-time',
+    '4' => 'Delta | Frontend Developer | REMOTE (EU only) | Full-time',
+    '5' => 'Epsilon | Frontend Developer | San Francisco, CA | ONSITE',
+    '6' => 'Zeta is hiring a frontend developer, everything is great, contact us anywhere.',
+    '7' => 'Eta | Hiring: Product Designer, Graphic Designer | Remote (anywhere) | Full-time',
+];
+$hn_openings = [];
+foreach ($hn_comments as $hn_id => $hn_html) {  // what fetch_hacker_news() keeps of each comment
+    $parsed = hacker_news_parse($hn_html);
+    if (!$parsed) {
+        continue;
+    }
+    [$where, $score] = hacker_news_location($parsed);
+    if ($where === null) {
+        continue;
+    }
+    $hn_openings[] = ['id' => (string) $hn_id, 'url' => "https://news.ycombinator.com/item?id=$hn_id", 'company' => $parsed['company'], 'header' => $parsed['header'],
+        'parts' => $parsed['parts'], 'lines' => array_slice($parsed['lines'], 0, 6), 'location' => $where, 'usa_score' => $score, 'description' => $hn_html, 'posted' => '2026-10-02'];
+}
+$hn_found = [];
+foreach (hacker_news_matching($hn_openings, ['Frontend Developer', 'Graphic Designer'], true) as $hn_job) {
+    $hn_found[$hn_job['name']] = $hn_job;
+}
+ksort($hn_found);
+check('hacker news: remote U.S. openings with a matching title are kept', array_keys($hn_found) === ['Acme', 'Beta Studio', 'Eta']);
+check('hacker news: the title, link and U.S. score come from the comment', ($hn_found['Acme']['title'] ?? '') === 'Senior Frontend Developer'
+    && ($hn_found['Acme']['url'] ?? '') === 'https://news.ycombinator.com/item?id=1' && ($hn_found['Acme']['usa_score'] ?? 0) === 6
+    && ($hn_found['Beta Studio']['title'] ?? '') === 'Graphic Designer' && ($hn_found['Eta']['title'] ?? '') === 'Graphic Designer');
+check('hacker news: other regions, onsite jobs and free-form comments are left out', !array_intersect(['Gamma', 'Delta', 'Epsilon', 'Zeta'], array_keys($hn_found)));
+check('hacker news: it is a registered feed that links on Hacker News', in_array('Hacker News', FEED_NAMES, true)
+    && in_array('news.ycombinator.com', feed_list()['Hacker News']['hosts'], true));
+
+// ---- Search page: Source filter, folds, a Source link (v1.1.294 - v1.1.296) ----
+$search_page = file_get_contents(APP_ROOT . '/pages/search.php');
+$charts_js = file_get_contents(APP_ROOT . '/static/js/charts.js');
+check('search: results can be filtered by Source', str_contains($search_page, 'id="result-source-filter"') && str_contains($search_page, 'data-source="<?= h(')
+    && str_contains($charts_js, 'selectedSource') && str_contains($charts_js, 'resultSourceFilter,resultNewFilter'));
+check('search: Job Titles, places, Results, Top 10 Picks and Listings fold, each remembered', str_contains($search_page, 'id="fold-titles"') && str_contains($search_page, 'id="fold-places"')
+    && str_contains($search_page, 'id="results-panel"') && str_contains($search_page, 'id="top-picks-panel"') && str_contains($search_page, 'id="listings-panel"')
+    && str_contains($search_page, "'search-folds.js'") && str_contains($charts_js, 'jobFinder.resultsOpen') && str_contains($charts_js, 'jobFinder.listingsOpen')
+    && substr_count($search_page, '<details') === substr_count($search_page, '</details>'));
+check('search: a listing\'s Source links to the page the job was found on', str_contains($search_page, "<dt>Source</dt><dd><?php \$source_name")
+    && str_contains(file_get_contents(APP_ROOT . '/templates/_job_card.php'), "<dt>Source</dt><dd><?php \$source_name"));
+check('iCIMS: a job is checked on its framed page, so the empty shell does not read as closed', str_contains(file_get_contents(APP_ROOT . '/includes/search/employers.php'), "?in_iframe=1"));
+check('clean-up: a rejected job is kept when closed jobs are tidied', (bool) preg_match('/is_rejected = 0 AND is_kept = 0 AND application_status NOT IN/', file_get_contents(APP_ROOT . '/includes/listings.php')));

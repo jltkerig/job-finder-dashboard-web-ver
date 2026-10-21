@@ -1767,3 +1767,52 @@ body[data-page="dashboard"] .credibility-legend { margin: 8px 0 14px; justify-co
 .companies-filter-box .companies-website-only:has(input:checked) { background: #1f2937; border-color: #1f2937; color: #fff; }
 .companies-filter-box .companies-website-only:has(input:focus-visible) { outline: 3px solid #93c5fd; outline-offset: 2px; }
 .companies-origin { margin:0 0 10px; }
+
+/* Search page: Results, Top 10 Picks and Listings fold from their headings; Filters fold up; Job Titles and places fold away. */
+/* Top 10 Picks collapses from its heading row (the Close button still hides the whole panel). */
+.top-picks-collapse > summary.top-picks-head { list-style: none; cursor: pointer; }
+.top-picks-collapse > summary.top-picks-head::-webkit-details-marker { display: none; }
+.top-picks-collapse > summary h2 { margin-right: auto; }
+.top-picks-collapse[open] > summary { margin-bottom: 10px; }
+.top-picks-collapse[open] > summary .summary-chevron { transform: rotate(-135deg); }
+.toolbar-title, .filter-heading { cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.filters-chevron { margin-left: 10px; }
+.filters-collapsed .filters-chevron { transform: rotate(45deg); }
+.toolbar-title[aria-expanded="true"] .filters-chevron, .filter-heading[aria-expanded="true"] .filters-chevron { transform: rotate(-135deg); }
+.filters-collapsed > :not(.toolbar-title):not(.filter-heading) { display: none !important; }
+.results-collapse > summary.results-summary h2 { margin: 0; }
+.listings-collapse > summary.listings-summary { list-style: none; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.listings-collapse > summary.listings-summary::-webkit-details-marker { display: none; }
+.listings-collapse > summary h3 { margin: 0; }
+.listings-collapse[open] > summary { margin: 14px 0 10px; }
+.listings-collapse > summary .summary-chevron { margin-left: auto; }
+.listings-collapse[open] > summary .summary-chevron { transform: rotate(-135deg); }
+.listings-collapse { margin: 16px 0 28px; padding: 18px 20px; background: #fff; border: 1px solid #ddd; border-radius: 12px; }
+.listings-collapse[open] > summary { margin-top: 0; }
+/* Listings header: a heading as big as the other section headings, with room before the scoring key. */
+.listings-collapse > summary.listings-summary { padding: 2px 0 4px; }
+.listings-collapse > summary h3 { font-size: 1.4rem; line-height: 1.25; }
+.listings-collapse[open] > summary.listings-summary { margin: 0 0 16px; }
+.listings-collapse > .credibility-legend { margin-top: 0; }
+/* Search for Jobs: fold-away sections (static/js/search-folds.js) */
+.job-search-form > details.search-fold { grid-column:1 / -1; border:1px solid #e3e6ea; border-radius:12px; background:#fafbfc; margin:0 0 12px; }
+.search-fold > summary { list-style:none; cursor:pointer; display:flex; align-items:center; gap:12px; padding:14px 20px; }
+.search-fold > summary::-webkit-details-marker { display:none; }
+.search-fold > summary::after { content:""; margin-left:auto; flex:none; width:10px; height:10px; border-right:2px solid #6b7280; border-bottom:2px solid #6b7280; transform:rotate(45deg); }
+.search-fold[open] > summary::after { transform:rotate(-135deg); }
+.fold-title { font-weight:700; font-size:1.1rem; flex:none; }
+.fold-count { flex:none; min-width:22px; padding:0 8px; border-radius:999px; background:#e8f0fb; color:#1f4f99; font-size:.8rem; font-weight:700; text-align:center; }
+.fold-count:empty { display:none; }
+.fold-glance { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#6b7280; font-size:.9rem; }
+.search-fold[open] > summary .fold-glance { display:none; }
+.fold-inside { padding:0 20px 18px; }
+.fold-inside > label { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+/* The Filters fold-up arrow sits at the far right, after the results number. */
+.results-toolbar, .filter-panel { position: relative; }
+.toolbar-title .filters-chevron, .filter-heading .filters-chevron { position: absolute; top: 24px; right: 20px; margin: 0; }
+body[data-page="search"] .results-toolbar .results-count { right: 46px; }
+body[data-page="search"] .results-toolbar .toolbar-title { padding-right: 140px; }
+.results-collapse:not([open]) { padding: 14px 20px; background: #fff; border: 1px solid #b9c1cc; border-radius: 12px; }
+.results-collapse:not([open]) > summary { cursor: pointer; }
+.results-collapse:not([open]):hover { border-color: #1f2937; box-shadow: 0 1px 4px rgba(31,41,55,.18); }
+.results-collapse:not([open]) > summary .summary-chevron { transform: rotate(45deg); }

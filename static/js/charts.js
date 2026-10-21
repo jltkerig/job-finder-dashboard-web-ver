@@ -219,13 +219,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const upper=raw.toUpperCase();
     return STATE_NAMES[upper]?upper:STATE_CODES[raw.toLowerCase()]||upper;
   }
-  const resultFilter = $("#result-filter"), resultStateFilter = $("#result-state-filter"), resultArrangementFilter = $("#result-arrangement-filter"), resultStatusFilter = $("#result-status-filter"), resultSort = $("#result-sort"), resultMinCredibility = $("#result-min-credibility"), resultScheduleFilter = $("#result-schedule-filter"), resultNewFilter = $("#result-new-filter"), resultsCount = $("#results-count"), resultsTableBody = $("#results-table tbody");
+  const resultFilter = $("#result-filter"), resultStateFilter = $("#result-state-filter"), resultArrangementFilter = $("#result-arrangement-filter"), resultStatusFilter = $("#result-status-filter"), resultSort = $("#result-sort"), resultMinCredibility = $("#result-min-credibility"), resultScheduleFilter = $("#result-schedule-filter"), resultSourceFilter = $("#result-source-filter"), resultNewFilter = $("#result-new-filter"), resultsCount = $("#results-count"), resultsTableBody = $("#results-table tbody");
   function updateClientResults() {
     if (!resultsTableBody) return;
     const query=(resultFilter?.value||"").trim().toLowerCase(),status=resultStatusFilter?.value||"all";
     const selectedState=resultStateFilter?.value||"all";
     const selectedArrangement=resultArrangementFilter?.value||"all";
-    const minScore=Number(resultMinCredibility?.value||0), selectedSchedule=resultScheduleFilter?.value||"all";
+    const minScore=Number(resultMinCredibility?.value||0), selectedSchedule=resultScheduleFilter?.value||"all"; const selectedSource=resultSourceFilter?.value||"all";
     const queryState=STATE_NAMES[query.toUpperCase()]?query.toUpperCase():STATE_CODES[query]||null;
     let rows=$$(".result-row",resultsTableBody);
     rows.forEach((row)=>{
@@ -238,6 +238,7 @@ document.addEventListener("DOMContentLoaded", () => {
         &&(selectedArrangement==="all"||arrangement===selectedArrangement||(selectedArrangement==="unknown"&&!arrangement))
         &&(status==="all"||row.dataset.status===status)
         &&(minScore===-1||score>=Math.max(3,minScore))
+        &&(selectedSource==="all"||(row.dataset.source||"")===selectedSource)
         &&(selectedSchedule==="all"||(selectedSchedule==="unknown"?!schedule:(selectedSchedule==="freelance"?/freelanc|gig|project.based|independent contractor/.test(schedule):schedule.includes(selectedSchedule))))
         &&(resultNewFilter?.value!=="new"||row.dataset.new==="true");
       row.hidden=!matches;
@@ -253,8 +254,8 @@ document.addEventListener("DOMContentLoaded", () => {
     codes.sort((a,b)=>(STATE_NAMES[a]||a).localeCompare(STATE_NAMES[b]||b));
     codes.forEach(code=>{const option=document.createElement("option");option.value=code;option.textContent=STATE_NAMES[code]?`${STATE_NAMES[code]} (${code})`:code;resultStateFilter.appendChild(option);});
   }
-  [resultFilter,resultStateFilter,resultArrangementFilter,resultStatusFilter,resultSort,resultMinCredibility,resultScheduleFilter,resultNewFilter].forEach(control=>control?.addEventListener("input",updateClientResults));
-  [resultStateFilter,resultArrangementFilter,resultStatusFilter,resultSort,resultMinCredibility,resultScheduleFilter,resultNewFilter].forEach(control=>control?.addEventListener("change",updateClientResults));
+  [resultFilter,resultStateFilter,resultArrangementFilter,resultStatusFilter,resultSort,resultMinCredibility,resultScheduleFilter,resultSourceFilter,resultNewFilter].forEach(control=>control?.addEventListener("input",updateClientResults));
+  [resultStateFilter,resultArrangementFilter,resultStatusFilter,resultSort,resultMinCredibility,resultScheduleFilter,resultSourceFilter,resultNewFilter].forEach(control=>control?.addEventListener("change",updateClientResults));
   updateClientResults();
 
   function normalizeJobTitles(value) {
@@ -857,4 +858,35 @@ document.addEventListener("DOMContentLoaded", () => {
     if (target) { target.open = true; target.closest(".saved-job-card").scrollIntoView({ block: "start" }); }
 
   }
+});
+
+// Filters (Search results and the Dashboard's lists) fold up from their "Filters" heading; each choice is remembered.
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".toolbar-title, .filter-heading").forEach((heading) => {
+    const box = heading.parentElement, page = document.body.dataset.page || "page", key = box.id ? `jobFinder.${page}.${box.id}.filtersOpen` : `jobFinder.${page}.filtersOpen`;
+    const chevron = document.createElement("span"); chevron.className = "summary-chevron filters-chevron"; chevron.setAttribute("aria-hidden", "true");
+    heading.append(chevron);
+    heading.setAttribute("role", "button"); heading.tabIndex = 0;
+    const set = (open) => { box.classList.toggle("filters-collapsed", !open); heading.setAttribute("aria-expanded", String(open)); try { localStorage.setItem(key, open ? "1" : "0"); } catch {} };
+    let open = true; try { open = localStorage.getItem(key) !== "0"; } catch {}
+    box.classList.toggle("filters-collapsed", !open); heading.setAttribute("aria-expanded", String(open));
+    heading.addEventListener("click", () => set(box.classList.contains("filters-collapsed")));
+    heading.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); heading.click(); } });
+  });
+});
+
+// The Search page's Results (top picks, filters and the table) open and close from the heading; the choice is remembered.
+document.addEventListener("DOMContentLoaded", () => {
+  const panel = document.getElementById("results-panel");
+  if (!panel) return;
+  try { panel.open = localStorage.getItem("jobFinder.resultsOpen") !== "0"; } catch {}
+  panel.addEventListener("toggle", () => { try { localStorage.setItem("jobFinder.resultsOpen", panel.open ? "1" : "0"); } catch {} });
+});
+
+// The listings (scoring guide and results table) open and close from their heading; the choice is remembered.
+document.addEventListener("DOMContentLoaded", () => {
+  const panel = document.getElementById("listings-panel");
+  if (!panel) return;
+  try { panel.open = localStorage.getItem("jobFinder.listingsOpen") !== "0"; } catch {}
+  panel.addEventListener("toggle", () => { try { localStorage.setItem("jobFinder.listingsOpen", panel.open ? "1" : "0"); } catch {} });
 });

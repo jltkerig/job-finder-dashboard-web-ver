@@ -10,7 +10,7 @@ require_once __DIR__ . '/profile.php';
 require_once __DIR__ . '/places.php';
 
 // Remote job feeds and job sites list many employers' jobs: their domain is the board's, never offered for blocking.
-const FEED_NAMES = ['Remote OK', 'Remotive', 'We Work Remotely', 'USAJOBS', 'Adzuna', 'National Labor Exchange'];
+const FEED_NAMES = ['Remote OK', 'Remotive', 'We Work Remotely', 'Hacker News', 'USAJOBS', 'Adzuna', 'National Labor Exchange'];
 // Jobs you captured with the Web Job Scraper extension (shown even when the site's domain is blocked).
 const CAPTURE_SOURCES = ['LinkedIn', 'Indeed', 'Glassdoor', 'Maryland Workforce Exchange', 'USAJOBS'];
 const SAVED_STATUSES = ['Saved', 'Applied', 'Talking With Recruiter', 'Interview'];
@@ -207,7 +207,7 @@ function tidy_closed_jobs(): int
     q("UPDATE companies SET closed_at = NULL WHERE job_open_status <> 'Closed' AND closed_at IS NOT NULL");
     $marks = implode(', ', array_fill(0, count(SAVED_STATUSES), '?'));
     return q("DELETE FROM companies WHERE job_open_status = 'Closed' AND closed_at IS NOT NULL AND closed_at < ?
-        AND is_kept = 0 AND application_status NOT IN ($marks)",
+        AND is_rejected = 0 AND is_kept = 0 AND application_status NOT IN ($marks)",
         array_merge([now_utc(-CLOSED_KEEP_DAYS * 86400)], SAVED_STATUSES))->rowCount();
 }
 

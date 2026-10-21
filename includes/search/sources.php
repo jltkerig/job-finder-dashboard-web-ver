@@ -1,7 +1,7 @@
 <?php
-// Remote-job feeds (Remote OK, Remotive, We Work Remotely) and job sites searched by title and place (National
+// Remote-job feeds (Remote OK, Remotive, We Work Remotely, Hacker News "Who is hiring?") and job sites searched by title and place (National
 // Labor Exchange, USAJOBS, Adzuna). Each provider's own listing stays the link and the provider is named, as their
-// terms ask. Ported from the desktop app's job_feeds.py, remote_ok.py and job_sites.py.
+// terms ask. Ported from the desktop app's job_feeds.py, remote_ok.py, hacker_news.py and job_sites.py.
 
 declare(strict_types=1);
 
@@ -38,6 +38,8 @@ function feed_list(): array
         'Remote OK' => ['domain' => 'remoteok.com', 'hosts' => ['remoteok.com', 'www.remoteok.com'], 'fetch' => 'fetch_remote_ok', 'wide' => false],
         'Remotive' => ['domain' => 'remotive.com', 'hosts' => ['remotive.com', 'www.remotive.com'], 'fetch' => 'fetch_remotive', 'wide' => true],
         'We Work Remotely' => ['domain' => 'weworkremotely.com', 'hosts' => ['weworkremotely.com', 'www.weworkremotely.com'], 'fetch' => 'fetch_we_work_remotely', 'wide' => true],
+        'Hacker News' => ['domain' => 'news.ycombinator.com', 'hosts' => ['news.ycombinator.com'], 'fetch' => 'fetch_hacker_news', 'wide' => false,
+            'matcher' => 'hacker_news_matching'],
     ];
 }
 
@@ -138,9 +140,176 @@ function fetch_we_work_remotely(): array
     return array_values($jobs);
 }
 
+// --- Hacker News "Ask HN: Who is hiring?" ------------------------------------------------------------------------
+// Every month the account whoishiring posts a thread in which companies add one top-level comment per opening, usually
+// starting with a line like "Acme | Frontend Engineer | REMOTE (US) | Full-time". The thread and its comments come
+// from the free Hacker News search service (hn.algolia.com), which needs no key. Each match links to its comment on
+// Hacker News, which is where the company's own apply link or email is. Only remote openings open to U.S. applicants
+// are kept, since the feed is saved as remote work like the other feeds.
+
+const HN_SEARCH_URL = 'https://hn.algolia.com/api/v1';
+const HN_MAX_PAGES = 4;
+const HN_REMOTE = '/\bremote\b/i';
+const HN_US_WORDS = '/\b(?:USA?|United States|U\.S\.)\b|\bNorth America\b|\bAmericas\b/i';
+const HN_OTHER_REGION = '/\b(?:EU|Europe|European|EMEA|UK|United Kingdom|Canada|India|APAC|LATAM|Germany|France|Spain|Poland|Brazil|Australia|Israel|Ireland|Netherlands|Portugal|Mexico)\b/i';
+const HN_ANYWHERE = '/\b(?:anywhere|worldwide|global)\b/i';
+
+/** The comment's text as lines (a paragraph or line break starts a new one). */
+function hacker_news_lines(string $html): array
+{
+    $text = preg_replace('~<\s*(?:p|br)\s*/?\s*>~i', "\n", $html) ?? $html;
+    $text = html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    return array_values(array_filter(array_map('trim', explode("\n", $text)), fn($line) => $line !== ''));
+}
+
+/** ['company', 'header', 'parts', 'lines'] from a comment's first line, or null when it has no "Company | Role | ..." header. */
+function hacker_news_parse(string $html): ?array
+{
+    $lines = hacker_news_lines($html);
+    if (!$lines) {
+        return null;
+    }
+    $header = $lines[0];
+    $parts = array_values(array_filter(array_map('trim', preg_split('/\s*\|\s*/', $header) ?: []), fn($part) => $part !== ''));
+    if (count($parts) < 2) {
+        return null; // free-form comments can't be read reliably
+    }
+    $company = trim((string) preg_replace('/\s*\((?:[^)]*)\)\s*|\s*https?:\/\/\S+/', ' ', $parts[0]), " -:–—");
+    if ($company === '' || mb_strlen($company) > 80) {
+        return null;
+    }
+    return ['company' => $company, 'header' => $header, 'parts' => array_slice($parts, 1), 'lines' => $lines];
+}
+
+/** Pieces of the header and any "Hiring:" line that could be a job title. */
+function hacker_news_roles(array $parsed): array
+{
+    $texts = $parsed['parts'];
+    foreach (array_slice($parsed['lines'], 1, 5) as $line) {
+        if (preg_match('/^(?:hiring|roles?|positions?|open roles?)\b/i', $line)) {
+            $texts[] = $line;
+        }
+    }
+    $pieces = [];
+    foreach ($texts as $text) {
+        $text = preg_replace('/^(?:hiring|roles?|positions?|open roles?)\s*:\s*/i', '', $text);
+        foreach (preg_split('~\s*/\s*|\s*,\s*|\s+and\s+|\s+or\s+|\s*;\s*~i', (string) $text) ?: [] as $piece) {
+            $piece = trim($piece, " -:–—");
+            if (mb_strlen($piece) >= 3 && mb_strlen($piece) <= 90) {
+                $pieces[] = $piece;
+            }
+        }
+    }
+    return $pieces;
+}
+
+/** [where, U.S. score]: 6 when the header names the U.S., 5 when it is open to anywhere, 0 when not for U.S. applicants. [null, 0] when not remote. */
+function hacker_news_location(array $parsed): array
+{
+    $header = $parsed['header'];
+    $places = array_filter($parsed['parts'], fn($part) => preg_match(HN_REMOTE, $part) || preg_match(HN_US_WORDS, $part)
+        || preg_match(HN_ANYWHERE, $part) || preg_match(HN_OTHER_REGION, $part));
+    $place = implode(' | ', $places);
+    if (!preg_match(HN_REMOTE, $header)) {
+        return [null, 0];
+    }
+    if (preg_match(HN_US_WORDS, $header)) {
+        return [$place ?: 'Remote (US)', 6];
+    }
+    if (preg_match(HN_ANYWHERE, $header)) {
+        return [$place ?: 'Remote (anywhere)', 5];
+    }
+    if (preg_match(HN_OTHER_REGION, $header)) {
+        return [$place, 0]; // "REMOTE (EU)": not open to U.S. applicants
+    }
+    return [$place ?: 'Remote', 5]; // "REMOTE" with no region named
+}
+
+/** The newest "Who is hiring?" thread's remote openings, kept for a day (the thread changes once a month). */
+function fetch_hacker_news(): array
+{
+    return cached_feed('hackernews-who-is-hiring', 24 * 3600, function () {
+        $options = ['agent' => FEED_AGENT, 'timeout' => 20, 'headers' => ['Accept: application/json']];
+        $found = http_request(HN_SEARCH_URL . '/search_by_date?' . http_build_query(['tags' => 'story,author_whoishiring', 'hitsPerPage' => 12]), $options);
+        if ($found['status'] !== 200) {
+            throw new RuntimeException("Hacker News search answered HTTP {$found['status']}");
+        }
+        $thread = null;
+        foreach (json_decode($found['body'], true)['hits'] ?? [] as $hit) {
+            $title = (string) ($hit['title'] ?? '');
+            if (preg_match('/who is hiring/i', $title) && !preg_match('/wants to be hired|freelancer/i', $title)) {
+                $thread = $hit;
+                break;
+            }
+        }
+        if (!$thread) {
+            throw new RuntimeException('No Who is hiring thread found');
+        }
+        $story = (string) $thread['objectID'];
+        $openings = [];
+        for ($page = 0; $page < HN_MAX_PAGES; $page++) {
+            $response = http_request(HN_SEARCH_URL . '/search?' . http_build_query(['tags' => "comment,story_$story", 'hitsPerPage' => 1000, 'page' => $page]), $options);
+            if ($response['status'] !== 200) {
+                throw new RuntimeException("Hacker News search answered HTTP {$response['status']}");
+            }
+            $data = json_decode($response['body'], true) ?: [];
+            foreach ($data['hits'] ?? [] as $hit) {
+                if ((string) ($hit['parent_id'] ?? '') !== $story || empty($hit['comment_text'])) {
+                    continue; // a reply to an opening, not an opening
+                }
+                $parsed = hacker_news_parse((string) $hit['comment_text']);
+                if (!$parsed) {
+                    continue;
+                }
+                [$location, $score] = hacker_news_location($parsed);
+                if ($location === null) {
+                    continue; // only remote openings are kept
+                }
+                $openings[] = ['id' => (string) $hit['objectID'], 'url' => 'https://news.ycombinator.com/item?id=' . $hit['objectID'],
+                    'company' => $parsed['company'], 'header' => $parsed['header'], 'parts' => $parsed['parts'],
+                    'lines' => array_slice($parsed['lines'], 0, 6), 'location' => mb_substr($location, 0, 100), 'usa_score' => $score,
+                    'description' => mb_substr((string) $hit['comment_text'], 0, 200000), 'posted' => substr((string) ($hit['created_at'] ?? ''), 0, 10)];
+            }
+            if ($page + 1 >= (int) ($data['nbPages'] ?? 1)) {
+                break;
+            }
+        }
+        return $openings;
+    });
+}
+
+/** Openings whose header names a title you search for, remote and open to U.S. applicants. */
+function hacker_news_matching(array $openings, array $titles, bool $usa_only): array
+{
+    $out = [];
+    foreach ($openings as $opening) {
+        if ($usa_only && !($opening['usa_score'] ?? 0)) {
+            continue;
+        }
+        $role = null;
+        foreach (hacker_news_roles(['parts' => $opening['parts'], 'lines' => $opening['lines']]) as $piece) {
+            if (matching_title($piece, $titles)) {
+                $role = $piece;
+                break;
+            }
+        }
+        $url = (string) ($opening['url'] ?? '');
+        if ($role === null || parse_url($url, PHP_URL_HOST) !== 'news.ycombinator.com') {
+            continue;
+        }
+        $out[] = ['name' => mb_substr($opening['company'], 0, 255), 'title' => mb_substr($role, 0, 255), 'url' => $url,
+            'location' => (string) $opening['location'], 'html' => $opening['description'], 'text' => html_to_text($opening['description']),
+            'posted' => $opening['posted'] ?: null, 'usa_score' => (int) $opening['usa_score']];
+    }
+    return $out;
+}
+
 /** Feed listings with a matching title, open to U.S. applicants, and linked on the provider's own site. */
 function feed_matching(string $name, array $feed, array $jobs, array $titles, bool $usa_only): array
 {
+    if (isset($feed['matcher'])) {
+        return ($feed['matcher'])($jobs, $titles, $usa_only);
+    }
     $out = [];
     $eligible_words = $feed['wide'] ? '/\b(?:Anywhere|Worldwide|Global|World|Americas?|North(?:ern)? America)\b/i' : '/\b(?:Anywhere|Worldwide|Global)\b/i';
     foreach ($jobs as $job) {

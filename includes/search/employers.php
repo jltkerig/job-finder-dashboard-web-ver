@@ -655,7 +655,10 @@ function board_status(array $config, string $url): string
             case 'successfactors':
             case 'ultipro':
             case 'neogov':
-                $response = employer_get($url, [], ACCEPT_HTML);
+                // An iCIMS job sits in a frame: the plain address answers with an empty shell (no JobPosting record), which
+                // used to read as a closed job. Ask for the framed page, as the search and the job reader do.
+                $asked = $config['system'] === 'icims' ? (preg_replace('/[?#].*$/', '', $url) . '?in_iframe=1') : $url;
+                $response = employer_get($asked, [], ACCEPT_HTML);
                 if (in_array($response['status'], [404, 410], true)) {
                     return 'Closed';
                 }

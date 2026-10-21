@@ -155,3 +155,11 @@
     window.location.href = "claude://";
   });
 })();
+
+// Top 10 Picks opens and closes from its heading; the choice is remembered.
+(() => {
+  const panel = document.getElementById("top-picks-panel");
+  if (!panel) return;
+  try { panel.open = localStorage.getItem("jobFinder.topPicksOpen") !== "0"; } catch {}
+  panel.addEventListener("toggle", () => { try { localStorage.setItem("jobFinder.topPicksOpen", panel.open ? "1" : "0"); } catch {} });
+})();
