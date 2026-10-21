@@ -814,10 +814,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }));
   $$("input[data-title-suggest]").forEach(attachTitleSuggest);
 
-  // Collapsible panels marked data-remember start closed and keep the user's choice.
+  // Collapsible panels marked data-remember start closed (open with data-open-default) and keep the user's choice.
   $$("details[data-remember]").forEach((panel) => {
     const key = panel.dataset.remember;
-    try { panel.open = localStorage.getItem(key) === "1"; } catch {}
+    try { const saved = localStorage.getItem(key); panel.open = saved === null ? panel.hasAttribute("data-open-default") : saved === "1"; } catch {}
     if (panel.hasAttribute("data-open-now")) panel.open = true; // e.g. "Saved." must be seen
     panel.addEventListener("toggle", () => { try { localStorage.setItem(key, panel.open ? "1" : "0"); } catch {} });
   });

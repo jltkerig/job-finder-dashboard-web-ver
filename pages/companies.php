@@ -13,11 +13,11 @@ try {  // the employers in your work history join your companies, once each, and
     error_log('Companies sync: ' . $error->getMessage());
 }
 $home_place = companies_home_place($profile);
-$kinds = [KNOWN_KIND => 'Employers from your searches'];
+$kinds = [KNOWN_KIND => 'Employers from your searches', MINE_KIND => 'My companies'];
 foreach (company_kinds() as $key => [$label]) {
     $kinds[$key] = $label;
 }
-$default_kinds = array_merge([KNOWN_KIND], DEFAULT_COMPANY_KINDS);
+$default_kinds = array_merge([KNOWN_KIND, MINE_KIND], DEFAULT_COMPANY_KINDS);
 
 $title = 'Companies';
 $page = 'companies';
@@ -27,6 +27,8 @@ require APP_ROOT . '/templates/_top.php';
 ?>
 <main>
   <section class="company-section companies-search">
+    <details class="companies-searchbox history-collapse" id="companies-searchbox" data-remember="jobFinder.companiesSearchOpen" data-open-default>
+    <summary><h2>Search</h2><span class="summary-chevron" aria-hidden="true"></span></summary>
     <form id="companies-form" class="companies-form" autocomplete="off">
       <div class="form-field companies-place">
         <label for="companies-place">Search around</label>
@@ -36,16 +38,25 @@ require APP_ROOT . '/templates/_top.php';
         <label for="companies-miles">Within</label>
         <select id="companies-miles" name="miles"><?php foreach (COMPANY_MILE_CHOICES as $miles): ?><option value="<?= $miles ?>"<?= $miles === 15 ? ' selected' : '' ?>><?= $miles ?> miles</option><?php endforeach; ?></select>
       </div>
-      <fieldset class="companies-kinds">
-        <legend>Kinds of place</legend>
-        <span class="companies-kinds-tools"><button class="chip-button" id="companies-kinds-all" type="button">All</button><button class="chip-button" id="companies-kinds-none" type="button">None</button></span>
+      <div class="companies-filter-box">
+      <div class="filter-heading"><span class="filter-icon" aria-hidden="true">⌕</span><strong>Filters</strong></div>
+      <div class="companies-filters">
+        <label class="companies-website-only" title="Tick to hide every company that has no website listed."><input id="companies-website-only" type="checkbox" /> Hide companies with no website</label>
+        <button class="bordered-button secondary-action" id="companies-show-hidden" type="button" hidden>Show hidden</button>
+      </div>
+      <p class="companies-filter-label">Source</p>
+      <div class="companies-kind-tags companies-source-tags" id="companies-source-tags" role="group" aria-label="Where the companies come from"></div>
+      <p class="companies-filter-label">Type of business</p>
+      <div class="companies-kind-tags" id="companies-kind-tags" role="group" aria-label="Kinds of place: pick some to show only those in the results"></div>
+      </div>
+      <fieldset class="companies-kinds" hidden>
         <?php foreach ($kinds as $key => $label): ?><label class="companies-kind"><input type="checkbox" name="kinds" value="<?= h($key) ?>"<?= in_array($key, $default_kinds, true) ? ' checked' : '' ?> /> <?= h($label) ?></label><?php endforeach; ?>
       </fieldset>
       <div class="companies-actions"><button class="bordered-button primary-action" id="companies-search" type="submit">Search</button></div>
     </form>
-    <p class="field-help companies-origin">One place at a time: it starts at your home. The miles in the list are straight-line miles from the place in the box.</p>
-    <section class="companies-mine" id="companies-mine" aria-labelledby="companies-mine-heading">
-    <h2 id="companies-mine-heading">My Companies <span class="field-help" id="companies-mine-count"></span></h2>
+    </details>
+    <details class="companies-mine history-collapse" id="companies-mine" data-remember="jobFinder.myCompaniesOpen" data-open-default>
+    <summary><h2 id="companies-mine-heading">My Companies <span class="field-help" id="companies-mine-count"></span></h2><span class="summary-chevron" aria-hidden="true"></span></summary>
     <p class="field-help" id="companies-mine-empty" hidden>None yet. The employers in your work history are added here, and you can add your own above.</p>
     <div class="table-wrapper companies-table-wrapper" id="companies-mine-table-wrapper" hidden>
       <table class="companies-table companies-mine-table">
@@ -53,9 +64,9 @@ require APP_ROOT . '/templates/_top.php';
         <tbody id="companies-mine-body"></tbody>
       </table>
     </div>
-  </section>
-    <details class="companies-add" id="companies-add">
-      <summary>Add a company of your own</summary>
+  </details>
+    <details class="companies-add history-collapse" id="companies-add" data-remember="jobFinder.addCompanyOpen">
+      <summary><h2>Add a Company of Your Own</h2><span class="summary-chevron" aria-hidden="true"></span></summary>
       <form id="companies-add-form" class="companies-add-form" autocomplete="off">
         <input type="hidden" id="companies-add-id" value="" />
         <div class="form-field"><label for="companies-add-name">Company name</label><input id="companies-add-name" name="name" type="text" maxlength="150" required /></div>
@@ -77,13 +88,8 @@ require APP_ROOT . '/templates/_top.php';
     </details>
   </section>
   <section class="company-section companies-results" id="companies-results" hidden aria-live="polite">
-    <div class="companies-toolbar">
-      <strong id="companies-count"></strong>
-      <label class="companies-filter"><span class="visually-hidden">Filter these results</span><input id="companies-filter" type="search" placeholder="Filter by name, type or street" /></label>
-      <label class="companies-website-only"><input id="companies-website-only" type="checkbox" /> Only with a website</label>
-      <button class="bordered-button secondary-action" id="companies-show-hidden" type="button" hidden>Show hidden</button>
-    </div>
-    <div class="companies-kind-tags" id="companies-kind-tags" role="group" aria-label="Show only these kinds of place" hidden></div>
+    <details class="companies-collapse" id="companies-results-panel" open>
+    <summary class="companies-toolbar companies-collapse-summary"><strong id="companies-count"></strong><span class="summary-chevron" aria-hidden="true"></span></summary>
     <div class="table-wrapper companies-table-wrapper">
       <table class="companies-table">
         <thead><tr><th>Company</th><th>Type</th><th>Address</th><th id="companies-miles-header">Miles</th><th>Website</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
@@ -92,6 +98,7 @@ require APP_ROOT . '/templates/_top.php';
     </div>
     <p class="field-help">Places and addresses are from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>:
       as complete as they have made it for the area, so a company that is missing may just not be mapped yet.</p>
+    </details>
   </section>
   <p id="companies-status" class="field-help companies-status" role="status"></p>
 </main>

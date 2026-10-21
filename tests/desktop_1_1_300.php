@@ -41,3 +41,17 @@ check('tuning: the Tuning page no longer holds the search settings but shows Rec
 check('settings: saving returns to the Settings page', str_contains($tuning_action, "redirect('/rejected-listings?saved=1#search-settings')")
     && str_contains($tuning_action, "redirect('/rejected-listings?error='") && str_contains($tuning_action, "redirect('/tuning#brave-usage')"));
 check('dashboard: Recent Searches are no longer on the Dashboard', !str_contains($page, 'id="recent-searches"'));
+
+// ---- Companies: the Search card with a Filters box and Source pills (v1.1.290 - v1.1.294) ----
+$companies_page = file_get_contents(APP_ROOT . '/pages/companies.php');
+$companies_js = file_get_contents(APP_ROOT . '/static/js/companies.js');
+check('companies: the search folds up under one Search heading, with the filters inside it', str_contains($companies_page, 'id="companies-searchbox"')
+    && strpos($companies_page, 'id="companies-searchbox"') < strpos($companies_page, 'id="companies-source-tags"')
+    && strpos($companies_page, 'id="companies-source-tags"') < strpos($companies_page, 'id="companies-kind-tags"')
+    && strpos($companies_page, 'id="companies-kind-tags"') < strpos($companies_page, 'id="companies-search"'));
+check('companies: My companies is a Source beside Employers from your searches', str_contains($companies_page, "MINE_KIND => 'My companies'")
+    && str_contains($companies_page, 'array_merge([KNOWN_KIND, MINE_KIND]'));
+check('companies: My Companies, Add a Company and the results fold, and each remembers its choice', str_contains($companies_page, 'jobFinder.myCompaniesOpen')
+    && str_contains($companies_page, 'jobFinder.addCompanyOpen') && str_contains($companies_page, 'id="companies-results-panel"')
+    && substr_count($companies_page, '<details') === substr_count($companies_page, '</details>'));
+check('companies: Source pills combine with the type pills', str_contains($companies_js, 'activeSources') && str_contains($companies_js, 'companies-source-tags'));
