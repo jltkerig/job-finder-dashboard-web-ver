@@ -856,13 +856,5 @@ document.addEventListener("DOMContentLoaded", () => {
     const target = /^#job-\d+$/.test(location.hash) ? document.querySelector(`${location.hash} .saved-job-collapse`) : null;
     if (target) { target.open = true; target.closest(".saved-job-card").scrollIntoView({ block: "start" }); }
 
-    // Recent Searches starts collapsed; remember if the user leaves it open.
-    const history = document.getElementById("recent-searches");
-    if (history) {
-      try { history.open = localStorage.getItem("jobFinder.recentSearchesOpen") === "1"; } catch {}
-      history.addEventListener("toggle", () => {
-        try { localStorage.setItem("jobFinder.recentSearchesOpen", history.open ? "1" : "0"); } catch {}
-      });
-    }
   }
 });

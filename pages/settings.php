@@ -1,9 +1,13 @@
 <?php
-// Settings: rejected listings, search skips, blocked domains and blocked companies. Same markup as the desktop
-// Job Finder's templates/rejected-listings.html.
+// Settings: the search settings, rejected listings, search skips, blocked domains and blocked companies. Same markup as the
+// desktop Job Finder's templates/rejected-listings.html.
 
 declare(strict_types=1);
+require_once APP_ROOT . '/includes/tuning.php';
 
+$values = read_tuning_settings();
+$saved = !empty($_GET['saved']);
+$error = (string) ($_GET['error'] ?? '');
 $companies = get_rejected_companies();
 $skip_query = mb_substr(trim((string) ($_GET['skip_q'] ?? '')), 0, 200);
 [$search_skips, $skip_total, $skip_page, $skip_pages] = search_skips_page($skip_query, (int) ($_GET['skip_page'] ?? 1));
@@ -38,6 +42,7 @@ $page = 'settings';
 require APP_ROOT . '/templates/_top.php';
 ?>
 <main>
+<?php include APP_ROOT . '/templates/_search_settings.php'; ?>
   <details class="company-section settings-panel rejected-section history-collapse" id="rejected-listings" data-remember="jobFinder.rejectedListingsOpen">
     <summary><h2>Rejected Listings</h2><span class="summary-chevron" aria-hidden="true"></span></summary>
     <p class="section-intro">Listings you manually reject are kept here for review. Rejecting a listing does not automatically block its domain.

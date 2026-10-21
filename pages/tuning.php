@@ -1,26 +1,26 @@
 <?php
-// Tuning: what each source did in the last search, Brave Search use, and the search settings. Same markup as the
-// desktop Job Finder's templates/tuning.html, plus the Brave Search Usage panel.
+// Tuning: what each source did in the last search, Brave Search use, and the recent searches. Same markup as the
+// desktop Job Finder's templates/tuning.html, plus the Brave Search Usage panel. The search settings are on the
+// Settings page.
 
 declare(strict_types=1);
 require_once APP_ROOT . '/includes/tuning.php';
 require_once APP_ROOT . '/includes/search/brave.php';
 
-$values = read_tuning_settings();
 $health = read_board_health();
 if ($health) {
     $health['updated_text'] = date('M d, Y h:i A', strtotime($health['updated']));
 }
-$saved = !empty($_GET['saved']);
-$error = (string) ($_GET['error'] ?? '');
 $skipped = recent_skips();
+$search_history = get_search_history();
+$saved_titles = array_map('mb_strtolower', get_user_profile()['job_titles']);
 $brave = brave_counts();
 $reset = brave_next_reset();
 $days = (int) ceil(($reset - time()) / 86400);
 
 $title = 'Tuning';
 $page = 'tuning';
-$subtitle = 'Search settings and how each source did in the last search';
+$subtitle = 'How each source did in the last search, and your recent searches';
 require APP_ROOT . '/templates/_top.php';
 ?>
 <main>
@@ -87,37 +87,22 @@ require APP_ROOT . '/templates/_top.php';
         <li><strong><?= h($item['reason']) ?></strong><?php if ($item['title']): ?> · <?= h($item['title']) ?><?php endif; ?> <a href="<?= h($item['url']) ?>" target="_blank" rel="noopener noreferrer">Source</a></li><?php endforeach; ?>
       </ul><?php else: ?><p class="field-help">Nothing was skipped in the recent searches.</p><?php endif; ?>
     </details>
-    <details class="settings-panel history-collapse" id="search-settings" data-remember="jobFinder.searchSettingsOpen"<?= $saved || $error !== '' ? ' data-open-now' : '' ?>>
-  <summary>
-        <h2>Search Settings
-        </h2><span class="summary-chevron" aria-hidden="true"></span>
-      </summary>
-  <?php if ($saved): ?>
-      <p class="field-help" role="status"><strong>Saved.</strong> The next search uses these settings.
-      </p><?php endif; ?>
-  <?php if ($error !== ''): ?>
-      <p class="field-help" role="alert"><strong><?= h($error) ?></strong>
-      </p><?php endif; ?>
-  <form method="post" action="/tuning/settings">
-    <?= csrf_field() ?>
-    <?php foreach (TUNING_FIELDS as $key => [$label, $help, $kind, $low, $high, $default]): ?>
-    <div class="form-field"><label for="tune-<?= h($key) ?>"><?= h($label) ?></label>
-      <p class="field-help"><?= h($help) ?> (<?= $low ?>–<?= $high ?>, standard <?= $default ?>)
-          </p>
-      <input id="tune-<?= h($key) ?>" name="<?= h($key) ?>" type="number" step="<?= $kind === 'int' ? '1' : '0.1' ?>" min="<?= $low ?>" max="<?= $high ?>" value="<?= h($values[$key] ?? $default) ?>" required />
+  <details class="history-panel history-collapse" id="recent-searches" data-remember="jobFinder.recentSearchesOpen">
+    <summary class="history-summary">
+      <h2>Recent Searches
+      </h2><span class="summary-chevron" aria-hidden="true"></span>
+    </summary><?php if ($search_history): ?>
+    <div class="history-list"><?php foreach ($search_history as $search): $is_saved = in_array(mb_strtolower($search['main_title']), $saved_titles, true); ?>
+      <div class="history-item">
+        <div class="history-main"><strong class="history-title" title="<?= h($search['job_title']) ?>"><?= h($search['main_title']) ?></strong><?php if ($search['other_titles']): ?><small class="history-titles"><?= h(implode(' • ', $search['other_titles'])) ?></small><?php endif; ?><span><?= h($search['state']) ?></span><?php if ($search['cities_json']): ?><small class="history-cities" data-cities="<?= h($search['cities_json'] ?: '[]') ?>"></small><?php endif; ?><small><?= h(local_time($search['searched_at'], 'M d, Y h:i A')) ?></small>
         </div>
-    <?php endforeach; ?>
-    <?php foreach (TUNING_SWITCHES as $key => [$label, $help, $default]): ?>
-    <div class="form-field"><label class="switch-row"><input type="checkbox" name="<?= h($key) ?>"<?= ($values[$key] ?? $default) ? ' checked' : '' ?> /> <?= h($label) ?></label>
-      <p class="field-help"><?= h($help) ?>
-          </p>
+        <div class="history-actions"><button class="bordered-button save-history-title" type="button" data-job-title="<?= h($search['main_title']) ?>"<?= $is_saved ? ' disabled' : '' ?>><?= $is_saved ? 'Saved' : 'Save Job Title' ?></button><button class="bordered-button search-again-button" type="button" data-job-title="<?= h($search['job_title']) ?>" data-state="<?= h($search['state']) ?>" data-cities="<?= h($search['cities_json'] ?: '[]') ?>">Search Again</button>
         </div>
-    <?php endforeach; ?>
-    <button class="bordered-button primary-action" type="submit">Save settings</button>
-  </form>
-  <p class="field-help">Changes apply to the next search; a search that is running keeps the settings it started with.
-      </p>
-    </details>
+      </div><?php endforeach; ?>
+    </div><?php else: ?>
+    <div class="empty-inline">No searches recorded yet.
+    </div><?php endif; ?>
+  </details>
   </div>
 </main>
 <?php require APP_ROOT . '/templates/_bottom.php';

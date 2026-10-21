@@ -28,3 +28,16 @@ check('dashboard filters: the legend ids are per list', str_contains(dash_legend
 $page = file_get_contents(APP_ROOT . '/pages/dashboard.php');
 check('dashboard: Applied Jobs gets its own panel and the old filter form is gone', str_contains($page, 'id="applied-jobs-panel"')
     && !str_contains($page, 'dashboard-filter-panel') && str_contains($page, "'dashboard-filters.js'"));
+
+// ---- Search settings move to the Settings page; Recent Searches move to Tuning (v1.1.300) ----
+$settings_page = file_get_contents(APP_ROOT . '/pages/settings.php');
+$tuning_page = file_get_contents(APP_ROOT . '/pages/tuning.php');
+$settings_partial = file_get_contents(APP_ROOT . '/templates/_search_settings.php');
+$tuning_action = file_get_contents(APP_ROOT . '/actions/tuning.php');
+check('settings: the Search Settings panel comes first on the Settings page', str_contains($settings_page, "_search_settings.php")
+    && strpos($settings_page, '_search_settings.php') < strpos($settings_page, 'id="rejected-listings"') && str_contains($settings_partial, 'id="search-settings"'));
+check('tuning: the Tuning page no longer holds the search settings but shows Recent Searches', !str_contains($tuning_page, 'id="search-settings"')
+    && str_contains($tuning_page, 'id="recent-searches"') && str_contains($tuning_page, 'jobFinder.recentSearchesOpen'));
+check('settings: saving returns to the Settings page', str_contains($tuning_action, "redirect('/rejected-listings?saved=1#search-settings')")
+    && str_contains($tuning_action, "redirect('/rejected-listings?error='") && str_contains($tuning_action, "redirect('/tuning#brave-usage')"));
+check('dashboard: Recent Searches are no longer on the Dashboard', !str_contains($page, 'id="recent-searches"'));

@@ -28,14 +28,12 @@ require_once APP_ROOT . '/includes/resume/store.php';
 require_once APP_ROOT . '/includes/companies.php';
 $application_files = files_by_job(); // résumés and cover letters made for each job
 $demanded_skills = array_map(fn($pair) => ['skill' => $pair[0], 'count' => $pair[1]], listing_skill_demand($profile['skills']));
-$search_history = get_search_history();
 $counts = get_dashboard_counts();
 $applied_months = applied_by_month();
 $applied_elsewhere_count = count(applied_elsewhere());
 $skill_suggestions = profile_skill_suggestions($profile);
 $fit_updated = isset($_GET['fit_updated']) ? (int) $_GET['fit_updated'] : null;
 $profile_changed = !empty($_GET['profile_changed']);
-$saved_titles = array_map('mb_strtolower', $profile['job_titles']);
 $form_examples = setting_json('form_examples', ['home_zip' => '', 'home_location' => '']);
 
 $title = 'Dashboard';
@@ -218,22 +216,6 @@ require APP_ROOT . '/templates/_top.php';
         </h3>
         <p>Jobs you mark Applied show up here.
         </p>
-      </div><?php endif; ?>
-    </details>
-    <details class="history-panel history-collapse" id="recent-searches">
-      <summary class="history-summary">
-        <h2>Recent Searches
-        </h2><span class="summary-chevron" aria-hidden="true"></span>
-      </summary><?php if ($search_history): ?>
-      <div class="history-list"><?php foreach ($search_history as $search): $is_saved = in_array(mb_strtolower($search['main_title']), $saved_titles, true); ?>
-        <div class="history-item">
-          <div class="history-main"><strong class="history-title" title="<?= h($search['job_title']) ?>"><?= h($search['main_title']) ?></strong><?php if ($search['other_titles']): ?><small class="history-titles"><?= h(implode(' • ', $search['other_titles'])) ?></small><?php endif; ?><span><?= h($search['state']) ?></span><?php if ($search['cities_json']): ?><small class="history-cities" data-cities="<?= h($search['cities_json'] ?: '[]') ?>"></small><?php endif; ?><small><?= h(local_time($search['searched_at'], 'M d, Y h:i A')) ?></small>
-          </div>
-          <div class="history-actions"><button class="bordered-button save-history-title" type="button" data-job-title="<?= h($search['main_title']) ?>"<?= $is_saved ? ' disabled' : '' ?>><?= $is_saved ? 'Saved' : 'Save Job Title' ?></button><button class="bordered-button search-again-button" type="button" data-job-title="<?= h($search['job_title']) ?>" data-state="<?= h($search['state']) ?>" data-cities="<?= h($search['cities_json'] ?: '[]') ?>">Search Again</button>
-          </div>
-        </div><?php endforeach; ?>
-      </div><?php else: ?>
-      <div class="empty-inline">No searches recorded yet.
       </div><?php endif; ?>
     </details>
   </section>
