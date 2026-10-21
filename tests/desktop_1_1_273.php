@@ -19,7 +19,7 @@ check('address: joined back', join_address_parts(['street' => '1 A St', 'city' =
 
 // --- My companies ---
 $_point = fn() => null;
-$entry = my_company_add(['name' => 'Example Co', 'street' => '10 Main Street', 'city' => 'Harrisburg', 'state' => 'MD', 'zip' => '17101',
+$entry = my_company_add(['name' => 'Example Co', 'street' => '10 Main Street', 'city' => 'Harrisburg', 'state' => 'PA', 'zip' => '17101',
     'phone' => '410-555-0101', 'website' => 'example.example.com', 'jobs_board' => 'Indeed'], 'MD');
 check('a company is kept with its address as one line', $entry['address'] === '10 Main Street, Harrisburg, PA, 17101' && $entry['place'] === 'Harrisburg, PA');
 check('a website gets https://', $entry['website'] === 'https://example.example.com');
