@@ -42,6 +42,35 @@ profile and settings are kept in `data/jobfinder.sqlite`, which is never uploade
   file already imported unchanged is skipped. Each job's company website is looked up for about 20 seconds after
   the upload; the cron job finishes the rest a few a minute.
 
+## What changed in 1.1.286 - 1.1.300
+
+The web version caught up to the desktop Job Finder's v1.1.300 (it was at 1.1.285):
+
+- **Dashboard:** Applied, Talking With Recruiter and Interview jobs move out of Saved Jobs into their own **Applied
+  Jobs** panel. The Search page's filter bar (text, state, work location, listing status, source, credibility, work
+  type, sort including Job fit and Job Fit Minus Titles) filters each list in the browser. Saved Jobs, Applied Jobs
+  and each Profile section fold from their headings and remember it. A collapsed saved job has a **Delete** button, and
+  **Clear closed jobs** deletes every saved job whose posting has closed.
+- **Settings and Tuning:** the Search Settings panel is now the first panel on the Settings page (saving returns
+  there); Recent Searches moved from the Dashboard to Tuning. The Companies and Tuning pages lost their subtitle.
+- **Companies:** one **Search** card with a Filters box; *Employers from your searches* and *My companies* are Source
+  pills that combine with the type-of-business pills. My Companies, Add a Company and the results fold.
+- **Search:** the Hacker News "Ask HN: Who is hiring?" thread is a remote feed (`hacker_news_*` in
+  `includes/search/sources.php`; only remote openings open to U.S. applicants whose title matches); a **Source** filter;
+  Job Titles, places, Results, Top 10 Picks and Listings fold; a listing's Source links to the page the job was found
+  on; its Notes can be edited and web addresses in them are clickable. iCIMS jobs are checked on their framed page so
+  they no longer read as closed, and the closed-job clean-up keeps rejected jobs.
+- **Skill Fitting:** a new page ranks open jobs by how many of each listing's skills you have, with Core / Normal /
+  Nice to have weights (`includes/skill_fitting.php`). The weights also drive the *Job Fit Minus Titles* sort.
+- **Résumé Builder:** *Add common rules* on the résumé and cover letter rules boxes, and greeting suggestions in the
+  cover letter editor (`includes/resume/presets.php`).
+- **Menu:** Companies sits right of Search; Skill Fitting is last.
+
+Not in the web version: the Apply Queue and what is built on it (adding jobs by link or from saved jobs, Job Link
+Résumé Creation, *Rewrite with current rules*, the queue's filters and buttons), the Quit button and the home page
+stats feed (desktop-only), the handwriting signature style, typed extra links and Move up / Move down on the desktop
+Résumé Builder's own profile editor (the web version edits the profile on the Dashboard), and the Ignore / Avoid terms.
+
 ## What changed since 1.1.273
 
 - **1.1.274:** Companies results can be filtered by kind of place with tags.
