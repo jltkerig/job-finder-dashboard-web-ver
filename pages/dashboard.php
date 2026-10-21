@@ -88,7 +88,7 @@ require APP_ROOT . '/templates/_top.php';
             </div>
             <div class="form-field"><label for="job-titles">Other Job Titles to Search For</label>
           <p class="field-help">Separate titles with commas.
-              </p><input id="job-titles" name="job_titles" type="text" data-title-suggest="list" value="<?= h(implode(', ', array_filter($profile['job_titles'], fn($t) => $t !== $profile['primary_job_title']))) ?>" placeholder="Front End Developer, Visual Designer" />
+              </p><input id="job-titles" name="job_titles" type="text" data-title-suggest="list" data-also-from="primary-job-title" value="<?= h(implode(', ', array_filter($profile['job_titles'], fn($t) => $t !== $profile['primary_job_title']))) ?>" placeholder="Front End Developer, Visual Designer" />
               <div id="title-suggestion-chips" class="title-chips" hidden><span class="field-help">Suggested:</span>
                 <div class="chip-row">
                 </div>

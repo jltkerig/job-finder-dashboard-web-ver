@@ -165,3 +165,7 @@ check('greetings: a person\'s name is used, a company is not mistaken for one', 
     && greeting_options(['Acme Inc'], '') === ['Hello,', 'Good morning,'] && rule_person_name(['Human Resources']) === '' && rule_person_name(['Sam Lee']) === 'Sam Lee');
 check('rule presets: the Résumé Builder pages load their scripts', str_contains(file_get_contents(APP_ROOT . '/pages/resume.php'), "'rule-presets.js'")
     && str_contains(file_get_contents(APP_ROOT . '/pages/resume_build.php'), "'greeting.js'"));
+
+// ---- Dashboard profile: other titles never repeat the main one; the work description grows with its text (v1.1.288) ----
+check('profile: the other-titles box skips the main title when it suggests', str_contains(file_get_contents(APP_ROOT . '/pages/dashboard.php'), 'name="job_titles" type="text" data-title-suggest="list" data-also-from="primary-job-title"')
+    && str_contains($charts_js, 'input.dataset.alsoFrom') && str_contains($charts_js, 'box.scrollHeight'));
