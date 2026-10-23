@@ -15,7 +15,10 @@ const FEED_NAMES = ['Remote OK', 'Remotive', 'We Work Remotely', 'Hacker News', 
 const CAPTURE_SOURCES = ['LinkedIn', 'Indeed', 'Glassdoor', 'Maryland Workforce Exchange', 'USAJOBS'];
 const SAVED_STATUSES = ['Saved', 'Applied', 'Talking With Recruiter', 'Interview'];
 const CLOSED_KEEP_DAYS = 7;
-const REJECT_REASONS = ['wrong_role', 'wrong_location', 'not_a_job', 'duplicate', 'closed', 'other'];
+// The reasons offered when rejecting, with their labels (the same list as the desktop Job Finder).
+const REJECT_REASON_LABELS = ['other' => 'Other reason', 'wrong_role' => 'Wrong role', 'wrong_location' => 'Wrong location',
+    'bad_job_fit' => 'Bad Job Fit', 'not_a_job' => 'Not a job', 'duplicate' => 'Duplicate', 'closed' => 'Job is closed'];
+const REJECT_REASONS = ['other', 'wrong_role', 'wrong_location', 'bad_job_fit', 'not_a_job', 'duplicate', 'closed'];
 const APPLIED_STATUSES = ['Applied', 'Talking With Recruiter', 'Interview'];
 const UNSAVED_KEEP_DAYS = 14;  // an unsaved result is deleted this long after it was first saved here
 const SKIPS_PER_PAGE = 25;
@@ -239,6 +242,16 @@ function reject_listing(int $id, string $reason): ?array
             rejected_at = ?, rejection_reason = ?, rejected_by = 'user'
         WHERE id = ?", [now_utc(), $reason, $id]);
     return $row;
+}
+
+/** Change why a rejected listing was rejected. It becomes the user's decision, so a later search will not restore it. */
+function change_rejection_reason(int $id, string $reason): bool
+{
+    if (!row('SELECT 1 FROM companies WHERE id = ? AND is_rejected = 1', [$id])) {
+        return false;
+    }
+    q("UPDATE companies SET rejection_reason = ?, rejected_by = 'user' WHERE id = ? AND is_rejected = 1", [$reason, $id]);
+    return true;
 }
 
 function restore_rejected(int $id): ?array

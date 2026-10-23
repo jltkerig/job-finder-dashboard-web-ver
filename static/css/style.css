@@ -947,6 +947,7 @@ body[data-page="dashboard"] .saved-job-card { display: block; padding: 0; }
 .profile-preferences input { margin: 0; accent-color: #1f2937; }
 /* Recent Searches sits below Saved Jobs. */
 .saved-job-grid + .history-panel, .empty-dashboard + .history-panel { margin-top: 32px; }
+body[data-page="tuning"] .company-section > .history-collapse { max-width: 1400px; margin: 28px auto 0; }
 .history-collapse > summary { list-style: none; display: flex; align-items: center; gap: 10px; cursor: pointer; }
 .history-collapse > summary::-webkit-details-marker { display: none; }
 .history-collapse > summary h2 { margin: 0; }

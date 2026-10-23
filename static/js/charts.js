@@ -127,6 +127,25 @@ document.addEventListener("DOMContentLoaded", () => {
     const response = await fetch(`/restore-rejected/${companyId}`, { method: "POST", headers: { "X-CSRF-Token": csrfToken, "X-Requested-With": "fetch", Accept: "application/json" } });
     const data = await readJsonResponse(response, "Could not restore the listing.", "E3204"); if (!response.ok) throw new Error(serverMessage(data, "Could not restore the listing.", "E3204")); return data;
   }
+  // Rejected listings: change why one was rejected (the same reasons as the Reject dialog).
+  $$(".rejection-reason-select").forEach((select) => {
+    const save = select.parentElement.querySelector(".change-reason-action");
+    let saved = select.value;
+    select.addEventListener("change", () => { save.disabled = select.value === saved; });
+    save.addEventListener("click", async () => {
+      save.disabled = true;
+      try {
+        const response = await fetch(`/rejected-reason/${select.dataset.companyId}`, { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken, "X-Requested-With": "fetch", Accept: "application/json" }, body: JSON.stringify({ reason: select.value }) });
+        const data = await readJsonResponse(response, "Could not change the reason.", "E3206"); if (!response.ok) throw new Error(serverMessage(data, "Could not change the reason.", "E3206"));
+        saved = select.value;
+        const text = select.selectedOptions[0].textContent;
+        const card = select.closest(".rejected-card");
+        card.querySelectorAll(".reason-label").forEach((label) => { label.textContent = text; label.hidden = saved === "other"; });
+        card.querySelector(".reason-detail").hidden = saved === "other";
+        showToast("Reason changed", "success");
+      } catch (error) { save.disabled = false; showToast(error.message, "danger"); }
+    });
+  });
   $$(".reject-action").forEach((button) => button.addEventListener("click", async () => {
     const companyId = button.dataset.companyId, companyName = button.dataset.companyName || "this listing";
     const inRow = button.closest(".result-row");

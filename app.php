@@ -116,7 +116,7 @@ $handler = $routes["$method $path"] ?? null;
 $route_id = null;
 // Buttons on one listing: /reject-listing/12 and the like.
 if ($handler === null && $method === 'POST'
-    && preg_match('#^/(reject-listing|restore-rejected|block-domain|block-company|unsave-kept|update-kept|delete-kept|save-notes)/(\d+)$#', $path, $m)) {
+    && preg_match('#^/(reject-listing|rejected-reason|restore-rejected|block-domain|block-company|unsave-kept|update-kept|delete-kept|save-notes)/(\d+)$#', $path, $m)) {
     $handler = 'actions/listings.php';
     $path = '/' . $m[1];
     $route_id = (int) $m[2];

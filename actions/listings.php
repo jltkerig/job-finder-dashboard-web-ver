@@ -25,6 +25,15 @@ switch ($path) {
         $row ? json_out(['status' => 'rejected', 'company_id' => $route_id, 'domain' => $row['domain']])
             : api_error('E3201', 'The listing could not be found.', 404);
 
+    case '/rejected-reason':
+        $reason = (string) (request_json()['reason'] ?? $_POST['reason'] ?? '');
+        if (!in_array($reason, REJECT_REASONS, true)) {
+            api_error('E3205', 'Choose one of the listed reasons.', 400);
+        }
+        change_rejection_reason($route_id, $reason)
+            ? json_out(['status' => 'updated', 'company_id' => $route_id, 'reason' => $reason])
+            : api_error('E3203', 'The rejected listing could not be found.', 404);
+
     case '/restore-rejected':
         $row = restore_rejected($route_id);
         if (!wants_json()) {
