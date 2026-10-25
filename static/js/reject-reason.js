@@ -1,16 +1,16 @@
-// "If rejecting, why?" for a Reject button that has no Details tab with the picker beside it (a Top 10 pick, a saved job
-// on the Dashboard). The same reasons as the picker on a result's Details tab. window.askRejectReason(name) resolves to
+// "If rejecting, why?": the pop-up every Reject button opens (a listing, a Top 10 pick, a saved job on the Dashboard), so the
+// reason is chosen in the same step that confirms the rejection. window.askRejectReason(name) resolves to
 // the reason, or null when you cancel.
 (() => {
-  const REASONS = [["other", "Other reason"], ["wrong_role", "Wrong role"], ["wrong_location", "Wrong location"],
-    ["not_a_job", "Not a job"], ["duplicate", "Duplicate"], ["closed", "Job is closed"]];
+  const REASONS = [["other", "Other"], ["wrong_role", "Wrong role"], ["wrong_location", "Wrong location"],
+    ["bad_job_fit", "Bad Job Fit"], ["not_a_job", "Not a job"], ["duplicate", "Duplicate"], ["applied_before", "Applied Before"], ["closed", "Job is closed"]];
   let dialog, title, select;
 
   function button(text, value, classes) {
     const element = document.createElement("button");
     element.type = "submit";
     element.value = value;
-    element.className = `bordered-button ${classes}`;
+    element.className = classes;
     element.textContent = text;
     return element;
   }
@@ -29,7 +29,7 @@
     label.append("If rejecting, why? ", select);
     const actions = document.createElement("div");
     actions.className = "review-actions";
-    actions.append(button("Cancel", "cancel", "secondary-action"), button("Reject", "reject", "primary-action"));
+    actions.append(button("Cancel", "cancel", "bordered-button"), button("Reject", "reject", "primary-button"));
     form.append(title, label, actions);
     dialog.append(form);
     document.body.append(dialog);

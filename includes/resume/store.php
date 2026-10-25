@@ -1,7 +1,7 @@
 <?php
-// Résumé Builder's own files, all in data/resume (never uploaded to GitHub, and closed to the web by
-// data/.htaccess): the uploaded résumé, reference documents, references, writing rules, the saved design, and the
-// finished PDFs with their editable drafts. Ported from the desktop Résumé Builder (config, models, builds,
+// Resume Builder's own files, all in data/resume (never uploaded to GitHub, and closed to the web by
+// data/.htaccess): the uploaded resume, reference documents, references, writing rules, the saved design, and the
+// finished PDFs with their editable drafts. Ported from the desktop Resume Builder (config, models, builds,
 // references, documents, writing_rules and resume_file).
 
 declare(strict_types=1);
@@ -54,7 +54,7 @@ function write_json_file(string $path, $data): void
     write_file_atomic($path, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 }
 
-/** A message shown once at the top of the Résumé Builder page after a button is used. */
+/** A message shown once at the top of the Resume Builder page after a button is used. */
 function flash(string $message, string $kind = 'ok'): void
 {
     start_session();
@@ -88,7 +88,7 @@ const LAYOUT_CHOICES = ['font_kind' => ['serif', 'sans'], 'name_align' => ['left
     'page_size' => ['letter', 'a4']];
 const LAYOUT_FLAGS = ['heading_rule', 'header_rule'];
 const LAYOUT_FONTS = ['font_family', 'name_font', 'heading_font', 'detail_font'];
-// The font boxes on the Résumé Design form, in the order shown.
+// The font boxes on the Resume Design form, in the order shown.
 const DESIGN_FONT_ROLES = ['name_font' => 'Name Font', 'heading_font' => 'Section Heading Font', 'font_family' => 'Body Text Font',
     'detail_font' => 'Dates, Sub-headings and Contact Font'];
 const DESIGN_NUMBERS = ['body_size', 'name_size', 'heading_size', 'line_spacing', 'section_gap', 'margin_top', 'margin_right', 'margin_bottom', 'margin_left'];
@@ -135,7 +135,7 @@ function clean_layout(array $values): array
     return $clean;
 }
 
-/** Measured settings brought into range (a 6 pt résumé becomes 7 pt) instead of refused; unknown choices are dropped. */
+/** Measured settings brought into range (a 6 pt resume becomes 7 pt) instead of refused; unknown choices are dropped. */
 function fit_layout(array $values): array
 {
     foreach ($values as $key => $value) {
@@ -164,7 +164,7 @@ function merge_layout(?array ...$layers): array
     return $layout;
 }
 
-// --- The saved design (Résumé Design) ---------------------------------------------------------------------------
+// --- The saved design (Resume Design) ---------------------------------------------------------------------------
 
 function design_state(): array
 {
@@ -198,7 +198,7 @@ function design_overrides(): array
     return design_state()['overrides'];
 }
 
-/** The design new PDFs are drawn with: what was measured from the uploaded résumé, with your changes on top. */
+/** The design new PDFs are drawn with: what was measured from the uploaded resume, with your changes on top. */
 function effective_layout(): array
 {
     return merge_layout(current_resume()['layout'] ?? null, design_overrides());
@@ -275,7 +275,7 @@ function delete_reference(string $id): bool
 // --- Writing rules ------------------------------------------------------------------------------------------------
 
 const RULE_FILES = ['resume' => 'resume-rules.md', 'cover_letter' => 'cover-letter-rules.md'];
-const RULE_TITLES = ['resume' => 'Résumé Rules', 'cover_letter' => 'Cover Letter Rules'];
+const RULE_TITLES = ['resume' => 'Resume Rules', 'cover_letter' => 'Cover Letter Rules'];
 const RULES_MAX_CHARS = 60000;
 
 function load_rules(string $kind): string
@@ -446,7 +446,7 @@ function remove_tree(string $path): void
     }
 }
 
-// --- The uploaded résumé -----------------------------------------------------------------------------------------------
+// --- The uploaded resume -----------------------------------------------------------------------------------------------
 
 function current_resume(): ?array
 {
@@ -466,7 +466,7 @@ function current_resume_file(): ?string
     return $info ? resume_dir('current-resume/' . $info['file']) : null;
 }
 
-/** Replace the current résumé with a new upload and measure its layout. Returns the info record. */
+/** Replace the current resume with a new upload and measure its layout. Returns the info record. */
 function save_resume_upload(string $filename, string $data): array
 {
     $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
@@ -495,7 +495,7 @@ function save_resume_upload(string $filename, string $data): array
     } catch (InvalidArgumentException $error) {
         throw $error;
     } catch (Throwable $error) {
-        error_log('Could not read résumé: ' . $error->getMessage() . ' at ' . $error->getFile() . ':' . $error->getLine());
+        error_log('Could not read resume: ' . $error->getMessage() . ' at ' . $error->getFile() . ':' . $error->getLine());
         throw new InvalidArgumentException('Could not read that file. Try another PDF or DOCX.');
     }
     $layout = clean_layout(fit_layout($layout)) + DEFAULT_LAYOUT;
@@ -526,7 +526,7 @@ function design_record(?array $facts, array $layout): array
     return ['facts' => $facts, 'rows' => $rows, 'notes' => design_notes_text($rows)];
 }
 
-/** Look at the uploaded file again (also fills in the design of a résumé uploaded before this existed). */
+/** Look at the uploaded file again (also fills in the design of a resume uploaded before this existed). */
 function reanalyze_resume_design(): ?array
 {
     $info = current_resume();
@@ -539,7 +539,7 @@ function reanalyze_resume_design(): ?array
         try {
             $facts = analyze_pdf_page(first_pdf_page((string) file_get_contents($file)));
         } catch (Throwable $error) {
-            error_log('Could not look at the résumé again: ' . $error->getMessage());
+            error_log('Could not look at the resume again: ' . $error->getMessage());
         }
     }
     $info['layout'] = array_merge($info['layout'], clean_layout(fit_layout(layout_from_facts($facts))));
@@ -560,7 +560,7 @@ function current_design(): ?array
     return $info['design'];
 }
 
-// --- Finished résumés and cover letters ---------------------------------------------------------------------------------
+// --- Finished resumes and cover letters ---------------------------------------------------------------------------------
 
 const BUILD_KINDS = ['resume' => '', 'cover_letter' => 'Cover_Letter'];
 
@@ -570,7 +570,7 @@ function name_part(?string $text): string
 }
 
 /**
- * Firstname_Lastname_Company_JobTitle_MM-DD-YYYY.pdf for a résumé (never the word "ATS"), and
+ * Firstname_Lastname_Company_JobTitle_MM-DD-YYYY.pdf for a resume (never the word "ATS"), and
  * Firstname_Lastname_Company_JobTitle_Cover_Letter_MM-DD-YYYY.pdf for a cover letter; _2, _3 ... when taken.
  */
 function build_filename(string $first, string $last, string $kind, string $job_title, string $company = '', ?int $when = null): string
@@ -605,7 +605,7 @@ function safe_build_name(string $filename): bool
 function build_draft_path(string $filename): string
 {
     if (!safe_build_name($filename)) {
-        throw new InvalidArgumentException('Not a Résumé Builder file name.');
+        throw new InvalidArgumentException('Not a Resume Builder file name.');
     }
     return resume_dir('drafts/' . pathinfo($filename, PATHINFO_FILENAME) . '.json');
 }
@@ -621,7 +621,7 @@ function texts(array $list, int $limit = 100): array
     return array_slice(array_values(array_map(fn($v) => is_scalar($v) ? trim((string) $v) : '', $list)), 0, $limit);
 }
 
-/** A résumé as Claude or the editor sent it, checked and with every field present. */
+/** A resume as Claude or the editor sent it, checked and with every field present. */
 function clean_resume_content(array $content): array
 {
     $full_name = trim((string) ($content['full_name'] ?? ''));
@@ -739,7 +739,7 @@ function files_by_job(): array
     foreach (list_builds() as $record) {
         if ($record['pdf_exists'] && is_numeric($record['job_id'] ?? null)) {
             $found[(int) $record['job_id']][] = ['kind' => $record['kind'], 'pdf' => $record['pdf'], 'updated' => $record['updated'] ?? '',
-                'label' => $record['kind'] === 'resume' ? 'Résumé' : 'Cover Letter'];
+                'label' => $record['kind'] === 'resume' ? 'Resume' : 'Cover Letter'];
         }
     }
     return $found;

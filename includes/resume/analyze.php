@@ -1,5 +1,5 @@
 <?php
-// Measures the uploaded résumé's design: fonts, sizes, colours, margins, headings, spacing and bullets. Ported
+// Measures the uploaded resume's design: fonts, sizes, colours, margins, headings, spacing and bullets. Ported
 // from the desktop's resume_file.py and design_report.py, which read PDFs with PyMuPDF; here a small reader
 // follows each page's drawing commands to find every piece of text with its font, size, colour and position,
 // and the thin lines drawn under headings, then groups the text into spans, lines and blocks the same way.

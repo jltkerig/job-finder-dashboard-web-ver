@@ -27,6 +27,8 @@ function dash_item_attrs(array $c): string
         'fit-count' => (string) $fit_count,
         'schedule' => (string) ($c['details']['schedule'] ?? ''),
         'found' => (string) ($c['date_found'] ?? ''),
+        'applied' => (string) ($c['applied_on'] ?? ''),
+        'app-status' => (string) ($c['application_status'] ?? ''),
     ];
     $out = [];
     foreach ($attrs as $name => $value) {
@@ -39,11 +41,11 @@ function dash_item_attrs(array $c): string
 function dash_legend(string $key): string
 {
     $k = h($key);
-    return '<div class="credibility-legend" aria-label="Credibility score guide"><strong>Scoring:</strong>'
-        . '<span class="legend-item" tabindex="0" aria-describedby="' . $k . '-low-help"><i class="legend-dot low"></i>Low<span id="' . $k . '-low-help" class="credibility-tip" role="tooltip">0–40%: limited evidence.</span></span>'
-        . '<span class="legend-item" tabindex="0" aria-describedby="' . $k . '-medium-help"><i class="legend-dot medium"></i>Medium<span id="' . $k . '-medium-help" class="credibility-tip" role="tooltip">50–70%: some evidence.</span></span>'
-        . '<span class="legend-item" tabindex="0" aria-describedby="' . $k . '-high-help"><i class="legend-dot high"></i>High<span id="' . $k . '-high-help" class="credibility-tip" role="tooltip">80–100%: stronger evidence.</span></span>'
-        . '<a href="/credibility-scores">How are scores calculated?</a></div>';
+    return '<div class="credibility-legend" aria-label="Credibility score guide"><strong>Scoring:</strong><ul>'
+        . '<li class="legend-item" tabindex="0" aria-describedby="' . $k . '-low-help"><i class="legend-dot low"></i>Low<small id="' . $k . '-low-help" class="credibility-tip" role="tooltip">0–40%: limited evidence.</small></li>'
+        . '<li class="legend-item" tabindex="0" aria-describedby="' . $k . '-medium-help"><i class="legend-dot medium"></i>Medium<small id="' . $k . '-medium-help" class="credibility-tip" role="tooltip">50–70%: some evidence.</small></li>'
+        . '<li class="legend-item" tabindex="0" aria-describedby="' . $k . '-high-help"><i class="legend-dot high"></i>High<small id="' . $k . '-high-help" class="credibility-tip" role="tooltip">80–100%: stronger evidence.</small></li>'
+        . '</ul><a href="/credibility-scores">How are scores calculated?</a></div>';
 }
 
 /**
@@ -62,25 +64,32 @@ function dash_toolbar(string $key, string $target, string $item_selector, array 
     foreach (array_keys($sources) as $label) {
         $source_options .= '<option value="' . h($label) . '">' . h($label) . '</option>';
     }
+    $app_status = $key === 'applied'
+        ? '<div class="filter-box"><label for="applied-app-status">Application Status</label><select id="applied-app-status" data-f="appStatus"><option value="all">All stages</option><option value="Applied">Applied</option><option value="Talking With Recruiter">Talking With Recruiter</option><option value="Interview">Interview</option></select></div>'
+        : '';
+    $applied_sorts = $key === 'applied'
+        ? '<option value="applied-newest">Date Applied (Newest First)</option><option value="applied-oldest">Date Applied (Oldest First)</option>'
+        : '';
     return <<<HTML
 <section class="results-toolbar dash-toolbar" id="{$k}-filters" data-target="{$target}" data-item="{$item_selector}" aria-label="{$k} filters">
-      <div class="toolbar-title"><span class="filter-icon" aria-hidden="true">⌕</span><strong>Filters</strong>
+      <div class="toolbar-title"><i class="filter-icon" aria-hidden="true">⌕</i><strong>Filters</strong>
       </div>
-      <div class="form-field compact-field"><label for="{$k}-text">Search</label><input id="{$k}-text" data-f="text" type="search" placeholder="Company, job, or city..." />
+      <div class="filter-box"><label for="{$k}-text">Search</label><input id="{$k}-text" data-f="text" type="search" placeholder="Company, job, or city..." />
       </div>
-      <div class="form-field compact-field"><label for="{$k}-state">State</label><select id="{$k}-state" data-f="state"><option value="all">All</option></select>
+      <div class="filter-box"><label for="{$k}-state">State</label><select id="{$k}-state" data-f="state"><option value="all">All</option></select>
       </div>
-      <div class="form-field compact-field"><label for="{$k}-arrangement">Work Location</label><select id="{$k}-arrangement" data-f="arrangement"><option value="all">All work locations</option><option value="Remote">Remote</option><option value="Hybrid">Hybrid</option><option value="Onsite">Onsite</option><option value="unknown">Unspecified</option></select>
+      <div class="filter-box"><label for="{$k}-arrangement">Work Location</label><select id="{$k}-arrangement" data-f="arrangement"><option value="all">All work locations</option><option value="Remote">Remote</option><option value="Hybrid">Hybrid</option><option value="Onsite">Onsite</option><option value="unknown">Unspecified</option></select>
       </div>
-      <div class="form-field compact-field"><label for="{$k}-status">Listing Status</label><select id="{$k}-status" data-f="status"><option value="all">All statuses</option><option value="open">Open only</option><option value="closed">Closed only</option><option value="unknown">Unknown only</option></select>
+      <div class="filter-box"><label for="{$k}-status">Listing Status</label><select id="{$k}-status" data-f="status"><option value="all">All statuses</option><option value="open">Open only</option><option value="closed">Closed only</option><option value="unknown">Unknown only</option></select>
       </div>
-      <div class="form-field compact-field"><label for="{$k}-source">Source</label><select id="{$k}-source" data-f="source"><option value="all">All sources</option>{$source_options}</select>
+      {$app_status}
+      <div class="filter-box"><label for="{$k}-source">Source</label><select id="{$k}-source" data-f="source"><option value="all">All sources</option>{$source_options}</select>
       </div>
-      <div class="form-field compact-field"><label for="{$k}-credibility">Min. Career Credibility</label><select id="{$k}-credibility" data-f="credibility"><option value="-1">Show all scores</option><option value="3">30%+</option><option value="5">50%+</option><option value="7">70%+</option><option value="9">90%+</option></select>
+      <div class="filter-box"><label for="{$k}-credibility">Min. Career Credibility</label><select id="{$k}-credibility" data-f="credibility"><option value="-1">Show all scores</option><option value="3">30%+</option><option value="5">50%+</option><option value="7">70%+</option><option value="9">90%+</option></select>
       </div>
-      <div class="form-field compact-field"><label for="{$k}-schedule">Work Type</label><select id="{$k}-schedule" data-f="schedule"><option value="all">All work types</option><option value="part">Part-time</option><option value="full">Full-time</option><option value="contract">Contract</option><option value="freelance">Freelance / Gig</option><option value="unknown">Unspecified</option></select>
+      <div class="filter-box"><label for="{$k}-schedule">Work Type</label><select id="{$k}-schedule" data-f="schedule"><option value="all">All work types</option><option value="part">Part-time</option><option value="full">Full-time</option><option value="contract">Contract</option><option value="freelance">Freelance / Gig</option><option value="unknown">Unspecified</option></select>
       </div>
-      <div class="form-field compact-field"><label for="{$k}-sort">Sort</label><select id="{$k}-sort" data-f="sort"><option value="default">Newest</option><option value="oldest">Oldest</option><option value="company">Company A–Z</option><option value="job">Job title A–Z</option><option value="distance">Distance</option><option value="job-fit">Job fit</option><option value="skill-fit">Job Fit Minus Titles</option><option value="career-credibility">Career credibility</option><option value="usa-credibility">USA credibility</option></select>
+      <div class="filter-box"><label for="{$k}-sort">Sort</label><select id="{$k}-sort" data-f="sort"><option value="default">Newest</option><option value="oldest">Oldest</option>{$applied_sorts}<option value="company">Company A–Z</option><option value="job">Job title A–Z</option><option value="distance">Distance</option><option value="job-fit">Job fit</option><option value="skill-fit">Job Fit Minus Titles</option><option value="career-credibility">Career credibility</option><option value="usa-credibility">USA credibility</option></select>
       </div>{$extra}
       <div class="results-count" id="{$k}-count" data-count>
       </div>

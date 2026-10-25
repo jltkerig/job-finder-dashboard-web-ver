@@ -2,11 +2,11 @@
 // in this browser. The Job column always shows, so it isn't in the list.
 (() => {
   "use strict";
-  const table = document.getElementById("results-table");
+  const table = document.querySelector(".js-results-table");
   const chooser = document.getElementById("column-chooser");
   if (!table || !chooser) return;
   const options = chooser.querySelector(".column-options");
-  const showAll = document.getElementById("column-show-all");
+  const showAll = document.querySelector(".js-column-show-all");
   const STORAGE_KEY = "jobFinderHiddenColumns";
   const ALWAYS = new Set(["Job"]);
   // Compact rows (one line per listing) is on unless the person turned it off; the choice is remembered.
@@ -44,8 +44,8 @@
   function apply(hidden) {
     style.textContent = headers
       .filter((column) => hidden.has(column.name) && !ALWAYS.has(column.name))
-      .map((column) => `#results-table > thead > tr > th:nth-child(${column.index}),`
-        + ` #results-table > tbody > tr.result-row > td:nth-child(${column.index}) { display: none; }`)
+      .map((column) => `.js-results-table > thead > tr > th:nth-child(${column.index}),`
+        + ` .js-results-table > tbody > tr.result-row > td:nth-child(${column.index}) { display: none; }`)
       .join("\n");
     for (const box of options.querySelectorAll("input")) box.checked = !hidden.has(box.value);
   }

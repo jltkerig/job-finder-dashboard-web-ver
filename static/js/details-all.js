@@ -13,11 +13,11 @@
   // Every Details button on screen (a filtered-out row or a closed Top 10 panel has none), and whether its panel is open.
   function toggles() {
     const items = [];
-    document.querySelectorAll("#results-table .details-action").forEach((el) => {
+    document.querySelectorAll(".js-results-table .js-details-action").forEach((el) => {
       const target = document.getElementById(el.dataset.detailsTarget);
       if (target && shown(el)) items.push({ el, open: !target.hidden });
     });
-    document.querySelectorAll("#top-picks-list .top-pick-details-button").forEach((el) => {
+    document.querySelectorAll("#top-picks-list .js-top-pick-details-button").forEach((el) => {
       if (shown(el)) items.push({ el, open: el.getAttribute("aria-expanded") === "true" });
     });
     return items;
@@ -45,7 +45,7 @@
 
   // Opening or closing one by hand changes what the button should offer next.
   document.addEventListener("click", (event) => {
-    if (pending > 0 || !event.target.closest(".details-action, .top-pick-details-button")) return;
+    if (pending > 0 || !event.target.closest(".js-details-action, .js-top-pick-details-button")) return;
     setTimeout(() => label(allOpen(toggles())), 0);
   });
 })();

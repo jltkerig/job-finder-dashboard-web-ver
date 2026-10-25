@@ -70,6 +70,28 @@
     status.classList.toggle("companies-error", Boolean(isError));
   }
 
+  // 2026-10-22 -> Oct 22, 2026
+  function longDate(iso) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || "");
+    if (!match) return "";
+    return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  // The Dates column: when it was added, when Job Finder last checked one of its jobs, and its newest posting.
+  function datesCell(company) {
+    const td = document.createElement("td");
+    td.className = "companies-dates";
+    const lines = [["Added", company.added], ["Checked", company.last_checked], ["Newest posting", company.newest_posting]]
+      .filter(([, value]) => longDate(value));
+    if (!lines.length) { td.textContent = "—"; return td; }
+    for (const [label, value] of lines) {
+      const small = document.createElement("small");
+      small.textContent = `${label} ${longDate(value)}`;
+      td.append(small);
+    }
+    return td;
+  }
+
   function cell(text, className) {
     const td = document.createElement("td");
     if (className) td.className = className;
@@ -94,6 +116,9 @@
     add("Type", company.kindLabels && company.kindLabels.length ? company.kindLabels.join(", ") : company.type);
     add("Address", company.address || company.place);
     add("Miles", company.miles === null || company.miles === undefined ? "" : String(company.miles));
+    add("Added", longDate(company.added));
+    add("Last checked", longDate(company.last_checked));
+    add("Newest posting", longDate(company.newest_posting));
     add("Phone", company.phone);
     add("Website", company.website, company.website);
     add("Job board", company.jobs_board, company.jobs_url);
@@ -141,7 +166,7 @@
   function button(label, className, onClick) {
     const node = document.createElement("button");
     node.type = "button";
-    node.className = `bordered-button secondary-action ${className}`;
+    node.className = `bordered-button ${className}`;
     node.textContent = label;
     node.addEventListener("click", onClick);
     return node;
@@ -222,7 +247,7 @@
     try {
       await post("/companies/saved", {
         name: company.name, website: company.website || "", address: company.address || "",
-        phone: company.phone || "", place: /d{5}/.test(company.address || "") ? "" : place.value.trim(),
+        phone: company.phone || "", place: /\b\d{5}\b/.test(company.address || "") ? "" : place.value.trim(),
         notes: company.type ? `Found near ${place.value.trim() || "your home"}: ${company.type}` : "",
       });
       savedNames.add(nameKey(company.name));
@@ -268,7 +293,7 @@
         }
         const synced = reply.jobs_synced || 0;
         const message = (editing ? `Saved ${reply.company.name}.` : `Added ${reply.company.name}.`)
-          + (synced ? ` The job${synced === 1 ? "" : "s"} you had there ${synced === 1 ? "is" : "are"} updated in your Profile too, so the Résumé Builder shows it.` : "")
+          + (synced ? ` The job${synced === 1 ? "" : "s"} you had there ${synced === 1 ? "is" : "are"} updated in your Profile too, so the Resume Builder shows it.` : "")
           + (reply.profile_synced === false ? " (Your Profile couldn't be updated just now.)" : "");
         resetAddForm();
         // An edit closes its row, taking the form's own message with it, so the message goes where the page shows them.
@@ -294,7 +319,7 @@
     name.append(strong);
     if (company.mine) {
       const badge = document.createElement("span");
-      badge.className = "companies-mine-badge";
+      badge.className = "navy-chip companies-mine-badge";
       badge.textContent = "Mine";
       name.append(badge);
     }
@@ -312,7 +337,8 @@
     }
     const where = company.address || company.place || "—";
     tr.append(name, cell(company.type || "—"), cell(where),
-      cell(company.miles === null || company.miles === undefined ? "—" : company.miles.toFixed(1), "companies-miles-cell"));
+      cell(company.miles === null || company.miles === undefined ? "—" : company.miles.toFixed(1), "companies-miles-cell"),
+      datesCell(company));
     const site = document.createElement("td");
     if (company.website) {
       const link = document.createElement("a");
@@ -344,12 +370,12 @@
     const actions = document.createElement("td");
     actions.className = "companies-row-actions";
     if (company.mine) {
-      actions.append(button("Edit", "companies-edit", () => editCompany(company, tr)),
-        button("Delete", "companies-delete", () => removeCompany(company)));
+      actions.append(button("Edit", "js-companies-edit", () => editCompany(company, tr)),
+        button("Delete", "js-companies-delete", () => removeCompany(company)));
     } else {
       if (/^(node|way|relation)\//.test(company.id)) {
         const map = document.createElement("a");
-        map.className = "bordered-button secondary-action";
+        map.className = "bordered-button";
         map.href = `https://www.openstreetmap.org/${company.id}`;
         map.target = "_blank";
         map.rel = "noopener noreferrer";
@@ -361,7 +387,7 @@
       save.disabled = saved;
       save.title = saved ? "In Saved Companies" : "Keep this company in Saved Companies";
       actions.append(save);
-      actions.append(button("Edit", "companies-edit", () => editCompany(company, tr)));
+      actions.append(button("Edit", "js-companies-edit", () => editCompany(company, tr)));
       actions.append(button(hidden.has(keyOf(company)) ? "Unhide" : "Hide", "companies-hide", () => {
         const set = readHidden();
         if (set.has(keyOf(company))) set.delete(keyOf(company)); else set.add(keyOf(company));
@@ -417,7 +443,7 @@
     const make = (text, active, onClick, dim, count, into = kindTags) => {
       const tag = document.createElement("button");
       tag.type = "button";
-      tag.className = `chip-button companies-kind-tag${active ? " is-active" : ""}${dim ? " is-empty" : ""}`;
+      tag.className = `navy-chip companies-kind-tag${active ? " is-active" : ""}${dim ? " is-empty" : ""}`;
       tag.setAttribute("aria-pressed", String(active));
       tag.textContent = text;
       if (count !== undefined) { const badge = document.createElement("span"); badge.className = "kind-count"; badge.textContent = count; tag.append(badge); }

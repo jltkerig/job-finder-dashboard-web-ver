@@ -1,6 +1,6 @@
 <?php
-// Text from an uploaded résumé: Word (.docx) and PDF files, read in plain PHP (shared hosting can't install the
-// Python libraries the desktop app uses). Good enough for text-based résumés; a scanned image has no text to read.
+// Text from an uploaded resume: Word (.docx) and PDF files, read in plain PHP (shared hosting can't install the
+// Python libraries the desktop app uses). Good enough for text-based resumes; a scanned image has no text to read.
 
 declare(strict_types=1);
 

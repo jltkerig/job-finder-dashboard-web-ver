@@ -17,7 +17,7 @@
     const list = fold.querySelector(fold.dataset.list);
     const count = fold.querySelector(".fold-count");
     const glance = fold.querySelector(".fold-glance");
-    const key = "jobFinder.searchFold." + fold.id;
+    const key = "jobFinder.searchFold.v3." + fold.id;
     try {
       const saved = localStorage.getItem(key);
       if (saved !== null) fold.open = saved === "1";

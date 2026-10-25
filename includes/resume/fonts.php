@@ -1,11 +1,11 @@
 <?php
-// Résumé fonts: the ones installed here, Google Fonts (downloaded once into data/resume/fonts), look-alikes for
+// Resume fonts: the ones installed here, Google Fonts (downloaded once into data/resume/fonts), look-alikes for
 // fonts that aren't available, and the type on the portfolio site. Only font names ever go to Google Fonts, and
-// only jamiekerig.com is ever read. Ported from the desktop Résumé Builder's design.py.
+// only jamiekerig.com is ever read. Ported from the desktop Resume Builder's design.py.
 
 declare(strict_types=1);
 
-// Google Fonts worth offering for a résumé, with a rough class used to suggest look-alikes.
+// Google Fonts worth offering for a resume, with a rough class used to suggest look-alikes.
 const GOOGLE_FONTS = [
     'Roboto' => 'sans', 'Open Sans' => 'sans', 'Lato' => 'sans', 'Montserrat' => 'sans', 'Source Sans 3' => 'sans',
     'Inter' => 'sans', 'Poppins' => 'sans', 'Nunito' => 'sans', 'Nunito Sans' => 'sans', 'Raleway' => 'sans',
@@ -86,7 +86,7 @@ const PORTFOLIO_READ = [
     'accents' => ['Volkhorn (quotes; no longer offered by Google Fonts)', 'Courier Prime (code)', 'Caveat (hand-written hello)'],
     'colors' => ['Dark' => '#353535', 'Accent yellow' => '#F7D136'],
 ];
-// The résumé settings that follow from it. The site's yellow is too pale for white paper, so headings use the dark.
+// The resume settings that follow from it. The site's yellow is too pale for white paper, so headings use the dark.
 const PORTFOLIO_PRESET = [
     'font_family' => 'Merriweather', 'font_kind' => 'serif', 'name_font' => 'Unna', 'heading_font' => 'Roboto Condensed',
     'detail_font' => 'Fira Sans Extra Condensed', 'text_color' => '#353535', 'accent_color' => '#353535',
@@ -262,7 +262,7 @@ function font_sources(string $family, string $kind): array
     return $memo["$family|$kind"] = $sources;
 }
 
-/** (installed fonts, Google Fonts) for the pickers; extras (fonts found in the résumé) join the first list. */
+/** (installed fonts, Google Fonts) for the pickers; extras (fonts found in the resume) join the first list. */
 function font_choices(array $extra = []): array
 {
     $installed = installed_fonts();
@@ -411,7 +411,7 @@ function portfolio(): array
     return design_state()['portfolio'] ?: PORTFOLIO_READ;
 }
 
-/** The résumé settings for matching the portfolio, using what the last read of the site found. */
+/** The resume settings for matching the portfolio, using what the last read of the site found. */
 function portfolio_preset(): array
 {
     $preset = PORTFOLIO_PRESET;

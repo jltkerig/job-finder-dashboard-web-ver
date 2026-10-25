@@ -1,5 +1,5 @@
 <?php
-// One saved résumé or cover letter: edit its words and layout, redraw it, download or delete it. $rb_file is the
+// One saved resume or cover letter: edit its words and layout, redraw it, download or delete it. $rb_file is the
 // PDF's file name (see app.php). Ported from the desktop's build.html.
 
 declare(strict_types=1);
@@ -10,7 +10,7 @@ try {
     $draft = load_draft($rb_file);
 } catch (InvalidArgumentException | RuntimeException) {
     http_response_code(404);
-    exit('That file is gone. <a href="/resume-builder">Back to Résumé Builder</a>');
+    exit('That file is gone. <a href="/resume-builder">Back to Resume Builder</a>');
 }
 $c = $draft['content'];
 $l = full_layout($draft['layout']);
@@ -26,24 +26,23 @@ if (!in_array($l['font_family'], $fonts, true)) {
 }
 $saved_references = array_map(fn($r) => array_intersect_key($r, array_flip(PRINTED_REFERENCE_FIELDS)), load_references());
 
-$title = ($draft['kind'] === 'resume' ? 'Résumé' : 'Cover Letter') . ($draft['job_title'] ? ": {$draft['job_title']}" : '');
+$title = ($draft['kind'] === 'resume' ? 'Resume' : 'Cover Letter') . ($draft['job_title'] ? ": {$draft['job_title']}" : '');
 $subtitle = $draft['pdf'] . ($draft['company'] ? " · {$draft['company']}" : '');
 $page = 'resume';
-$extra_css = ['/static/css/resume.css'];
 $flashes = take_flashes();
 $selected = fn(bool $on) => $on ? ' selected' : '';
 require APP_ROOT . '/templates/_top.php';
 ?>
-<main>
+<main class="resume-builder">
 <?php foreach ($flashes as [$kind, $message]): ?>
   <p class="flash flash-<?= h($kind) ?>" role="status"><?= h($message) ?></p>
 <?php endforeach; ?>
-<p><a href="/resume-builder#saved">&larr; Back to Résumé Builder</a></p>
+<p><a href="/resume-builder#saved">&larr; Back to Resume Builder</a></p>
 <div class="editor">
 <form method="post" class="card">
   <?= csrf_field() ?>
   <div class="form-actions">
-    <button class="bordered-button primary" type="submit">Save and redraw PDF</button>
+    <button class="primary-button" type="submit">Save and redraw PDF</button>
     <a class="bordered-button" href="/resume-builder/files/<?= $file ?>?download=1">Download PDF</a>
   </div>
 
@@ -141,7 +140,7 @@ require APP_ROOT . '/templates/_top.php';
   <label>Signature <span class="field-help">empty means your full name</span><input name="signature" value="<?= h($c['signature']) ?>" /></label>
 <?php endif; ?>
   <div class="form-actions">
-    <button class="bordered-button primary" type="submit">Save and redraw PDF</button>
+    <button class="primary-button" type="submit">Save and redraw PDF</button>
   </div>
 </form>
 

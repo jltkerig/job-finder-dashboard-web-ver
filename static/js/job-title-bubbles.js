@@ -1,7 +1,7 @@
 // Search page: the job titles are bubbles under a box (like the cities), not one long box. The real value stays in the
-// hidden #job-title input as "Title, Title" (charts.js reads and saves it); this script shows it as bubbles and adds to it.
+// hidden .js-job-title input as "Title, Title" (charts.js reads and saves it); this script shows it as bubbles and adds to it.
 (() => {
-  const store = document.getElementById("job-title");
+  const store = document.querySelector(".js-job-title");
   const entry = document.getElementById("job-title-add");
   const list = document.getElementById("job-title-list");
   const addButton = document.getElementById("add-job-title");
@@ -21,7 +21,7 @@
   function render() {
     list.replaceChildren(...titles().map((title) => {
       const chip = document.createElement("span");
-      chip.className = "city-chip title-bubble";
+      chip.className = "navy-chip";
       const text = document.createElement("span");
       text.textContent = title;
       const remove = document.createElement("button");
@@ -51,7 +51,9 @@
   document.getElementById("job-title-suggestions")?.addEventListener("click", () => requestAnimationFrame(render));
   // Whatever is typed is part of the search when it starts, refreshes or ranks.
   document.addEventListener("click", (event) => {
-    if (event.target.closest("#start-search, #top-picks-button, #refresh-search")) commit();
+    if (event.target.closest(".js-start-search, .js-top-picks-button, #refresh-search")) commit();
   }, true);
   render();
+  // Show the suggestions for the titles already there, once charts.js (loaded after this) is listening.
+  window.addEventListener("load", () => store.dispatchEvent(new Event("input", { bubbles: true })));
 })();

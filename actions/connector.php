@@ -47,7 +47,7 @@ if ($method !== 'POST') {
     json_out(['jsonrpc' => '2.0', 'id' => null, 'error' => ['code' => -32000, 'message' => 'Use POST.']], 405);
 }
 if (!connector_enabled()) {
-    json_out(['jsonrpc' => '2.0', 'id' => null, 'error' => ['code' => -32001, 'message' => 'The Résumé Builder connector is turned off.']], 403);
+    json_out(['jsonrpc' => '2.0', 'id' => null, 'error' => ['code' => -32001, 'message' => 'The Resume Builder connector is turned off.']], 403);
 }
 if (bearer_client() === null) {
     header('WWW-Authenticate: Bearer resource_metadata="' . site_url() . '/.well-known/oauth-protected-resource"');

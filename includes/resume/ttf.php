@@ -1,6 +1,6 @@
 <?php
 // Reading TrueType fonts (.ttf, and the first font of a .ttc) for drawing PDFs: character widths, the glyph for
-// each character, and a cut-down copy of the font holding only the letters a résumé uses, so the PDF stays small.
+// each character, and a cut-down copy of the font holding only the letters a resume uses, so the PDF stays small.
 
 declare(strict_types=1);
 

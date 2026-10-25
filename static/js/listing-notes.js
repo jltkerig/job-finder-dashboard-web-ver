@@ -3,13 +3,13 @@
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || "";
 
   document.addEventListener("click", async (event) => {
-    const button = event.target.closest(".notes-edit, .notes-save");
+    const button = event.target.closest(".js-notes-edit, .js-notes-save");
     if (!button) return;
     const section = button.closest(".details-notes");
     const view = section.querySelector(".notes-view");
     const box = section.querySelector(".notes-input");
-    const edit = section.querySelector(".notes-edit");
-    const save = section.querySelector(".notes-save");
+    const edit = section.querySelector(".js-notes-edit");
+    const save = section.querySelector(".js-notes-save");
     const status = section.querySelector(".notes-status");
     if (button === edit) {
       view.hidden = true; edit.hidden = true;

@@ -1,0 +1,1178 @@
+/* Structure: every rule that sets how wide, tall or how many columns/rows something is, grouped by the same sections as style.css and animations.css.
+   Loaded BEFORE style.css. Inside a section the rules keep their order. */
+
+/* ===== Page frame and typography ===== */
+
+html, body { min-height: 100%; }
+
+body { min-height: 100vh; }
+
+.company-section { max-width: 1400px; }
+
+table { width: 100%; }
+
+.panel { max-width:1400px; }
+
+.visually-hidden { width:1px; height:1px; }
+
+/* ===== Header ===== */
+
+.header-content { max-width:1400px; width:100%; }
+
+/* ===== Navigation ===== */
+
+.nav-inner { max-width: 1400px; }
+
+.nav-link { min-width: 110px; }
+
+@media (max-width: 640px) {
+	.nav-link { min-width:0; }
+
+}
+@media (min-width: 641px) {
+	.nav-link { min-width: 96px; }
+
+}
+
+/* ===== Footer ===== */
+
+.footer-inner { max-width:1400px; width:100%; }
+
+.footer-social svg { width:18px; height:18px; }
+
+/* ===== Buttons ===== */
+
+/* One size for every button: --control-height high and as wide as its label; a container stretches or places it. */
+:is(.bordered-button, .primary-button, .destructive-button, .success-button) { min-height: var(--control-height); }
+
+.quit-button { min-height: var(--control-height); min-width: 80px; }
+
+/* ===== Form fields ===== */
+
+.form-field input, .form-field textarea { width: 100%; }
+
+.form-field select { width: 100%; }
+
+input:not([type]), input[type="text"], input[type="search"], input[type="number"], input[type="email"], input[type="url"], input[type="password"], input[type="tel"], input[type="date"], input[type="datetime-local"], input[type="month"], input[type="time"], input[type="week"], select { height: var(--control-height); }
+
+textarea { min-height: 96px; }
+
+/* ===== Toasts, status modal and loading ===== */
+
+.top-picks-actions .loading::before { width:14px; height:14px; }
+
+.searching-dot { width: 10px; height: 10px; }
+
+.toast-region { max-width: min(390px, calc(100vw - 44px)); }
+
+.search-progress-bar { height: 4px; }
+
+.search-progress-bar::after { width: 35%; height: 100%; }
+
+.status-modal-card { width: min(430px, 100%); }
+
+.status-modal-icon { width: 13px; height: 13px; }
+
+.loading-card { min-width:min(360px,calc(100vw - 32px)); max-width:440px; }
+
+.color-spinner { width:42px; height:42px; }
+
+.review-dialog { width:min(620px,calc(100vw - 24px)); max-height:85vh; }
+
+.search-running-dot { width:9px; height:9px; }
+
+/* ===== Credibility scores ===== */
+
+.results-table.compact-rows .job-fit, .results-table.compact-rows .credibility-badge { min-width:0; }
+
+.results-table.compact-rows td[data-label="Job Fit"] .job-fit, .results-table.compact-rows td .credibility-badge { height:20px; }
+
+.top-pick-stat .job-fit, .top-pick-stat .credibility-badge { min-width:0; }
+
+.credibility-badge { min-width:53px; min-height:26px; }
+
+.credibility-tip { width:220px; }
+
+@media (max-width: 760px) {
+	.credibility-tip { width:min(220px,75vw); }
+
+}
+.score-guide { max-width:850px; }
+
+.credibility-legend { width: 100%; }
+
+.legend-dot { width:8px; height:8px; }
+
+.score-rules { width:100%; }
+
+/* ===== Search for Jobs ===== */
+
+@media (max-width: 800px) {
+	.job-search-form { grid-template-columns: 1fr; }
+
+}
+.city-add-row { grid-template-columns: minmax(220px, 50%) 130px max-content; }
+
+@media (max-width: 900px) {
+	.city-add-row { grid-template-columns: 1fr; }
+
+}
+
+@media (max-width: 760px) {
+	.search-controls { grid-template-columns:1fr; }
+
+	
+
+	.city-add-row { grid-template-columns:1fr; }
+
+}
+.search-controls > button { min-height:42px; }
+
+.title-suggest { max-height: 280px; }
+
+.job-search-form { grid-template-columns:repeat(2, minmax(0, 1fr)); max-width:1100px; }
+
+.job-search-form > .form-field { min-width:0; }
+
+.job-search-form .job-title-store { width:100%; }
+
+.job-search-form .city-add-row { grid-template-columns:minmax(0, 1fr) 118px max-content; }
+
+@media (max-width: 820px) {
+	.job-search-form { grid-template-columns:1fr; }
+
+	.job-search-form .city-add-row { grid-template-columns:1fr; }
+
+}
+/* Second-level boxes */
+.job-search-form > details.search-fold { grid-column: 1 / -1; }
+
+/* ===== Results: filters and columns ===== */
+
+.results-toolbar .toolbar-title { flex-basis:100%; }
+
+.column-options .column-show-all { width: 100%; }
+
+.column-option input { width: auto; }
+
+.column-chooser-inline .column-show-all { min-height: 32px; }
+
+.column-chooser-inline .column-option input { width: 15px; height: 15px; min-height: 0; }
+
+.display-options > summary { width: auto; }
+
+.results-toolbar .display-options { flex-basis:100%; }
+
+.results-toolbar .display-options > summary { width:100%; }
+
+.results-toolbar .compact-rows-toggle input[type="checkbox"] { width:16px; min-width:16px; height:16px; min-height:0; }
+
+.results-toolbar .display-options .compact-rows-toggle { min-height:0; }
+
+.results-toolbar .display-options .column-option { min-height:30px; height:auto; }
+
+.results-toolbar .display-options .column-show-all { min-height:30px; }
+
+.results-toolbar .column-chooser-inline .column-option input { width:15px; height:15px; min-width:0; min-height:0; }
+
+.filter-icon { width:28px; height:28px; }
+
+/* Filter boxes: the same width rule for every filter in every toolbar; the toolbar's flex row wraps them. */
+.filter-box { flex: 1 1 150px; min-width: 130px; }
+
+.filter-box :is(input, select) { width: 100%; min-width: 0; }
+
+.filter-actions { flex: 0 0 auto; }
+
+.filter-options { grid-column: 1 / -1; position: relative; }
+
+/* ===== Top 10 Picks ===== */
+
+.top-pick { grid-template-columns:20px 1fr auto; }
+
+@media (max-width: 640px) {
+	.top-pick { grid-template-columns:20px 1fr; }
+
+}
+
+.top-pick-buttons { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+
+.top-pick-title .status-dot { width:10px; height:10px; }
+
+/* ===== Listings ===== */
+
+.reject-reason-label select { max-width:190px; }
+
+.details-notes { flex-basis: 100%; }
+
+.results-table th:first-child, .results-table td:first-child { width:160px; min-width:160px; max-width:160px; }
+
+@media (max-width: 760px) {
+	.results-table th:first-child, .results-table td:first-child { width:auto; min-width:0; max-width:none; }
+
+}
+@media (min-width: 761px) {
+	.results-table { min-width:1280px; }
+
+	.results-table th:nth-child(1), .results-table .result-row td:nth-child(1) { width:82px; min-width:82px; max-width:82px; }
+
+	.results-table th:nth-child(2) { width:120px; }
+
+	.results-table th:nth-child(3) { width:192px; }
+
+	.results-table th:nth-child(4) { width:72px; }
+
+	.results-table th:nth-child(5) { width:115px; }
+
+	.results-table th:nth-child(6) { width:90px; }
+
+	.results-table th:nth-child(7) { width:103px; }
+
+	.results-table th:nth-child(8) { width:65px; }
+
+	.results-table th:nth-child(9) { width:84px; }
+
+	.results-table th:nth-child(10) { width:69px; }
+
+	.results-table th:nth-child(11) { width:75px; }
+
+	.results-table th:nth-child(12) { width:90px; }
+
+	.results-table th:nth-child(13) { width:250px; }
+
+}
+.results-table .row-action-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+
+@media (max-width: 760px) {
+	.results-table { min-width:0; }
+
+	.results-table .result-row td[data-label="Save"] { width:auto; min-width:0; max-width:none; }
+
+	.results-table .result-row td.row-actions { grid-template-columns:1fr; }
+
+}
+
+@media (min-width: 761px) {
+	.results-table.compact-rows, .results-table.compact-rows tbody { min-width:0; }
+
+	.results-table.compact-rows tr.result-row { grid-template-columns:86px minmax(110px,1fr) minmax(200px,2.2fr) minmax(110px,1fr) 78px 78px 150px 236px; }
+
+	.results-table.compact-rows .result-row td { min-width:0; }
+
+	
+
+	
+
+}
+@media (min-width: 761px) and (max-width:1100px) {
+	.results-table.compact-rows tr.result-row { grid-template-columns:80px minmax(90px,1fr) minmax(150px,2fr) minmax(90px,1fr) 224px; }
+
+}
+@media (min-width: 761px) {
+	.results-table.compact-rows tr.details-row > td, .results-table.compact-rows tr.details-row > td:first-child { width:100%; min-width:0; max-width:none; }
+
+	.results-table.compact-rows .details-panel { width:100%; }
+
+}
+@media (max-width: 760px) {
+	.results-table .result-row { grid-template-columns:repeat(2,minmax(0,1fr)); }
+
+	.results-table .result-row td { grid-template-columns:none; min-width:0; }
+
+}
+.results-table.compact-rows .result-row td { width:auto; }
+
+.results-table.compact-rows td[data-label="Job"] { flex-basis:100%; }
+
+.results-table.compact-rows td[data-label="Domain"] { flex-basis:100%; }
+
+.results-table.compact-rows td[data-label="Save"] { width:228px; }
+
+.results-table.compact-rows td[data-label="Actions"] { width:228px; }
+
+
+
+.results-table.compact-rows td[data-label="Save"], .results-table.compact-rows td[data-label="Actions"] { min-width:228px; max-width:228px; }
+
+@media (max-width: 760px) {
+	.results-table.compact-rows tbody tr.result-row { min-height:0; }
+
+	.results-table.compact-rows td[data-label="Save"], .results-table.compact-rows td[data-label="Actions"] { flex-basis:100%; width:100%; min-width:0; max-width:none; }
+
+}
+.results-table.compact-rows td[data-label="Job Fit"], .results-table.compact-rows td[data-label="Career Credibility"], .results-table.compact-rows td[data-label="USA Credibility"], .results-table.compact-rows td[data-label="Listing"], .results-table.compact-rows td[data-label="Found"] { height:28px; }
+
+.results-table .details-panel { grid-template-columns:repeat(3,minmax(0,1fr)); }
+
+.results-table .details-section { min-width:0; }
+
+.results-table .details-grid { grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); }
+
+.results-table .details-grid > div { min-width:0; }
+
+.results-table .details-blocks .reject-reason { height:34px; min-height:34px; width:auto; }
+
+@media (max-width: 760px) {
+	.results-table .details-panel { grid-template-columns:1fr; }
+
+	.results-table .details-grid { grid-template-columns:1fr 1fr; }
+
+}
+
+.results-table tr.result-row td.row-actions .row-action-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+
+.results-table.compact-rows tbody tr.result-row { min-height:152px; }
+
+@media (max-width: 760px) {
+	.results-table.compact-rows td[data-label="Listing"] { flex-basis:100%; }
+
+}
+
+@media (min-width: 761px) {
+	.results-table.compact-rows td[data-label="Listing"] { width:228px; }
+
+	.results-table.compact-rows tbody tr.result-row { min-height:194px; }
+
+}
+.card-actions form {
+	width:100%;
+}
+
+.job-facts { grid-template-columns:repeat(4,minmax(0,1fr)); }
+
+.job-facts > div { min-width:0; }
+
+@media (max-width: 900px) {
+	.job-facts { grid-template-columns:repeat(2,minmax(0,1fr)); }
+
+}
+.status-dot { width:13px; height:13px; }
+
+.status-dot[data-tooltip]::after { width:220px; }
+
+.block-entry { min-width:0; }
+
+.job-posting-highlights { grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); }
+
+.job-posting-text { max-height:260px; }
+
+.job-posting-loading::before { width:12px; height:12px; }
+
+.job-title-suggestions::before { flex-basis:100%; }
+
+/* ===== Dashboard: saved jobs and Apply Queue ===== */
+
+.bulk-pick input { width:18px; height:18px; }
+
+.queue-add-list input { width: 18px; height: 18px; }
+
+.queue-link-row input { min-width: 0; }
+
+.status-step input[type="date"], .status-step select { min-width: 0; }
+
+.results-table .row-actions, .saved-job-card .card-actions { grid-template-columns:repeat(2,minmax(0,1fr)); }
+
+.job-fit { min-width:2.5em; }
+
+@media (max-width: 760px) {
+	.results-table .job-fit { min-width:3em; width:auto; }
+
+}
+.details-notes .notes-input { width:100%; }
+
+.saved-job-editor { grid-template-columns: minmax(180px, .7fr) minmax(260px, 2fr) auto; }
+
+@media (max-width: 900px) {
+	.saved-job-editor { grid-template-columns: 1fr; }
+
+}
+.job-links { grid-template-columns:repeat(3,minmax(0,1fr)); }
+
+@media (max-width: 760px) {
+	.job-links { grid-template-columns:1fr; }
+
+}
+.saved-job-card { min-width:0; }
+
+.saved-job-card .card-actions form {
+	width:auto;
+}
+
+.saved-job-card .job-meta > span { min-width:0; }
+
+.saved-job-card { grid-template-columns:minmax(0,1fr); }
+
+.saved-job-card .job-meta { grid-template-columns:repeat(2,minmax(0,1fr)); }
+
+@media (max-width: 760px) {
+	.saved-job-card .job-meta { grid-template-columns:1fr; }
+
+}
+.saved-job-card .card-actions > button, .saved-job-card .card-actions form, .saved-job-card .card-actions form button { width:100%; min-width:0; }
+
+.saved-job-grid { grid-template-columns: 1fr; }
+
+.saved-job-body { grid-template-columns: minmax(0, 1fr); }
+
+.summary-chevron { width: var(--chevron-size); height: var(--chevron-size); }
+
+.summary-text { min-width:0; }
+
+.card-panels { grid-template-columns:repeat(2,minmax(0,1fr)); }
+
+.card-panel { min-width:0; }
+
+.card-panel .saved-job-editor { grid-template-columns:minmax(0,1fr); }
+
+.card-panel .saved-job-editor textarea { min-height:90px; }
+
+.card-panel .saved-job-editor button { width:auto; }
+
+.file-list li { min-width:0; }
+
+@media (max-width: 900px) {
+	.card-panels { grid-template-columns:minmax(0,1fr); }
+
+}
+.saved-job-card .card-actions { grid-auto-rows:auto; }
+
+.saved-job-card .card-actions > button, .saved-job-card .card-actions form, .saved-job-card .card-actions form button { height:auto; min-height:40px; max-height:none; }
+
+@media (max-width: 760px) {
+	.saved-job-card .card-actions { grid-template-columns:1fr 1fr; }
+
+}
+
+@media (max-width: 760px) {
+	.summary-actions { width:100%; }
+
+}
+.card-panel .status-steps .step-add, .card-panel .status-steps .step-remove { width: 28px; height: 28px; min-height: 0; }
+
+.fold-count { width:24px; height:24px; }
+
+.fold-glance { min-width:0; }
+
+.fold-inside > label { width:1px; height:1px; }
+
+.kind-count { min-width: 24px; }
+
+.queue-add-search { width: 100%; }
+
+.queue-add-list { max-height: 280px; }
+
+.queue-link-status { min-height: 1.2em; }
+
+.apply-queue-edit-options { min-width: 150px; }
+
+.dash-toolbar .toolbar-title { flex-basis: 100%; }
+
+/* ===== Profile ===== */
+
+.profile-name-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+.profile-avatar { width:88px; height:88px; }
+
+@media (max-width: 760px) {
+	.profile-layout { grid-template-columns:1fr; }
+
+	.profile-summary-card { min-height:220px; }
+
+}
+.profile-layout { grid-template-columns:minmax(180px,1fr) minmax(0,3fr); }
+
+@media (max-width: 760px) {
+	.profile-layout { grid-template-columns:1fr; }
+
+}
+.profile-avatar img { width:100%; height:100%; }
+
+.profile-layout .profile-summary-card { min-height: 0; }
+
+.profile-side { min-width: 0; }
+
+.profile-summary-card .profile-avatar { width: 250px; height: auto; max-width: 100%; aspect-ratio: 1 / 1; }
+
+@media (min-width: 761px) {
+	.profile-layout { grid-template-columns: 284px minmax(0, 1fr); }
+
+}
+.work-fields input:not([type="checkbox"]), .work-fields textarea { width:100%; max-width:100%; }
+
+@media (max-width: 800px) {
+	.profile-name-grid { grid-template-columns: 1fr; }
+
+}
+.skill-add-row input { min-width:0; }
+
+.skill-add-row input, .skill-add-row button { min-height:42px; }
+
+.profile-subsection .city-add-row input, .profile-subsection .city-add-row select { width: 100%; }
+
+.skill-chip-list > small { flex-basis: 100%; }
+
+.skill-chip-list > h4 { flex-basis: 100%; }
+
+.profile-subsection .title-chips > .field-help { flex-basis:100%; }
+
+.job-search-form .skill-add-row { grid-template-columns:minmax(0, 1fr) max-content; }
+
+.job-title-field .city-add-row { max-width:100%; }
+
+.job-title-field .city-add-row > input { min-width:0; }
+
+.skill-zones { grid-template-columns:1fr 1fr; }
+
+.skill-zone { min-width:0; }
+
+.skill-zone-list { min-height:42px; }
+
+@media (max-width: 700px) {
+	.skill-zones { grid-template-columns:1fr; }
+
+}
+.skill-chip, .navy-chip, .skill-chip-list > button:not(.primary-button) { min-height: 0; }
+
+.skill-chip button, .navy-chip .city-remove { min-width: 0; min-height: 0; }
+
+.skill-chip button { width: 16px; height: 16px; }
+
+.navy-chip .city-remove { width: 20px; height: 20px; }
+
+.crop-preview { width:320px; height:320px; max-width:100%; }
+
+.avatar-canvas { max-width:100%; width:100%; height:auto; }
+
+.avatar-zoom { width:100%; }
+
+@media (max-width: 680px) {
+	.crop-preview { width:min(320px,75vw); height:min(320px,75vw); }
+
+}
+.preference-group { min-width: 0; }
+
+.work-entry summary { grid-template-columns:minmax(0,1fr) auto; }
+
+.work-main { min-width:0; }
+
+.work-fields { grid-template-columns:repeat(2,minmax(0,1fr)); }
+
+.work-dates-editor { min-width:0; }
+
+@media (max-width: 680px) {
+	.work-entry summary { grid-template-columns:1fr; }
+
+}
+.unsaved-note { max-width:calc(100% - 24px); }
+
+@media (max-width: 560px) {
+	.unsaved-note { max-width:none; }
+
+}
+.work-extra { min-width:0; }
+
+.work-extra-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+
+.work-extra-grid > label { min-width:0; }
+
+@media (max-width: 640px) {
+	.work-extra-grid { grid-template-columns:1fr 1fr; }
+
+}
+
+/* ===== Companies ===== */
+
+.companies-add-form .form-field { min-width:0; }
+
+.companies-filter input { min-width:260px; }
+
+.companies-filters .companies-filter input { width:100%; }
+
+.companies-filter-box .companies-website-only input { width: 1px; height: 1px; }
+
+.companies-place { min-width:220px; }
+
+.companies-add-form { grid-template-columns:repeat(12, minmax(0, 1fr)); }
+
+.address-suggest { max-height:260px; }
+
+@media (max-width: 760px) {
+	.companies-add-form { grid-template-columns:1fr; }
+
+}
+.companies-table { width:100%; }
+
+.companies-row-actions { width:1%; }
+
+.companies-filters .companies-filter { max-width:460px; }
+
+.companies-info { grid-template-columns:max-content 1fr; }
+
+.companies-filter-box .filter-heading { width: 100%; }
+
+.companies-filter-box .filter-icon { width: 24px; height: 24px; }
+
+/* ===== Settings ===== */
+
+.blocked-domain-add input { min-width:200px; }
+
+.settings-search input { width:100%; }
+
+.rejected-grid .rejected-card .card-actions > button { width:auto; min-width:0; }
+
+.settings-search { max-width:360px; }
+
+.skipped-list { max-height:260px; }
+
+.skip-meta { min-width: 0; }
+
+.skip-url { min-width: 0; }
+
+/* ===== Tuning ===== */
+
+.history-item { grid-template-columns: minmax(180px, 2fr) minmax(90px, 1fr) minmax(160px, 1fr) auto; }
+
+@media (max-width: 900px) {
+	.history-item { grid-template-columns: 1fr; }
+
+}
+.history-main { min-width:0; }
+
+@media (max-width: 680px) {
+	
+
+	.history-item .history-actions { width:100%; }
+
+}
+.tuning-section > .history-collapse { max-width: 1400px; }
+
+.history-months { grid-template-columns:repeat(3,minmax(0,1fr)); }
+
+.history-months input[type="checkbox"] { width:auto; }
+
+.search-settings form input[type="number"] { max-width: 260px; }
+
+.search-settings form .switch-row input[type="checkbox"] { width: 18px; min-width: 18px; max-width: 18px; height: 18px; min-height: 0; }
+
+@media (max-width: 680px) {
+	.work-fields, .history-months { grid-template-columns:1fr; }
+
+}
+@media (max-width: 760px) {
+	.board-health-table, .search-health table { max-width:100%; }
+
+}
+
+/* ===== Resume Builder ===== */
+
+/* Scoped under .resume-builder (the <main> of every Resume Builder page) so its plain-tag rules (details, table, legend) stay off the other pages. */
+
+.resume-builder .flash,
+.resume-builder .status {
+	max-width: 1400px;
+}
+
+.resume-builder .facts {
+	grid-template-columns: max-content 1fr;
+}
+
+.resume-builder .pages img {
+	width: 220px;
+}
+
+.resume-builder .upload label {
+	width: 100%;
+}
+
+.resume-builder .build-file small {
+	max-width: 230px;
+}
+
+.resume-builder .editor {
+	grid-template-columns: minmax(380px, 1fr) minmax(380px, 1fr);
+}
+
+.resume-builder .editor input:not([type=checkbox]):not([type=color]),
+.resume-builder .editor textarea,
+.resume-builder .editor select {
+	width: 100%;
+}
+
+.resume-builder .fields {
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.resume-builder .row {
+	grid-template-columns: 1fr 1fr;
+}
+
+.resume-builder .preview iframe {
+	width: 100%;
+	height: calc(100vh - 190px);
+	min-height: 500px;
+}
+
+.resume-builder .count {
+	min-width: 24px;
+}
+
+.resume-builder .ref-edit[open] {
+	flex-basis: 100%;
+}
+
+.resume-builder .ref-entry:has(.ref-edit[open]) .ref-actions {
+	width: 100%;
+}
+
+.resume-builder .ref-grid {
+	grid-template-columns: 1fr 1fr;
+}
+
+.resume-builder .ref-grid input {
+	width: 100%;
+}
+
+@media (max-width: 900px) {
+	.resume-builder .ref-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.resume-builder .editor {
+		grid-template-columns: 1fr;
+	}
+
+	.resume-builder .row {
+		grid-template-columns: 1fr;
+	}
+
+}
+
+.resume-builder .name-edit textarea {
+	width: 100%;
+}
+
+.resume-builder .rb-profile .facts {
+	grid-template-columns: max-content 1fr;
+}
+
+.resume-builder .rb-profile .name-edit form {
+	max-width: 900px;
+}
+
+.resume-builder .rb-profile .history-row .ref-grid {
+	grid-template-columns: 1fr 1fr;
+}
+
+.resume-builder .grid {
+	max-width: 1400px;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.resume-builder .rb-documents .ref-grid {
+	grid-template-columns: 1fr;
+}
+
+@media (max-width: 900px) {
+	.resume-builder .grid {
+		grid-template-columns: 1fr;
+	}
+
+	.resume-builder .how-to .steps {
+		grid-template-columns: 1fr;
+	}
+
+}
+
+.resume-builder .design-rows > div {
+	grid-template-columns: 190px 1fr;
+}
+
+.resume-builder .design-form textarea {
+	width: 100%;
+}
+
+.resume-builder .font-fields {
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.resume-builder .font-field input {
+	width: 100%;
+}
+
+.resume-builder .design-table {
+	width: 100%;
+}
+
+@media (max-width: 640px) {
+	.resume-builder .design-rows > div {
+		grid-template-columns: 1fr;
+	}
+
+}
+
+.resume-builder .rb-design .fields {
+	grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+.resume-builder .rb-design .fields input:not([type="checkbox"]):not([type="color"]),
+.resume-builder .rb-design .fields select {
+	width: 100%;
+}
+
+.resume-builder .rb-design .fields input[type="color"] {
+	width: 64px;
+	height: 36px;
+}
+
+.resume-builder .rb-design .fields input[type="checkbox"] {
+	width: auto;
+}
+
+.resume-builder .how-to-status::before {
+	width: 9px;
+	height: 9px;
+}
+
+.resume-builder .how-to .steps {
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.resume-builder .how-to .step-number {
+	width: 32px;
+	height: 32px;
+}
+
+@media (max-width: 1100px) {
+	.resume-builder .how-to .steps {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+}
+
+@media (max-width: 640px) {
+	.resume-builder .how-to .steps {
+		grid-template-columns: 1fr;
+	}
+
+}
+
+.resume-builder input[type="text"],
+.resume-builder input[type="search"],
+.resume-builder input[type="number"],
+.resume-builder input[type="email"],
+.resume-builder input[type="url"],
+.resume-builder input[type="password"],
+.resume-builder input[type="tel"],
+.resume-builder input[type="date"],
+.resume-builder input[type="datetime-local"],
+.resume-builder input[type="month"],
+.resume-builder input[type="time"],
+.resume-builder input[type="week"],
+.resume-builder select {
+	min-height: 42px;
+	height: 44px;
+}
+
+.resume-builder .writing-rules-form textarea {
+	width: 100%;
+	min-height: 320px;
+}
+
+.resume-builder .grid > * {
+	min-width: 0;
+}
+
+.resume-builder .card img {
+	max-width: 100%;
+	height: auto;
+}
+
+@media (max-width: 640px) {
+	.resume-builder .writing-rules-form textarea {
+		min-height: 260px;
+	}
+
+	.resume-builder .rb-profile .history-row .ref-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.resume-builder .rb-profile .facts {
+		grid-template-columns: 1fr;
+	}
+
+}
+
+.resume-builder .icon-button {
+	width: 34px;
+	height: 34px;
+}
+
+.resume-builder .icon-button svg {
+	width: 18px;
+	height: 18px;
+}
+
+.resume-builder .icon-button.icon-delete svg {
+	width: 14px;
+	height: 14px;
+}
+
+.resume-builder .rb-documents .icon-button svg {
+	width: 20px;
+	height: 20px;
+}
+
+.resume-builder .rb-documents .icon-button.icon-delete svg {
+	width: 16px;
+	height: 16px;
+}
+
+.resume-builder .find-list label > span {
+	min-width: 0;
+}
+
+.resume-builder .document-finds input[type="checkbox"] {
+	width: 18px;
+	height: 18px;
+	min-height: 0;
+}
+
+.resume-builder .education-current input {
+	width: 18px;
+	height: 18px;
+	min-height: 0;
+}
+
+.resume-builder .find-list li > label {
+	min-width: 0;
+}
+
+.resume-builder .dismiss-x {
+	width: 22px;
+	height: 22px;
+}
+
+.resume-builder .people-actions {
+	grid-template-columns: 150px 1fr;
+}
+
+.resume-builder .people-actions > .add-reference-panel > summary {
+	width: 150px;
+	min-height: 40px;
+}
+
+@media (max-width: 640px) {
+	.resume-builder .supervisor-row label {
+		max-width: 100%;
+	}
+
+	.resume-builder .supervisor-row select {
+		max-width: 100%;
+		min-width: 0;
+	}
+
+	.resume-builder .ref-summary {
+		min-width: 0;
+		max-width: 100%;
+	}
+
+}
+
+.resume-builder .ref-grid .can-reference input {
+	width: 18px;
+	height: 18px;
+	min-height: 0;
+}
+
+.resume-builder .supervisor-row select {
+	height: 32px;
+	min-height: 32px;
+	max-width: 320px;
+}
+
+.resume-builder .find-list li > .supervisor-row {
+	flex-basis: 100%;
+}
+
+.resume-builder .person-info {
+	min-width: 0;
+}
+
+.resume-builder .link-row {
+	grid-template-columns:minmax(120px, 180px) 1fr;
+}
+
+@media (max-width: 640px) {
+	.resume-builder .link-row {
+		grid-template-columns:1fr;
+	}
+
+}
+
+.resume-builder .builds-search input[type="search"] {
+	min-width: 0;
+}
+
+.resume-builder .job-link-form input[type="url"] {
+	min-width: 0;
+}
+
+.resume-builder .job-link-text textarea {
+	width: 100%;
+}
+
+.resume-builder .file-info {
+	min-width: 0;
+}
+
+.resume-builder .page-card img {
+	width: 210px;
+}
+
+.resume-builder .upload.dropzone label {
+	width: auto;
+}
+
+.resume-builder .upload-row input[type="file"] {
+	min-width: 0;
+}
+
+.resume-builder .uploads-grid {
+	grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+}
+
+.resume-builder .sub-card {
+	min-width: 0;
+}
+
+.resume-builder .pager .pager-gap {
+	height: 36px;
+}
+
+.resume-builder .doc-row {
+	grid-template-columns: auto 1fr auto;
+}
+
+.resume-builder .doc-type {
+	width: 46px;
+	height: 54px;
+}
+
+.resume-builder .doc-main {
+	min-width: 0;
+}
+
+.resume-builder .rb-documents .doc-actions .icon-button {
+	width: 36px;
+	height: 36px;
+}
+
+@media (max-width: 520px) {
+	.resume-builder .doc-row {
+		grid-template-columns: auto 1fr;
+	}
+
+}
+
+.resume-builder .rb-documents form.reference-new .upload-row input[type="file"] {
+	min-width: 0;
+	height: 44px;
+}
+
+.resume-builder .rb-documents form.reference-new .upload-row input[type="file"]::file-selector-button {
+	height: 30px;
+}
+
+.resume-builder .rb-documents form.reference-new .upload-row input[type="file"],
+.resume-builder .upload.dropzone .upload-row input[type="file"] {
+	height: auto;
+	min-height: 44px;
+}
+
+.resume-builder .rb-documents form.reference-new .upload-row input[type="file"]::file-selector-button,
+.resume-builder .upload.dropzone .upload-row input[type="file"]::file-selector-button {
+	height: 30px;
+}
+
+.resume-builder .rb-design .design-group .fields {
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.resume-builder .rb-design .design-group input:not([type="checkbox"]):not([type="color"]),
+.resume-builder .rb-design .design-group select {
+	width: 100%;
+	height: 42px;
+}
+
+.resume-builder .rb-design .design-group input[type="color"] {
+	width: 100%;
+	height: 42px;
+}
+
+.resume-builder .rb-design .design-group .fields > label.check {
+	height: 42px;
+}
+
+.resume-builder .rb-design .design-group .fields > label.check input {
+	width: 18px;
+	height: 18px;
+}
+
+.resume-builder .rb-design .design-group textarea {
+	width: 100%;
+}
+
+.resume-builder .design-sees > summary::after,
+.resume-builder .job-link-text > summary::after,
+.resume-builder .history-extra > summary::after {
+	width: 9px;
+	height: 9px;
+}
+
+.resume-builder .layout-fold > summary::after {
+	width: 9px;
+	height: 9px;
+}
+
+.resume-builder .job-link-status {
+	min-height: 1.4em;
+}
+
+.resume-builder .pick-col {
+	width: 36px;
+}
+
+.resume-builder .pick-col input {
+	width: 18px;
+	height: 18px;
+}
+
+.resume-builder .builds-form td[data-label="Job"] {
+	min-width: 180px;
+}
+
+.resume-builder .builds-form td[data-label="File"] {
+	min-width: 220px;
+}
+
+.resume-builder .builds-form td.pick-col,
+.resume-builder .builds-form th.pick-col {
+	width: 40px;
+	min-width: 40px;
+}
+
+.resume-builder .rule-presets-list {
+	max-height: 320px;
+}
+
+.resume-builder .on-resume input[type="checkbox"] {
+	width:16px;
+	height:16px;
+	min-height:0;
+}
+
+.resume-builder .text-create-form textarea,
+.resume-builder .markup-box {
+	width: 100%;
+}
+

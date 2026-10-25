@@ -1,5 +1,5 @@
 <?php
-// Schools listed under a résumé's education heading, to pre-fill the Dashboard's Education section. Ported from the
+// Schools listed under a resume's education heading, to pre-fill the Dashboard's Education section. Ported from the
 // desktop app's education_parse.py. Anything it cannot place is left blank rather than guessed.
 
 declare(strict_types=1);
@@ -69,7 +69,7 @@ function line_months(string $line): array
     return $found;
 }
 
-/** Schools under the résumé's education heading: [{school, degree, major, minor, start_date, end_date, gpa}]. */
+/** Schools under the resume's education heading: [{school, degree, major, minor, start_date, end_date, gpa}]. */
 function parse_education(string $text, int $limit = 6): array
 {
     $lines = clean_lines($text);
@@ -166,7 +166,7 @@ function parse_education(string $text, int $limit = 6): array
     return array_slice(array_values(array_filter($entries, fn($e) => $e['school'] !== '')), 0, $limit);
 }
 
-/** Saves the schools read from the résumé when no education is saved yet, so every page lists them. Saved education is
+/** Saves the schools read from the resume when no education is saved yet, so every page lists them. Saved education is
  * never replaced. Returns the saved schools, or [] when nothing was saved. */
 function save_schools_if_none(array $schools): array
 {

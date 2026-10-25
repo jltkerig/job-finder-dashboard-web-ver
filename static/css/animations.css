@@ -1,0 +1,60 @@
+/* Every CSS animation (animation: and @keyframes), grouped by the same sections as style.css and structure.css. Loaded after style.css. */
+
+/* ===== Page frame and typography ===== */
+
+/* Collapse arrow turning */
+.summary-chevron { transition: transform var(--transition-fast); }
+
+/* ===== Navigation ===== */
+
+.nav-link { transition: background var(--transition-base), color var(--transition-base), transform var(--transition-base); }
+.nav-link:hover { transform: var(--hover-lift); }
+
+/* ===== Toasts, status modal and loading ===== */
+
+/* Searching status */
+.searching-dot { animation: searching-pulse 1s ease-in-out infinite; }
+.searching-ellipsis::after { animation: searching-dots 1.2s steps(4, end) infinite; }
+@keyframes searching-pulse {
+	0%, 100% { opacity: 0.35; transform: scale(0.85); }
+	50% { opacity: 1; transform: scale(1); }
+}
+@keyframes searching-dots {
+	0% { content: ""; }
+	25% { content: "."; }
+	50% { content: ".."; }
+	75%, 100% { content: "..."; }
+}
+
+/* Toast, search progress bar, status modal */
+.toast { animation: toast-in .22s ease-out; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.search-progress-bar::after { animation: progress-slide 1.15s ease-in-out infinite; }
+@keyframes progress-slide { from { transform: translateX(-120%); } to { transform: translateX(330%); } }
+.status-modal-card { animation: status-modal-in .18s ease-out; }
+@keyframes status-modal-in { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* Color spinner */
+.color-spinner { animation: spin .9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Search still running pill */
+.search-running-dot { animation: search-running-pulse 1.2s ease-in-out infinite; }
+@keyframes search-running-pulse { 50% { opacity: .3; } }
+
+/* ===== Top 10 Picks ===== */
+
+/* Spinner (the Job Posting loader in Listings uses it too) */
+.top-picks-actions .loading::before { animation: top-picks-spin .8s linear infinite; }
+@keyframes top-picks-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .top-picks-actions .loading::before { animation-duration: 2.4s; }
+}
+
+/* ===== Listings ===== */
+
+.job-posting-loading::before { animation: top-picks-spin .8s linear infinite; }
+
+/* ===== Resume Builder ===== */
+
+/* none: its collapse arrow and menu use the shared ones above */

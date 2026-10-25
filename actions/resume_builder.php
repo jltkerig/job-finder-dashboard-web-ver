@@ -1,5 +1,5 @@
 <?php
-// Résumé Builder's buttons and files: uploads, reference documents, references, writing rules, the design, the
+// Resume Builder's buttons and files: uploads, reference documents, references, writing rules, the design, the
 // saved PDFs and the connector switch. $rb is the address after /resume-builder (see app.php). Each form comes
 // back to the page with a message at the top.
 
@@ -14,7 +14,7 @@ function send_resume_file(string $path, string $name, string $type, bool $downlo
 {
     if (!is_file($path)) {
         http_response_code(404);
-        exit('That file is gone. <a href="/resume-builder">Back to Résumé Builder</a>');
+        exit('That file is gone. <a href="/resume-builder">Back to Resume Builder</a>');
     }
     header('Content-Type: ' . $type);
     header('Content-Length: ' . filesize($path));
@@ -51,7 +51,7 @@ function reference_from_form(): array
     return array_combine(REFERENCE_FIELDS, array_map(fn($f) => trim((string) ($_POST[$f] ?? '')), REFERENCE_FIELDS));
 }
 
-/** The Résumé Design form as layout settings; throws InvalidArgumentException with a message to show. */
+/** The Resume Design form as layout settings; throws InvalidArgumentException with a message to show. */
 function design_from_form(): array
 {
     $data = [];
@@ -120,7 +120,7 @@ function letter_from_form(): array
         'closing' => trim((string) ($_POST['closing'] ?? '')), 'signature' => trim((string) ($_POST['signature'] ?? ''))];
 }
 
-/** A made-up résumé in the current design, so fonts, margins and spacing can be seen at once. */
+/** A made-up resume in the current design, so fonts, margins and spacing can be seen at once. */
 function design_preview_pdf(): string
 {
     return render_resume(clean_resume_content([
@@ -174,7 +174,7 @@ if ($method === 'GET') {
         exit;
     }
     http_response_code(404);
-    exit('Page not found. <a href="/resume-builder">Back to Résumé Builder</a>');
+    exit('Page not found. <a href="/resume-builder">Back to Resume Builder</a>');
 }
 
 // --- Buttons -------------------------------------------------------------------------------------------------------
@@ -245,7 +245,7 @@ try {
                     $missing[] = $name;
                 }
             }
-            $message = 'Saved your design. New résumés and cover letters use it.';
+            $message = 'Saved your design. New resumes and cover letters use it.';
             if ($fetched) {
                 $message .= ' Fonts saved from Google Fonts: ' . implode(', ', $fetched) . '.';
             }
@@ -257,13 +257,13 @@ try {
 
         case $rb === '/design/reset':
             reset_design();
-            flash('Your design now matches your uploaded résumé again.');
+            flash('Your design now matches your uploaded resume again.');
             $back('design');
 
         case $rb === '/design/reread':
             if ($info = reanalyze_resume_design()) {
                 save_design(design_overrides(), $info['design']['notes']);
-                flash('Looked at your résumé again and wrote out its design.');
+                flash('Looked at your resume again and wrote out its design.');
             }
             $back('design');
 
@@ -355,11 +355,11 @@ try {
             $back('found-people');
 
         case $rb === '/profile/fill-from-resume':
-            // the uploaded résumé's jobs the profile doesn't have yet
+            // the uploaded resume's jobs the profile doesn't have yet
             $profile = get_user_profile();
             $jobs = resume_new_jobs(current_resume_text(), $profile);
             if (!$jobs) {
-                flash('Nothing new to add: your profile already has the jobs the résumé lists.');
+                flash('Nothing new to add: your profile already has the jobs the resume lists.');
                 $back('profile');
             }
             if (!($profile['first_name'] && $profile['last_name'])) {
@@ -368,7 +368,7 @@ try {
             }
             save_work_history($profile, array_merge($profile['work_history'], array_map(fn($j) => array_intersect_key($j + ['description' => ''],
                 array_flip(['role', 'company', 'dates', 'description'])), $jobs)));
-            flash('Added ' . count($jobs) . (count($jobs) === 1 ? ' job' : ' jobs') . ' from your résumé to your profile. Check them on the Dashboard.');
+            flash('Added ' . count($jobs) . (count($jobs) === 1 ? ' job' : ' jobs') . ' from your resume to your profile. Check them on the Dashboard.');
             $back('profile');
 
         case $rb === '/connector/toggle':
@@ -415,4 +415,4 @@ try {
     $back();
 }
 http_response_code(404);
-exit('Page not found. <a href="/resume-builder">Back to Résumé Builder</a>');
+exit('Page not found. <a href="/resume-builder">Back to Resume Builder</a>');

@@ -1,5 +1,5 @@
 <?php
-// Draws résumés and cover letters as PDFs in the layout measured from the user's résumé. Ported from the desktop's
+// Draws resumes and cover letters as PDFs in the layout measured from the user's resume. Ported from the desktop's
 // pdf_render.py, which used ReportLab: the same styles, spacing and page breaks, with a small flow layout of
 // our own (wrapped paragraphs, rules, and blocks kept together on one page) on top of pdf.php.
 
@@ -180,7 +180,7 @@ function flow(PdfDocument $doc, array $blocks, array $margins): string
 function render_document(array $layout, string $title, string $author): array
 {
     [$page_width, $page_height] = PAGE_SIZES[$layout['page_size']] ?? PAGE_SIZES['letter'];
-    $doc = new PdfDocument($page_width, $page_height, ['title' => $title, 'author' => $author, 'creator' => 'Résumé Builder']);
+    $doc = new PdfDocument($page_width, $page_height, ['title' => $title, 'author' => $author, 'creator' => 'Resume Builder']);
     $legacy = min((float) $layout['margin_in'], 0.75); // top and bottom were never wider than 3/4 inch
     $margin = fn(string $key, float $default) => ($layout[$key] ?? $default) * 72;
     $margins = [$margin('margin_top', $legacy), $margin('margin_right', (float) $layout['margin_in']),

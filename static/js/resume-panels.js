@@ -1,4 +1,4 @@
-// Résumé Builder page: panels remember being open or closed, and open when a link points at them (adding a reference, saving a design...).
+// Resume Builder page: panels remember being open or closed, and open when a link points at them (adding a reference, saving a design...).
 (function () {
   [["references-panel", "resumeBuilder.referencesOpen", "#references"], ["design-panel", "resumeBuilder.designOpen", "#design"],
    ["profile-panel", "resumeBuilder.profileOpen", "#profile", true], ["resume-rules-panel", "resumeBuilder.resumeRulesOpen", "#resume-rules"],

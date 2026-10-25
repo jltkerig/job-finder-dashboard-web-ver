@@ -62,7 +62,7 @@ function saved_company_result(array $item, ?array $center = null): array
         $miles = round(miles_between($center, [(float) $item['lat'], (float) $item['lon']]), 1);
     }
     return ['id' => $item['id'], 'name' => $item['name'], 'address' => $item['address'] ?? '', 'website' => $item['website'] ?? '',
-        'phone' => $item['phone'] ?? '', 'place' => $item['place'] ?? '', 'notes' => $item['notes'] ?? '', 'miles' => $miles];
+        'phone' => $item['phone'] ?? '', 'place' => $item['place'] ?? '', 'notes' => $item['notes'] ?? '', 'miles' => $miles, 'added' => $item['saved'] ?? ''];
 }
 
 /** Nearest first when a center is given, then the ones that cannot be measured, each by name. */

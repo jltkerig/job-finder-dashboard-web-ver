@@ -52,7 +52,7 @@ if ($path === '/logout') {
     redirect('/login');
 }
 
-// The Résumé Builder connector: Claude calls these itself and signs in with OAuth, not the site's session.
+// The Resume Builder connector: Claude calls these itself and signs in with OAuth, not the site's session.
 if (preg_match('#^/(\.well-known/(oauth-authorization-server|oauth-protected-resource|openid-configuration)(/.*)?|oauth/(register|token)|mcp)$#', $path)) {
     require __DIR__ . '/actions/connector.php';
     exit;
@@ -85,6 +85,7 @@ $routes = [
     'GET /job-skill-fitting' => 'pages/skill_fitting.php',
     'GET /job-skill-fitting.json' => 'actions/skill_fitting.php',
     'POST /job-skill-fitting/weights' => 'actions/skill_fitting.php',
+    'POST /job-skill-fitting/weight' => 'actions/skill_fitting.php',
     'POST /delete-closed-kept' => 'actions/listings.php',
     'GET /credibility-scores' => 'pages/scores.php',
     'GET /resume-builder' => 'pages/resume.php',
@@ -136,7 +137,7 @@ if ($handler === null && $method === 'POST' && preg_match('#^/companies/saved/([
     $path = '/companies/saved/delete';
 }
 
-// Résumé Builder's own addresses: /resume-builder/build/<file> is a page; the rest are its buttons and files.
+// Resume Builder's own addresses: /resume-builder/build/<file> is a page; the rest are its buttons and files.
 if ($handler === null && preg_match('#^/resume-builder(/.+)$#', $path, $m)) {
     $rb = $m[1];
     if ($method === 'GET' && preg_match('#^/build/([^/]+)$#', $rb, $file)) {

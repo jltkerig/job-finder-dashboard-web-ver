@@ -38,8 +38,8 @@ check('updated in place', value('SELECT career_job_title FROM companies WHERE id
 check('shows in Search results', count(get_companies()) === 1);
 keep_listings([$id]);
 check('Keep saves it', count(get_kept_companies()) === 1 && get_dashboard_counts()['saved'] === 1);
-update_kept($id, 'Applied', 'Sent résumé');
-check('status and notes saved', row('SELECT application_status, notes FROM companies WHERE id = ?', [$id]) == ['application_status' => 'Applied', 'notes' => 'Sent résumé']);
+update_kept($id, 'Applied', 'Sent resume');
+check('status and notes saved', row('SELECT application_status, notes FROM companies WHERE id = ?', [$id]) == ['application_status' => 'Applied', 'notes' => 'Sent resume']);
 update_kept($id, 'Nonsense', '');
 check('unknown status becomes None', value('SELECT application_status FROM companies WHERE id = ?', [$id]) === 'None');
 reject_listing($id, 'wrong_role');
@@ -123,21 +123,21 @@ $validated = validate_search_criteria('Web Designer', 'MD', [['city' => 'Towson,
 check('search criteria cleaned', $validated[2] === [['city' => 'Towson, MD', 'radius' => 10]] && $validated[3] === null);
 check('drive time from home', describe_trip('17101', null, 'Towson, MD')['miles'] > 10);
 
-// --- Résumés ---
+// --- Resumes ---
 $zip = new ZipArchive();
 $docx = sys_get_temp_dir() . '/test-resume.docx';
 $zip->open($docx, ZipArchive::CREATE | ZipArchive::OVERWRITE);
 $zip->addFromString('word/document.xml', '<w:document><w:body><w:p><w:r><w:t>Jane Doe</w:t></w:r></w:p><w:p><w:r><w:t>HTML, CSS &amp; Figma</w:t></w:r></w:p></w:body></w:document>');
 $zip->close();
 $text = docx_text((string) file_get_contents($docx));
-check('Word résumé read', str_contains($text, 'Jane Doe') && str_contains($text, 'HTML, CSS & Figma'));
+check('Word resume read', str_contains($text, 'Jane Doe') && str_contains($text, 'HTML, CSS & Figma'));
 $suggestions = resume_suggestions($text);
-check('résumé suggestions', $suggestions['first_name'] === 'Jane' && $suggestions['skills'] === ['HTML', 'CSS', 'Figma']);
+check('resume suggestions', $suggestions['first_name'] === 'Jane' && $suggestions['skills'] === ['HTML', 'CSS', 'Figma']);
 $pdf = "%PDF-1.4\n1 0 obj << /Type /Page /Contents 2 0 R >> endobj\n2 0 obj << /Length 60 >> stream\nBT /F1 12 Tf 72 720 Td (Jane Doe) Tj 0 -14 Td (Web Designer) Tj ET\nendstream endobj\n%%EOF";
-check('PDF résumé read', str_contains(pdf_text($pdf), "Jane Doe\nWeb Designer"));
+check('PDF resume read', str_contains(pdf_text($pdf), "Jane Doe\nWeb Designer"));
 @unlink($docx);
 
-// --- Résumé Builder: drawing PDFs, measuring them, the connector, suggestions ---
+// --- Resume Builder: drawing PDFs, measuring them, the connector, suggestions ---
 // Its files go to a throwaway folder, never data/resume; fonts are never downloaded.
 $rb_dir = sys_get_temp_dir() . '/jobfinder-test-resume-' . getmypid();
 putenv("JOBFINDER_RESUME_DIR=$rb_dir");
@@ -152,7 +152,7 @@ $resume = ['full_name' => 'Jane Doe', 'headline' => 'Web Designer', 'contact' =>
         ['title' => 'Skills', 'text' => 'HTML, CSS, Figma']]];
 $layout = merge_layout(['font_family' => 'Arial', 'accent_color' => '#1F5F8B', 'heading_rule' => true]);
 $pdf = render_resume(clean_resume_content($resume), $layout);
-check('résumé PDF drawn', str_starts_with($pdf, '%PDF-1.4') && str_contains(pdf_text($pdf), 'Jane Doe'));
+check('resume PDF drawn', str_starts_with($pdf, '%PDF-1.4') && str_contains(pdf_text($pdf), 'Jane Doe'));
 $page = first_pdf_page($pdf);
 $measured = measure_pdf_layout($page);
 check('its layout measures back', $measured['body_size'] == 10.5 && $measured['name_size'] == 22.0 && $measured['accent_color'] === '#1F5F8B'
@@ -163,7 +163,7 @@ check('its design is described', $facts['page'] === 'Letter' && $facts['headings
 check('design rows written', str_contains(design_notes_text(describe_design($facts, $measured)), 'Section Order: EXPERIENCE → SKILLS'));
 $long = $resume;
 $long['sections'][0]['items'] = array_fill(0, 14, $resume['sections'][0]['items'][0]);
-check('a long résumé runs onto a second page', first_pdf_page(render_resume(clean_resume_content($long), $layout))['pages'] === 2);
+check('a long resume runs onto a second page', first_pdf_page(render_resume(clean_resume_content($long), $layout))['pages'] === 2);
 $letter = render_cover_letter(clean_letter_content(['full_name' => 'Jane Doe', 'paragraphs' => ['Hello.', 'Thanks.']]), $layout);
 check('cover letter drawn', str_contains(pdf_text($letter), 'Hello.') && str_contains(pdf_text($letter), date('F j, Y')));
 check('measured layouts are brought into range', fit_layout(['body_size' => 6, 'bullet_char' => '?'])['body_size'] == 7
@@ -191,7 +191,7 @@ check('only hashes are stored', !value('SELECT COUNT(*) FROM oauth_tokens WHERE 
 $_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $tokens['access_token'];
 check('access token accepted', bearer_client() === $client['client_id']);
 $reply = mcp_message(['jsonrpc' => '2.0', 'id' => 1, 'method' => 'tools/call', 'params' => ['name' => 'save_resume', 'arguments' => ['content' => $resume, 'company' => 'Acme', 'job_title' => 'Web Designer']]]);
-check('connector saves a résumé', !$reply['result']['isError'] && str_contains($reply['result']['content'][0]['text'], 'Jane_Doe_Acme_Web_Designer_'));
+check('connector saves a resume', !$reply['result']['isError'] && str_contains($reply['result']['content'][0]['text'], 'Jane_Doe_Acme_Web_Designer_'));
 $reply = mcp_message(['jsonrpc' => '2.0', 'id' => 2, 'method' => 'tools/call', 'params' => ['name' => 'get_build', 'arguments' => ['file_name' => '../config.php']]]);
 check('connector stays in its folder', $reply['result']['isError']);
 check('tools listed', count(mcp_message(['jsonrpc' => '2.0', 'id' => 3, 'method' => 'tools/list'])['result']['tools']) === 12);

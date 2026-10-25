@@ -43,8 +43,8 @@ require APP_ROOT . '/templates/_top.php';
 ?>
 <main>
 <?php include APP_ROOT . '/templates/_search_settings.php'; ?>
-  <details class="company-section settings-panel rejected-section history-collapse" id="rejected-listings" data-remember="jobFinder.rejectedListingsOpen">
-    <summary><h2>Rejected Listings</h2><span class="summary-chevron" aria-hidden="true"></span></summary>
+  <details class="company-section panel rejected-section history-collapse" id="rejected-listings" data-remember="jobFinder.rejectedListingsOpen">
+    <summary><h2>Rejected Listings</h2><i class="summary-chevron" aria-hidden="true"></i></summary>
     <p class="section-intro">Listings you manually reject are kept here for review. Rejecting a listing does not automatically block its domain.
     </p><?php if ($companies): ?>
     <div class="settings-search"><label for="rejected-search">Find a rejected listing</label><input id="rejected-search" type="search" placeholder="Company, job title, or domain" autocomplete="off" />
@@ -57,7 +57,7 @@ require APP_ROOT . '/templates/_top.php';
         $reason = $company['rejection_reason'];
         $is_feed = in_array($company['source_type'], FEED_NAMES, true);
     ?>
-      <article class="saved-job-card rejected-card" data-company-id="<?= $id ?>">
+      <article class="card saved-job-card rejected-card" data-company-id="<?= $id ?>">
         <details class="saved-job-collapse">
           <summary class="saved-job-summary">
             <div class="summary-text">
@@ -65,18 +65,18 @@ require APP_ROOT . '/templates/_top.php';
               </p>
               <p class="summary-line summary-facts"><span><?= h($place) ?><?= h($company['state'] ?: 'Location unknown') ?></span><span class="reason-label"<?= (!$reason || $reason === 'other') ? ' hidden' : '' ?>><?= h(reason_label($reason)) ?></span><span>Rejected <?= h(local_time($company['rejected_at'], 'M d, Y') ?: '?') ?></span>
               </p>
-            </div><span class="summary-chevron" aria-hidden="true"></span>
+            </div><i class="summary-chevron" aria-hidden="true"></i>
           </summary>
           <div class="saved-job-body">
             <div class="job-meta"><span><strong>Domain:</strong> <?php if ($domain_url): ?><a href="<?= h($domain_url) ?>" target="_blank" rel="noopener noreferrer"><?= h($domain) ?></a><?php else: ?>Unknown<?php endif; ?></span><span><strong>Location:</strong> <?= h($place) ?><?= h($company['state'] ?: 'Unknown') ?></span><span><strong>Source:</strong> <?= h($company['source_type'] ?: 'Brave Search') ?></span><span class="reason-detail"<?= (!$reason || $reason === 'other') ? ' hidden' : '' ?>><strong>Reason:</strong> <span class="reason-label"><?= h(reason_label($reason)) ?></span></span><span><strong>Rejected:</strong> <?= h(local_time($company['rejected_at']) ?: 'Unknown') ?></span>
             </div>
-            <div class="job-links equal-action-group"><?php if ($company['career_url']): ?><a class="bordered-button" href="<?= h($company['career_url']) ?>" target="_blank" rel="noopener noreferrer">View Career Page</a><?php endif; ?><?php if ($company['source_url']): ?><a class="bordered-button" href="<?= h($company['source_url']) ?>" target="_blank" rel="noopener noreferrer">View Source</a><?php endif; ?><button class="bordered-button details-action" type="button" data-details-target="rejected-details-<?= $id ?>">View Details</button>
+            <div class="job-links equal-action-group"><?php if ($company['career_url']): ?><a class="bordered-button" href="<?= h($company['career_url']) ?>" target="_blank" rel="noopener noreferrer">View Career Page</a><?php endif; ?><?php if ($company['source_url']): ?><a class="bordered-button" href="<?= h($company['source_url']) ?>" target="_blank" rel="noopener noreferrer">View Source</a><?php endif; ?><button class="bordered-button js-details-action" type="button" data-details-target="rejected-details-<?= $id ?>">View Details</button>
             </div>
             <div id="rejected-details-<?= $id ?>" class="card-details" hidden><span><strong>Career credibility:</strong> <a class="credibility-link" href="/credibility-scores" aria-label="How career credibility is calculated"><?= (int) $company['career_credibility'] * 10 ?>%</a></span><span><strong>USA credibility:</strong> <a class="credibility-link" href="/credibility-scores" aria-label="How usa credibility is calculated"><?= (int) $company['usa_credibility'] * 10 ?>%</a></span><span><strong>Work Arrangement:</strong> <?= h($company['work_arrangement'] ?: '—') ?></span><span><strong>Last verified:</strong> <?= h(local_time($company['last_checked']) ?: 'Never') ?></span><?php if ($company['result_updated_at']): ?><span><strong>Updated:</strong> <?= h(local_time($company['result_updated_at'])) ?></span><?php endif; ?>
             </div>
-            <div class="form-field rejection-reason-field"><label for="reason-<?= $id ?>">Reason for rejecting</label><select id="reason-<?= $id ?>" class="rejection-reason-select" data-company-id="<?= $id ?>"><?php foreach (REJECT_REASON_LABELS as $value => $label): ?><option value="<?= h($value) ?>"<?= ($reason ?: 'other') === $value ? ' selected' : '' ?>><?= h($label) ?></option><?php endforeach; ?><?php if ($reason && !isset(REJECT_REASON_LABELS[$reason])): ?><option value="<?= h($reason) ?>" selected disabled><?= h(reason_label($reason)) ?></option><?php endif; ?></select><button class="bordered-button secondary-action change-reason-action" type="button" data-company-id="<?= $id ?>" disabled>Save Reason</button>
+            <div class="form-field"><label for="reason-<?= $id ?>">Reason for rejecting</label><select id="reason-<?= $id ?>" class="rejection-reason-select" data-company-id="<?= $id ?>"><?php foreach (REJECT_REASON_LABELS as $value => $label): ?><option value="<?= h($value) ?>"<?= ($reason ?: 'other') === $value ? ' selected' : '' ?>><?= h($label) ?></option><?php endforeach; ?><?php if ($reason && !isset(REJECT_REASON_LABELS[$reason])): ?><option value="<?= h($reason) ?>" selected disabled><?= h(reason_label($reason)) ?></option><?php endif; ?></select><button class="bordered-button js-change-reason-action" type="button" data-company-id="<?= $id ?>" disabled>Save Reason</button>
             </div>
-            <div class="card-actions"><button class="bordered-button restore-action" type="button" data-company-id="<?= $id ?>" data-company-name="<?= h($company['name'] ?: 'this listing') ?>">Restore</button><?php if (!$is_feed): ?><button class="bordered-button block-action destructive-action" type="button" data-company-id="<?= $id ?>" data-domain="<?= h($domain) ?>">Block Company Domain</button><?php endif; ?><button class="bordered-button block-company-action destructive-action" type="button" data-company-id="<?= $id ?>" data-company-name="<?= h($company['name']) ?>">Block Company</button>
+            <div class="card-actions"><button class="success-button js-restore-action" type="button" data-company-id="<?= $id ?>" data-company-name="<?= h($company['name'] ?: 'this listing') ?>">Restore</button><?php if (!$is_feed): ?><button class="destructive-button js-block-action" type="button" data-company-id="<?= $id ?>" data-domain="<?= h($domain) ?>">Block Company Domain</button><?php endif; ?><button class="destructive-button js-block-company-action" type="button" data-company-id="<?= $id ?>" data-company-name="<?= h($company['name']) ?>">Block Company</button>
             </div>
           </div>
         </details>
@@ -88,14 +88,14 @@ require APP_ROOT . '/templates/_top.php';
       <h3>No Rejected Listings
       </h3>
       <p>Listings you reject will appear here.
-      </p><a class="bordered-button button-link" href="/">Go to Search</a>
+      </p><a class="bordered-button" href="/">Go to Search</a>
     </div><?php endif; ?>
   </details>
-  <details class="settings-panel history-collapse" id="search-skips" data-remember="jobFinder.searchSkipsOpen"<?= $skip_query !== '' || $skip_page > 1 ? ' data-open-now' : '' ?>>
-    <summary><h2>Search Skips</h2><span class="summary-chevron" aria-hidden="true"></span></summary>
+  <details class="panel history-collapse" id="search-skips" data-remember="jobFinder.searchSkipsOpen"<?= $skip_query !== '' || $skip_page > 1 ? ' data-open-now' : '' ?>>
+    <summary><h2>Search Skips</h2><i class="summary-chevron" aria-hidden="true"></i></summary>
     <p>Pages checked by Job Finder that did not qualify. Clear non-job pages are checked again after a short wait; temporary errors are retried on the next search. A page that later qualifies moves into Search results.
     </p><?php if ($search_skips || $skip_query !== ''): ?>
-    <form class="settings-search" method="get" action="/rejected-listings#search-skips"><label for="search-skip-search">Find a skipped page</label><input id="search-skip-search" name="skip_q" type="search" value="<?= h($skip_query) ?>" placeholder="Search title, reason, or any part of the URL" autocomplete="off" /><button class="bordered-button secondary-action" type="submit">Search</button><?php if ($skip_query !== ''): ?> <a class="bordered-button" href="/rejected-listings#search-skips">Clear</a><?php endif; ?>
+    <form class="settings-search" method="get" action="/rejected-listings#search-skips"><label for="search-skip-search">Find a skipped page</label><input id="search-skip-search" name="skip_q" type="search" value="<?= h($skip_query) ?>" placeholder="Search title, reason, or any part of the URL" autocomplete="off" /><button class="bordered-button" type="submit">Search</button><?php if ($skip_query !== ''): ?> <a class="bordered-button" href="/rejected-listings#search-skips">Clear</a><?php endif; ?>
     </form>
     <ul class="search-skip-list"><?php foreach ($search_skips as $item): ?>
       <li>
@@ -106,15 +106,15 @@ require APP_ROOT . '/templates/_top.php';
       </li><?php endforeach; ?>
     </ul>
     <nav class="pagination-controls" aria-label="Search skip pages"><span><?= $skip_total ?> skipped page<?= $skip_total === 1 ? '' : 's' ?><?php if ($skip_query !== ''): ?> match<?= $skip_total === 1 ? 'es' : '' ?> your search<?php endif; ?></span><?php if ($skip_pages > 1): ?>
-      <?php if ($skip_page > 1): ?><a class="bordered-button secondary-action" href="<?= h(skip_link($skip_page - 1, $skip_query)) ?>">Previous</a><?php endif; ?>
+      <?php if ($skip_page > 1): ?><a class="bordered-button" href="<?= h(skip_link($skip_page - 1, $skip_query)) ?>">Previous</a><?php endif; ?>
       <span>Page <?= $skip_page ?> of <?= $skip_pages ?></span>
-      <?php if ($skip_page < $skip_pages): ?><a class="bordered-button secondary-action" href="<?= h(skip_link($skip_page + 1, $skip_query)) ?>">Next</a><?php endif; ?><?php endif; ?>
+      <?php if ($skip_page < $skip_pages): ?><a class="bordered-button" href="<?= h(skip_link($skip_page + 1, $skip_query)) ?>">Next</a><?php endif; ?><?php endif; ?>
     </nav><?php else: ?>
     <p>No skipped pages have been recorded yet.
     </p><?php endif; ?>
   </details>
-  <details class="settings-panel history-collapse" id="blocked-domains" data-remember="jobFinder.blockedDomainsOpen"<?= $domain_notice !== '' ? ' data-open-now' : '' ?>>
-    <summary><h2>Blocked Domains</h2><span class="summary-chevron" aria-hidden="true"></span></summary>
+  <details class="panel history-collapse" id="blocked-domains" data-remember="jobFinder.blockedDomainsOpen"<?= $domain_notice !== '' ? ' data-open-now' : '' ?>>
+    <summary><h2>Blocked Domains</h2><i class="summary-chevron" aria-hidden="true"></i></summary>
     <p>Domains on this list are excluded from future searches. Removing a domain allows future results from it; previously rejected listings stay rejected.
     </p><?php if ($domain_notice === 'invalid'): ?>
     <p class="form-error" role="alert">Enter a domain such as example.com.
@@ -123,13 +123,13 @@ require APP_ROOT . '/templates/_top.php';
     </p><?php elseif ($domain_notice === 'remove'): ?>
     <p class="settings-notice" role="status">Domain unblocked.
     </p><?php endif; ?>
-    <form class="blocked-domain-add" action="/settings/blocked-domains" method="post"><?= csrf_field() ?><input type="hidden" name="action" value="add" /><label for="new-blocked-domain">Block a domain</label><input id="new-blocked-domain" name="domain" type="text" placeholder="example.com" required /><button class="bordered-button secondary-action" type="submit">Block Domain</button>
+    <form class="blocked-domain-add" action="/settings/blocked-domains" method="post"><?= csrf_field() ?><input type="hidden" name="action" value="add" /><label for="new-blocked-domain">Block a domain</label><input id="new-blocked-domain" name="domain" type="text" placeholder="example.com" required /><button class="bordered-button" type="submit">Block Domain</button>
     </form><?php if ($blocked_domains): ?>
     <div class="settings-search"><label for="blocked-domain-search">Find a blocked domain</label><input id="blocked-domain-search" type="search" placeholder="Type any part of a domain" autocomplete="off" />
     </div>
     <ul class="blocked-domain-list" data-page-size="10"><?php foreach ($blocked_domains as $domain): ?>
       <li><span class="block-entry"><strong><?= h($domain) ?></strong><small><?= h(block_when($domain_info[$domain] ?? null)) ?></small></span>
-        <form action="/settings/blocked-domains" method="post"><?= csrf_field() ?><input type="hidden" name="action" value="remove" /><input type="hidden" name="domain" value="<?= h($domain) ?>" /><button class="bordered-button secondary-action" type="submit">Unblock</button>
+        <form action="/settings/blocked-domains" method="post"><?= csrf_field() ?><input type="hidden" name="action" value="remove" /><input type="hidden" name="domain" value="<?= h($domain) ?>" /><button class="bordered-button" type="submit">Unblock</button>
         </form>
       </li><?php endforeach; ?>
     </ul>
@@ -138,8 +138,8 @@ require APP_ROOT . '/templates/_top.php';
     <p>No domains are blocked.
     </p><?php endif; ?>
   </details>
-  <details class="settings-panel history-collapse" id="blocked-companies" data-remember="jobFinder.blockedCompaniesOpen"<?= $company_notice !== '' ? ' data-open-now' : '' ?>>
-    <summary><h2>Blocked Companies</h2><span class="summary-chevron" aria-hidden="true"></span></summary>
+  <details class="panel history-collapse" id="blocked-companies" data-remember="jobFinder.blockedCompaniesOpen"<?= $company_notice !== '' ? ' data-open-now' : '' ?>>
+    <summary><h2>Blocked Companies</h2><i class="summary-chevron" aria-hidden="true"></i></summary>
     <p>Company names here are skipped in future searches. Blocking a company does not remove listings already found.
     </p><?php if ($company_notice === 'invalid'): ?>
     <p class="form-error" role="alert">Enter a company name.
@@ -148,13 +148,13 @@ require APP_ROOT . '/templates/_top.php';
     </p><?php elseif ($company_notice === 'remove'): ?>
     <p class="settings-notice" role="status">Company unblocked.
     </p><?php endif; ?>
-    <form class="blocked-domain-add" action="/settings/blocked-companies" method="post"><?= csrf_field() ?><input type="hidden" name="action" value="add" /><label for="new-blocked-company">Block a company</label><input id="new-blocked-company" name="company" type="text" placeholder="Company name" required /><button class="bordered-button secondary-action" type="submit">Block Company</button>
+    <form class="blocked-domain-add" action="/settings/blocked-companies" method="post"><?= csrf_field() ?><input type="hidden" name="action" value="add" /><label for="new-blocked-company">Block a company</label><input id="new-blocked-company" name="company" type="text" placeholder="Company name" required /><button class="bordered-button" type="submit">Block Company</button>
     </form><?php if ($blocked_companies): ?>
     <div class="settings-search"><label for="blocked-company-search">Find a blocked company</label><input id="blocked-company-search" type="search" placeholder="Type any part of a name" autocomplete="off" />
     </div>
     <ul class="blocked-company-list blocked-domain-list" data-page-size="10"><?php foreach ($blocked_companies as $name): ?>
       <li><span class="block-entry"><strong><?= h($name) ?></strong><small><?= h(block_when($company_info[$name] ?? null)) ?></small></span>
-        <form action="/settings/blocked-companies" method="post"><?= csrf_field() ?><input type="hidden" name="action" value="remove" /><input type="hidden" name="company" value="<?= h($name) ?>" /><button class="bordered-button secondary-action" type="submit">Unblock</button>
+        <form action="/settings/blocked-companies" method="post"><?= csrf_field() ?><input type="hidden" name="action" value="remove" /><input type="hidden" name="company" value="<?= h($name) ?>" /><button class="bordered-button" type="submit">Unblock</button>
         </form>
       </li><?php endforeach; ?>
     </ul>
@@ -163,8 +163,8 @@ require APP_ROOT . '/templates/_top.php';
     <p>No companies are blocked.
     </p><?php endif; ?>
   </details>
-  <details class="settings-panel history-collapse" id="password"<?= $password_notice !== '' ? ' open' : '' ?>>
-    <summary><h2>Password</h2><span class="summary-chevron" aria-hidden="true"></span></summary>
+  <details class="panel history-collapse" id="password"<?= $password_notice !== '' ? ' open' : '' ?>>
+    <summary><h2>Password</h2><i class="summary-chevron" aria-hidden="true"></i></summary>
     <p>Changing it signs out every other browser and disconnects Claude. Forgot it? Use "Forgot password?" on the
       sign-in page with the setup code from config.php.
     </p><?php if ($password_notice === 'saved'): ?>
@@ -177,7 +177,7 @@ require APP_ROOT . '/templates/_top.php';
       <label for="current-password">Current password <input id="current-password" name="current" type="password" required autocomplete="current-password" /></label>
       <label for="new-password">New password (10 or more characters) <input id="new-password" name="password" type="password" minlength="10" required autocomplete="new-password" /></label>
       <label for="confirm-password">Type it again <input id="confirm-password" name="confirm" type="password" minlength="10" required autocomplete="new-password" /></label>
-      <button class="bordered-button secondary-action" type="submit">Change Password</button>
+      <button class="bordered-button" type="submit">Change Password</button>
     </form>
     <h3>Recent sign-ins</h3>
     <p>The last 30 sign-ins and wrong passwords. One you don't recognize? Change your password.</p>

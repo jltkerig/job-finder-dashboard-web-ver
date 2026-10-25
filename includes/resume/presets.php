@@ -1,7 +1,7 @@
 <?php
-// Ready-made rules to tick on the Résumé Rules and Cover Letter Rules boxes, and the greeting suggestions in the cover
+// Ready-made rules to tick on the Resume Rules and Cover Letter Rules boxes, and the greeting suggestions in the cover
 // letter editor. Ticking a rule adds its line to the rules box (static/js/rule-presets.js); the box is still what gets
-// saved, so nothing here is stored. Ported from the desktop Résumé Builder's rule_presets.py.
+// saved, so nothing here is stored. Ported from the desktop Resume Builder's rule_presets.py.
 
 declare(strict_types=1);
 
@@ -27,7 +27,7 @@ const RULE_PRESETS = [
         ]],
         ['heading' => 'Length and format', 'rules' => [
             ['id' => 'cl-len-short', 'text' => 'Keep the letter to one page, three or four short paragraphs.'],
-            ['id' => 'cl-len-real', 'text' => 'Use only experience from my résumé; never invent tools, metrics or responsibilities.'],
+            ['id' => 'cl-len-real', 'text' => 'Use only experience from my resume; never invent tools, metrics or responsibilities.'],
         ]],
         ['heading' => 'Closing', 'rules' => [
             ['id' => 'cl-close-plain', 'text' => 'End with a plain closing line and "Sincerely,"; no "I look forward to hearing from you at your earliest convenience".'],
@@ -52,7 +52,7 @@ const RULE_PRESETS = [
             ['id' => 'rs-avoid-dash', 'text' => 'Do not use em dashes.'],
         ]],
         ['heading' => 'Length and format', 'rules' => [
-            ['id' => 'rs-len-page', 'text' => 'Keep the résumé to one page when the experience allows.'],
+            ['id' => 'rs-len-page', 'text' => 'Keep the resume to one page when the experience allows.'],
             ['id' => 'rs-len-ats', 'text' => 'Keep it easy for applicant tracking systems to read: plain headings, selectable text.'],
         ]],
     ],

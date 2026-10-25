@@ -54,7 +54,7 @@ check('the employers in a work history join the list once', sync_my_companies_fr
     && sync_my_companies_from_work_history(get_user_profile()['work_history'], 'MD') === 0
     && (bool) array_filter(my_companies_load(), fn($c) => $c['name'] === 'Other Place' && ($c['source'] ?? '') === 'resume'));
 $other = array_values(array_filter(my_companies_load(), fn($c) => $c['name'] === 'Other Place'))[0];
-check('a deleted résumé employer does not come back', my_company_delete($other['id'])
+check('a deleted resume employer does not come back', my_company_delete($other['id'])
     && sync_my_companies_from_work_history(get_user_profile()['work_history'], 'MD') === 0);
 
 // --- Nearby places (OpenStreetMap answers, as Nominatim sends them) ---
@@ -114,7 +114,7 @@ $left = hide_dashboard_jobs($rows, $rows);
 check('saved, applied and queued jobs (and copies) leave the results', count($left) === 1 && $left[0]['name'] === 'Delta');
 check('an Easy Apply badge is drawn', str_contains(easy_apply_badge(), 'Easy Apply'));
 
-// --- Education from a résumé ---
+// --- Education from a resume ---
 $resume = "Pat Sample\nSpringfield, MD\n\nEDUCATION\nSpringfield University\nBachelor's Degree in Graphic Design\nMay 2014\n"
     . "Riverside College\nAssociate's Degree in Graphic Design\nGPA: 3.5\n\nSKILLS\nHTML, CSS\n";
 $schools = parse_education($resume);
@@ -125,7 +125,7 @@ check('education: none without a heading', parse_education("Pat Sample\nSKILLS\n
 q('DELETE FROM user_profile_education');
 check('education: saved when none is saved, and then left alone', count(save_schools_if_none($schools)) === 2 && save_schools_if_none($schools) === []
     && count(get_user_profile()['education']) === 2);
-check('education: the résumé reader suggests them', count(resume_suggestions($resume)['education']) === 2);
+check('education: the resume reader suggests them', count(resume_suggestions($resume)['education']) === 2);
 
 // --- JobAps (the State of Maryland) ---
 check('jobaps: working title', jobaps_working_title('ACCOUNTANT II (Accountant II, General Accounting) - #26-004547-0006') === 'Accountant II, General Accounting'

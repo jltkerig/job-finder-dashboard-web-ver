@@ -1,10 +1,10 @@
 <?php
 // The Search Settings panel (on the Settings page). Needs $values (read_tuning_settings()), $saved and $error.
 ?>
-  <details class="settings-panel history-collapse" id="search-settings" data-remember="jobFinder.searchSettingsOpen"<?= $saved || $error !== '' ? ' data-open-now' : '' ?>>
+  <details class="panel search-settings history-collapse" id="search-settings" data-remember="jobFinder.searchSettingsOpen"<?= $saved || $error !== '' ? ' data-open-now' : '' ?>>
   <summary>
         <h2>Search Settings
-        </h2><span class="summary-chevron" aria-hidden="true"></span>
+        </h2><i class="summary-chevron" aria-hidden="true"></i>
       </summary>
   <?php if ($saved): ?>
       <p class="field-help" role="status"><strong>Saved.</strong> The next search uses these settings.
@@ -27,7 +27,7 @@
           </p>
         </div>
     <?php endforeach; ?>
-    <button class="bordered-button primary-action" type="submit">Save settings</button>
+    <button class="primary-button" type="submit">Save settings</button>
   </form>
   <p class="field-help">Changes apply to the next search; a search that is running keeps the settings it started with.
       </p>

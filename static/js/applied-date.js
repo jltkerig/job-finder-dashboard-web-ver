@@ -7,6 +7,15 @@
     return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
   }
 
+  // The + beside "More dates" adds a row (date and status); the x removes one. Save Changes stores them.
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest && event.target.closest(".step-add, .step-remove");
+    if (!button) return;
+    if (button.matches(".step-remove")) { button.closest(".status-step").remove(); return; }
+    const box = button.closest(".status-steps");
+    box.querySelector(".status-step-list").append(box.querySelector(".status-step-template").content.cloneNode(true));
+  });
+
   document.addEventListener("change", (event) => {
     const select = event.target;
     if (!select.matches || !select.matches('.saved-job-editor select[name="application_status"]')) return;

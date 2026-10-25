@@ -1,7 +1,7 @@
 <?php
-// What your reference documents and uploaded résumé have that your profile doesn't yet: jobs, skills, missing job
+// What your reference documents and uploaded resume have that your profile doesn't yet: jobs, skills, missing job
 // details (address, phone, supervisor) and people who could be references. Only suggestions: nothing is saved
-// until you tick what to add on the Résumé Builder page. Ported from the desktop's document_import.py and
+// until you tick what to add on the Resume Builder page. Ported from the desktop's document_import.py and
 // profile_import.py.
 
 declare(strict_types=1);
@@ -472,7 +472,7 @@ function save_work_history(array $profile, array $history, array $extra_skills =
     }
 }
 
-/** Jobs the uploaded résumé lists that the profile's work history doesn't have yet (matched on title and company). */
+/** Jobs the uploaded resume lists that the profile's work history doesn't have yet (matched on title and company). */
 function resume_new_jobs(string $text, array $profile): array
 {
     $known = [];

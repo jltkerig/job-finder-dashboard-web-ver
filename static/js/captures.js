@@ -1,5 +1,5 @@
 // Asks before importing jobs saved by the Web Job Scraper Firefox extension.
-// Nothing is moved or imported until "Yes" is clicked; "Not now" hides the prompt until new files arrive.
+// Nothing is moved or imported until "Import" is clicked; "Not now" hides the prompt until new files arrive.
 (() => {
   "use strict";
   const box = document.getElementById("capture-prompt");
@@ -18,7 +18,7 @@
   function button(label, className, onClick) {
     const node = document.createElement("button");
     node.type = "button";
-    node.className = `bordered-button ${className}`;
+    node.className = className;
     node.textContent = label;
     node.addEventListener("click", onClick);
     return node;
@@ -57,13 +57,16 @@
     const files = `${data.count} new capture file${data.count === 1 ? "" : "s"}`;
     const jobs = `${data.jobs} job${data.jobs === 1 ? "" : "s"}`;
     const heading = document.createElement("strong");
-    heading.textContent = `Found ${files} (${jobs}) in ${data.from}.`;
+    heading.textContent = `Found ${files} (${jobs}).`;
+    // Only the last folders show; the full paths are in the tooltip.
+    const tail = (path) => String(path || "").split(/[\\/]/).filter(Boolean).slice(-2).join("\\");
     const question = document.createElement("p");
-    question.textContent = `Move them to ${data.to} and import them?`;
+    question.textContent = `Importing moves ${data.count === 1 ? "it" : "them"} from ${tail(data.from)} to ${tail(data.to)}.`;
+    question.title = `From ${data.from} to ${data.to}`;
     const actions = document.createElement("div");
     actions.className = "capture-prompt-actions";
-    const yes = button("Yes", "primary-action", () => importNow(data.signature, [yes, notNow]));
-    const notNow = button("Not now", "secondary-action", () => {
+    const yes = button(`Import ${data.count} file${data.count === 1 ? "" : "s"}`, "primary-button", () => importNow(data.signature, [yes, notNow]));
+    const notNow = button("Not now", "bordered-button", () => {
       rememberDismissed(data.signature);
       box.hidden = true;
     });

@@ -20,6 +20,24 @@ switch ($path) {
         }
         redirect('/job-skill-fitting');
 
+    case '/job-skill-fitting/weight':
+        // One skill from the Dashboard's skill boxes: {"skill": ..., "weight": core|normal|nice}.
+        $data = request_json();
+        $skill = mb_substr(trim((string) ($data['skill'] ?? '')), 0, 100);
+        $weight = $data['weight'] ?? null;
+        if ($skill === '' || !is_string($weight) || !isset(SKILL_WEIGHT_LABELS[$weight])) {
+            api_error('skill_weight_invalid', 'Choose Core, Normal or Nice to have for a skill.', 400);
+        }
+        try {
+            $choices = load_skill_weights();
+            $choices[$skill] = $weight;
+            save_skill_weights($choices);
+        } catch (Throwable $problem) {
+            error_log('Could not save the skill weight: ' . $problem->getMessage());
+            api_error('skill_weight_failed', 'Could not save the skill weight.', 500);
+        }
+        json_out(['skill' => $skill, 'weight' => $weight]);
+
     case '/job-skill-fitting.json':
         try {
             [$skills, $jobs, $weights] = skill_fitted_jobs();

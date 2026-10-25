@@ -1,16 +1,15 @@
 <?php
-// Résumé Builder: upload your résumé, keep reference documents, references and writing rules, adjust the design,
-// connect Claude, and review the résumés and cover letters Claude saved. Ported from the desktop app's page;
+// Resume Builder: upload your resume, keep reference documents, references and writing rules, adjust the design,
+// connect Claude, and review the resumes and cover letters Claude saved. Ported from the desktop app's page;
 // your profile is edited on the Dashboard here, so this page only shows it.
 
 declare(strict_types=1);
 require_once APP_ROOT . '/includes/connector.php';
 require_once APP_ROOT . '/includes/resume/suggestions.php';
 
-$title = 'Résumé Builder';
+$title = 'Resume Builder';
 $page = 'resume';
-$subtitle = 'Tailored résumés and cover letters from your Dashboard profile';
-$extra_css = ['/static/css/resume.css'];
+$subtitle = 'Tailored resumes and cover letters from your Dashboard profile';
 
 $flashes = take_flashes();
 $profile = get_user_profile();
@@ -22,7 +21,7 @@ $enabled = connector_enabled();
 $connections = $enabled ? connector_connections() : [];
 $stamp = fn(?string $iso) => $iso ? date('M j, Y g:i A', strtotime($iso)) : '';
 
-// The design section, when there is a résumé to measure.
+// The design section, when there is a resume to measure.
 if ($resume) {
     $report = current_design() ?? ['rows' => [], 'notes' => '', 'facts' => null];
     $layout = effective_layout();
@@ -34,7 +33,7 @@ if ($resume) {
     $design_notes = design_state()['notes'] ?: $report['notes'];
     $site = portfolio();
 }
-// What the résumé and reference documents have that the profile doesn't: offered with tick boxes, added only on request.
+// What the resume and reference documents have that the profile doesn't: offered with tick boxes, added only on request.
 $resume_jobs = [];
 $finds = ['jobs' => [], 'skills' => [], 'details' => [], 'people' => []];
 try {
@@ -43,7 +42,7 @@ try {
     $finds = document_suggestions($profile, $texts) + ['details' => detail_suggestions($profile, $texts),
         'people' => reference_suggestions($profile, $references, $texts)];
 } catch (Throwable $error) { // an unreadable file just means no suggestions
-    error_log('Résumé Builder suggestions: ' . $error->getMessage());
+    error_log('Resume Builder suggestions: ' . $error->getMessage());
 }
 // Suggestions for "your job together": the profile's work history, then jobs already typed.
 $past_jobs = array_merge(array_map(fn($w) => implode(' at ', array_filter([$w['role'], $w['company']], 'strlen')), $profile['work_history']),
@@ -69,7 +68,7 @@ HTML;
 
 require APP_ROOT . '/templates/_top.php';
 ?>
-<main>
+<main class="resume-builder">
 <?php foreach ($flashes as [$kind, $message]): ?>
   <p class="flash flash-<?= h($kind) ?>" role="status"><?= h($message) ?></p>
 <?php endforeach; ?>
@@ -82,13 +81,13 @@ require APP_ROOT . '/templates/_top.php';
     <?php else: ?><span class="how-to-status status-warn">Not connected to Claude yet</span><?php endif; ?>
   </div>
   <ol class="steps">
-    <li><span class="step-number" aria-hidden="true">1</span><h3>Upload Your Résumé</h3>
-      <p>Choose your current résumé below. Its layout is copied: fonts, sizes, colors and section order.</p></li>
+    <li><span class="step-number" aria-hidden="true">1</span><h3>Upload Your Resume</h3>
+      <p>Choose your current resume below. Its layout is copied: fonts, sizes, colors and section order.</p></li>
     <li><span class="step-number" aria-hidden="true">2</span><h3>Check Your Profile</h3>
       <p>Make sure your name, location, job titles, work history and skills are right on the <a href="/dashboard">Dashboard</a>.</p></li>
     <li><span class="step-number" aria-hidden="true">3</span><h3>Ask Claude</h3>
       <p>Connect Claude below, then ask it to write for a job you saved:</p>
-      <q>Use Résumé Builder to write a résumé and cover letter for the Acme web developer job.</q></li>
+      <q>Use Resume Builder to write a resume and cover letter for the Acme web developer job.</q></li>
     <li><span class="step-number" aria-hidden="true">4</span><h3>Review and Download</h3>
       <p>Come back here to read, edit and download the finished PDFs.</p></li>
   </ol>
@@ -96,19 +95,19 @@ require APP_ROOT . '/templates/_top.php';
 
 <section class="card wide" id="connect-claude">
   <h2>Connect Claude</h2>
-  <p class="field-help">Claude (claude.ai or the Claude app) adds this site as a connector. It can then read your profile, saved jobs, résumé,
-    references, documents and writing rules, and save résumés and cover letters here. Claude can only connect after you approve it
+  <p class="field-help">Claude (claude.ai or the Claude app) adds this site as a connector. It can then read your profile, saved jobs, resume,
+    references, documents and writing rules, and save resumes and cover letters here. Claude can only connect after you approve it
     with your Job Finder password, and you can cut it off here at any time.</p>
   <form method="post" action="/resume-builder/connector/toggle" class="inline-form">
     <?= csrf_field() ?>
     <input type="hidden" name="enabled" value="<?= $enabled ? '0' : '1' ?>" />
     <p><strong>The connector is <?= $enabled ? 'on' : 'off' ?>.</strong>
-      <button class="bordered-button<?= $enabled ? '' : ' primary' ?>" type="submit"><?= $enabled ? 'Turn Off and Disconnect Everything' : 'Turn On' ?></button></p>
+      <button class="<?= $enabled ? 'bordered-button' : 'primary-button' ?>" type="submit"><?= $enabled ? 'Turn Off and Disconnect Everything' : 'Turn On' ?></button></p>
   </form>
 <?php if ($enabled): ?>
   <ol class="connect-steps">
     <li>In Claude, open <strong>Settings → Connectors</strong> and choose <strong>Add custom connector</strong>.</li>
-    <li>Name it <strong>Résumé Builder</strong> and paste this address: <code class="connector-url"><?= h(connector_url()) ?></code>
+    <li>Name it <strong>Resume Builder</strong> and paste this address: <code class="connector-url"><?= h(connector_url()) ?></code>
       <button type="button" class="bordered-button" data-copy="<?= h(connector_url()) ?>">Copy</button></li>
     <li>Click <strong>Connect</strong>. This site opens and asks for your Job Finder password; Claude is connected once you allow it.</li>
   </ol>
@@ -136,23 +135,23 @@ require APP_ROOT . '/templates/_top.php';
 </section>
 
 <section class="card" id="your-resume">
-  <h2>Your Current Résumé</h2>
+  <h2>Your Current Resume</h2>
 <?php if ($resume): ?>
   <p><strong><a href="/resume-builder/current-resume" target="_blank" rel="noopener"><?= h($resume['original_name']) ?></a></strong>
     · uploaded <?= h($stamp($resume['uploaded_at'])) ?><?= $resume['pages'] ? ' · ' . h(plural((int) $resume['pages'], 'page', 'pages')) : '' ?></p>
   <?php foreach ($resume['notes'] ?? [] as $note): ?><p class="field-help"><?= h($note) ?></p><?php endforeach; ?>
 <?php else: ?>
-  <p>No résumé uploaded yet.</p>
+  <p>No resume uploaded yet.</p>
 <?php endif; ?>
   <form method="post" action="/resume-builder/upload" enctype="multipart/form-data" class="upload">
     <?= csrf_field() ?>
     <label for="resume"><?= $resume ? 'Replace with' : 'Upload' ?> a PDF or Word (.docx) file</label>
     <input id="resume" name="resume" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" required />
-    <button class="bordered-button primary" type="submit">Upload</button>
+    <button class="primary-button" type="submit">Upload</button>
   </form>
 </section>
 
-<section class="card" id="documents">
+<section class="card rb-documents" id="documents">
   <h2>Reference Documents</h2>
   <p class="field-help">Anything that helps Claude write about you: past cover letters, performance reviews, award letters, certificates, a list of projects.
     Claude can read these in every chat and uses only what is actually in them.</p>
@@ -172,7 +171,7 @@ require APP_ROOT . '/templates/_top.php';
           <form method="post" action="/resume-builder/documents/<?= h($d['id']) ?>/rename">
             <?= csrf_field() ?>
             <div class="ref-grid"><label class="ref-notes">Label <input name="label" value="<?= h($d['label']) ?>" maxlength="120" required /></label></div>
-            <button class="bordered-button primary" type="submit">Save label</button>
+            <button class="primary-button" type="submit">Save label</button>
           </form>
         </details>
         <form method="post" action="/resume-builder/documents/<?= h($d['id']) ?>/delete" data-confirm="Delete this document?">
@@ -194,15 +193,15 @@ require APP_ROOT . '/templates/_top.php';
       <label>File <span class="field-help">PDF, Word .docx, .txt or .md, up to 10 MB</span>
         <input name="document" type="file" accept=".pdf,.docx,.txt,.md" required /></label>
     </div>
-    <button class="bordered-button primary" type="submit">Add document</button>
+    <button class="primary-button" type="submit">Add document</button>
   </form>
 </section>
 
 <?php if ($resume): $l = $layout; ?>
-<section class="card wide" id="design">
-<details class="section-collapse" id="design-panel">
-  <summary><h2>Résumé Design</h2><span class="summary-chevron" aria-hidden="true"></span></summary>
-  <p class="field-help">What Résumé Builder sees in your uploaded résumé is written out below. Change anything, then Save Design: new résumés
+<section class="card wide rb-design" id="design">
+<details class="section-collapse rb-design-panel" id="design-panel">
+  <summary><h2>Resume Design</h2><i class="summary-chevron" aria-hidden="true"></i></summary>
+  <p class="field-help">What Resume Builder sees in your uploaded resume is written out below. Change anything, then Save Design: new resumes
     and cover letters are drawn with it, and Claude reads your notes.</p>
 
   <h3>What It Sees</h3>
@@ -211,7 +210,7 @@ require APP_ROOT . '/templates/_top.php';
   </dl>
   <form method="post" action="/resume-builder/design/reread" class="inline-form">
     <?= csrf_field() ?>
-    <button class="bordered-button" type="submit">Look at My Résumé Again</button>
+    <button class="bordered-button" type="submit">Look at My Resume Again</button>
   </form>
 
   <form method="post" action="/resume-builder/design/save" class="design-form">
@@ -267,18 +266,18 @@ require APP_ROOT . '/templates/_top.php';
     </div>
 
     <h3>Design Notes</h3>
-    <p class="field-help">Written from your résumé. Edit it as you like; Claude reads it when it writes for you.</p>
+    <p class="field-help">Written from your resume. Edit it as you like; Claude reads it when it writes for you.</p>
     <textarea name="notes" rows="12" maxlength="6000"><?= h($design_notes) ?></textarea>
 
     <div class="form-actions">
-      <button class="bordered-button primary" type="submit">Save Design</button>
+      <button class="primary-button" type="submit">Save Design</button>
       <a class="bordered-button" href="/resume-builder/design/preview.pdf" target="_blank" rel="noopener">Preview With Sample Text</a>
       <a class="bordered-button" href="/resume-builder?preset=portfolio#design">Match My Portfolio (jamiekerig.com)</a>
     </div>
   </form>
-  <form method="post" action="/resume-builder/design/reset" class="inline-form" data-confirm="Go back to the design measured from your résumé?">
+  <form method="post" action="/resume-builder/design/reset" class="inline-form" data-confirm="Go back to the design measured from your resume?">
     <?= csrf_field() ?>
-    <button class="bordered-button" type="submit">Reset to My Résumé</button>
+    <button class="bordered-button" type="submit">Reset to My Resume</button>
   </form>
 
   <h3>Type on jamiekerig.com</h3>
@@ -302,12 +301,12 @@ require APP_ROOT . '/templates/_top.php';
 </section>
 <?php endif; ?>
 
-<section class="card wide" id="profile">
-<details class="section-collapse" id="profile-panel">
-  <summary><h2>Profile</h2><span class="summary-chevron" aria-hidden="true"></span></summary>
+<section class="card wide rb-profile" id="profile">
+<details class="section-collapse rb-profile-panel" id="profile-panel">
+  <summary><h2>Profile</h2><i class="summary-chevron" aria-hidden="true"></i></summary>
   <?php $others = array_values(array_filter($profile['job_titles'], fn($t) => strcasecmp($t, $profile['primary_job_title']) !== 0)); ?>
   <?php if (!($profile['first_name'] && $profile['last_name'] && $profile['home_location'])): ?>
-    <p class="status status-warn">Add your name and location on the <a href="/dashboard">Dashboard</a>. Résumés, cover letters and file names use them.</p>
+    <p class="status status-warn">Add your name and location on the <a href="/dashboard">Dashboard</a>. Resumes, cover letters and file names use them.</p>
   <?php endif; ?>
   <dl class="facts">
     <dt>Name</dt><dd><?= h(trim("{$profile['first_name']} {$profile['last_name']}") ?: '—') ?></dd>
@@ -322,7 +321,7 @@ require APP_ROOT . '/templates/_top.php';
     <dt>Skills</dt><dd><?php foreach ($profile['skills'] as $s): ?><span class="chip"><?= h($s) ?></span><?php endforeach; ?><?= $profile['skills'] ? '' : '—' ?></dd>
   </dl>
   <?php if ($resume_jobs): ?>
-  <p class="status status-warn">Your résumé lists <?= h(plural(count($resume_jobs), 'job', 'jobs')) ?> not in your profile yet:
+  <p class="status status-warn">Your resume lists <?= h(plural(count($resume_jobs), 'job', 'jobs')) ?> not in your profile yet:
     <?= h(implode('; ', array_map('job_label', $resume_jobs))) ?>.</p>
   <form method="post" action="/resume-builder/profile/fill-from-resume"><?= csrf_field() ?><button class="bordered-button" type="submit">Add them to my profile</button></form>
   <?php endif; ?>
@@ -356,7 +355,7 @@ require APP_ROOT . '/templates/_top.php';
         <small class="find-source">From <?= h($d['source']) ?></small></span></label><button class="dismiss-button" type="submit" formaction="/resume-builder/suggestions/dismiss" formnovalidate name="dismiss" value="detail:<?= h($d['dismiss']) ?>" title="Don't suggest these details again">Dismiss</button></li>
     <?php endforeach; ?></ul>
     <?php endif; ?>
-    <button class="bordered-button primary" type="submit">Add Ticked Items</button>
+    <button class="primary-button" type="submit">Add Ticked Items</button>
   </form>
   <?php endif; ?>
 
@@ -396,9 +395,9 @@ require APP_ROOT . '/templates/_top.php';
 
 <section class="card wide" id="references">
 <details class="section-collapse" id="references-panel">
-  <summary><h2>References</h2><span class="summary-chevron" aria-hidden="true"></span></summary>
-  <p class="field-help">People who agreed to vouch for you. When you ask, Claude adds the ones you choose as the last section of the résumé.
-    Otherwise they stay off résumés, and never go in cover letters. Private notes are never sent to Claude.</p>
+  <summary><h2>References</h2><i class="summary-chevron" aria-hidden="true"></i></summary>
+  <p class="field-help">People who agreed to vouch for you. When you ask, Claude adds the ones you choose as the last section of the resume.
+    Otherwise they stay off resumes, and never go in cover letters. Private notes are never sent to Claude.</p>
   <datalist id="relationships"><?php foreach (RELATIONSHIPS as $r): ?><option value="<?= h($r) ?>"><?php endforeach; ?></datalist>
   <datalist id="past-jobs"><?php foreach ($past_jobs as $j): ?><option value="<?= h($j) ?>"><?php endforeach; ?></datalist>
 <?php if ($references): ?>
@@ -426,7 +425,7 @@ require APP_ROOT . '/templates/_top.php';
           <form method="post" action="/resume-builder/references/<?= h($r['id']) ?>/update">
             <?= csrf_field() ?>
             <?php reference_fields($r); ?>
-            <button class="bordered-button primary" type="submit">Save changes</button>
+            <button class="primary-button" type="submit">Save changes</button>
           </form>
         </details>
         <form method="post" action="/resume-builder/references/<?= h($r['id']) ?>/delete" data-confirm="Delete this reference?">
@@ -445,19 +444,19 @@ require APP_ROOT . '/templates/_top.php';
     <form method="post" action="/resume-builder/references/add" class="reference add-box">
       <?= csrf_field() ?>
       <?php reference_fields([]); ?>
-      <button class="bordered-button primary" type="submit">Add reference</button>
+      <button class="primary-button" type="submit">Add reference</button>
     </form>
   </details>
 </details>
 </section>
 
 <?php require_once APP_ROOT . '/includes/resume/presets.php'; foreach (['resume' => ['resume-rules', 18, "Technical Skills\n- Use a Technical Skills section instead of a Professional Summary.\n- Never invent metrics.",
-    'Your standing instructions for every résumé. Claude reads them before writing, and they win over its built-in rules. To change one for a single job, say so when you ask.'],
-    'cover_letter' => ['cover-letter-rules', 14, "Tone\n- Keep it short and low-key.\n- Use specific experience from the résumé.",
+    'Your standing instructions for every resume. Claude reads them before writing, and they win over its built-in rules. To change one for a single job, say so when you ask.'],
+    'cover_letter' => ['cover-letter-rules', 14, "Tone\n- Keep it short and low-key.\n- Use specific experience from the resume.",
     'Your standing instructions for every cover letter, including how to explain an employment gap. Claude reads them before writing.']] as $kind => [$anchor, $rows, $example, $help]): ?>
 <section class="card wide" id="<?= $anchor ?>">
 <details class="section-collapse" id="<?= $anchor ?>-panel">
-  <summary><h2><?= h(RULE_TITLES[$kind]) ?></h2><span class="summary-chevron" aria-hidden="true"></span></summary>
+  <summary><h2><?= h(RULE_TITLES[$kind]) ?></h2><i class="summary-chevron" aria-hidden="true"></i></summary>
   <p class="field-help"><?= h($help) ?></p>
   <p class="field-help rules-format"><strong>How to write them:</strong> put each rule on its own line, starting with a dash (-). A line without a dash
     is a heading that groups the rules under it. Leave a blank line between groups. Write them the way you would tell a person; no special symbols are needed.</p>
@@ -465,14 +464,14 @@ require APP_ROOT . '/templates/_top.php';
   <form method="post" action="/resume-builder/writing-rules/<?= $kind ?>" class="writing-rules-form">
     <?= csrf_field() ?>
     <textarea id="<?= $anchor ?>-box" name="rules" rows="<?= $rows ?>" aria-label="<?= h(RULE_TITLES[$kind]) ?>" placeholder="<?= h($example) ?>"><?= h(load_rules($kind)) ?></textarea>
-    <button class="bordered-button primary" type="submit">Save <?= h(RULE_TITLES[$kind]) ?></button>
+    <button class="primary-button" type="submit">Save <?= h(RULE_TITLES[$kind]) ?></button>
   </form>
 </details>
 </section>
 <?php endforeach; ?>
 
 <section class="card wide" id="saved">
-  <h2>Saved Résumés and Cover Letters</h2>
+  <h2>Saved Resumes and Cover Letters</h2>
 <?php if ($builds): ?>
   <div class="table-wrapper"><table>
     <thead><tr><th>File</th><th>Type</th><th>Job</th><th>Updated</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
@@ -480,7 +479,7 @@ require APP_ROOT . '/templates/_top.php';
     <?php foreach ($builds as $b): $file = rawurlencode($b['pdf']); ?>
       <tr>
         <td data-label="File"><?= h($b['pdf']) ?><?= $b['pdf_exists'] ? '' : ' <span class="status-warn">(PDF missing)</span>' ?></td>
-        <td data-label="Type"><?= $b['kind'] === 'resume' ? 'Résumé' : 'Cover letter' ?></td>
+        <td data-label="Type"><?= $b['kind'] === 'resume' ? 'Resume' : 'Cover letter' ?></td>
         <td data-label="Job"><?= h($b['job_title']) ?><?= $b['company'] ? ' at ' . h($b['company']) : '' ?></td>
         <td data-label="Updated"><?= h($stamp($b['updated'])) ?></td>
         <td class="actions">

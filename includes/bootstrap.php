@@ -4,7 +4,7 @@
 declare(strict_types=1);
 
 const APP_ROOT = __DIR__ . '/..';
-const APP_VERSION = '1.1.300';  // the same number as the desktop Job Finder it matches (dashboard.py APP_VERSION)
+const APP_VERSION = '1.1.302';  // the same number as the desktop Job Finder it matches (dashboard.py APP_VERSION)
 const DATA_DIR = APP_ROOT . '/resources';     // bundled reference data (O*NET, Census places and ZIPs)
 
 // Choices for a saved job's Application Status, in the order the drop-downs show them.
@@ -22,7 +22,7 @@ function config(): array
 }
 
 /**
- * Where your own data lives: the SQLite file, uploaded résumés, made PDFs and caches. data/ by default;
+ * Where your own data lives: the SQLite file, uploaded resumes, made PDFs and caches. data/ by default;
  * config.php 'data_dir' moves it out of the public web folder.
  */
 function data_path(string $sub = ''): string
@@ -279,7 +279,7 @@ function google_analytics_id(): string
 /**
  * Browser rules sent with every page. The Content-Security-Policy lets pages run only this site's own scripts
  * (no inline code, nothing from elsewhere), so text that sneaks into a page can't run as a script. $framing is who
- * may show the page in a frame: this site (the Résumé Builder's PDF preview) or nobody (the Claude approval page).
+ * may show the page in a frame: this site (the Resume Builder's PDF preview) or nobody (the Claude approval page).
  */
 function send_security_headers(string $framing = "'self'"): void
 {

@@ -1,4 +1,4 @@
-// Résumé Design: clicking a suggested font fills its box.
+// Resume Design: clicking a suggested font fills its box.
 document.addEventListener("click", (event) => {
   const button = event.target.closest(".chip-button[data-fill]");
   if (!button) return;

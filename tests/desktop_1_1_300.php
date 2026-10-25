@@ -147,7 +147,7 @@ check('clear closed jobs: deletes saved jobs whose posting is closed, and only t
 
 $skill_page = file_get_contents(APP_ROOT . '/pages/skill_fitting.php');
 $top_menu = file_get_contents(APP_ROOT . '/templates/_top.php');
-check('skill fitting: the page, its menu entry and its routes exist', str_contains($skill_page, 'Job Skill Fitting') && str_contains($top_menu, "'/job-skill-fitting' => ['Skill Fitting'")
+check('skill fitting: the page, its link on Tuning and its routes exist', str_contains($skill_page, 'Job Skill Fitting') && str_contains(file_get_contents(APP_ROOT . '/pages/tuning.php'), 'href="/job-skill-fitting"')
     && str_contains(file_get_contents(APP_ROOT . '/app.php'), "'POST /job-skill-fitting/weights'") && str_contains(file_get_contents(APP_ROOT . '/app.php'), "'GET /job-skill-fitting.json'"));
 check('menu: Companies sits right of Search', strpos($top_menu, "'/companies'") < strpos($top_menu, "'/dashboard' =>"));
 
@@ -163,7 +163,7 @@ check('rule presets: both rules boxes offer ready-made rules, grouped under head
     && str_contains(rule_menu('resume', 'resume-rules-box'), '<legend>Bullets</legend>') && str_contains(rule_menu('cover_letter', 'x'), 'Do not use em dashes.'));
 check('greetings: a person\'s name is used, a company is not mistaken for one', greeting_options(['Jane Smith', 'Acme Inc'], 'Acme') === ['Hello Jane Smith,', 'Dear Jane Smith,', 'Hi Jane,', 'Hello,', 'Good morning,', 'To the team at Acme,']
     && greeting_options(['Acme Inc'], '') === ['Hello,', 'Good morning,'] && rule_person_name(['Human Resources']) === '' && rule_person_name(['Sam Lee']) === 'Sam Lee');
-check('rule presets: the Résumé Builder pages load their scripts', str_contains(file_get_contents(APP_ROOT . '/pages/resume.php'), "'rule-presets.js'")
+check('rule presets: the Resume Builder pages load their scripts', str_contains(file_get_contents(APP_ROOT . '/pages/resume.php'), "'rule-presets.js'")
     && str_contains(file_get_contents(APP_ROOT . '/pages/resume_build.php'), "'greeting.js'"));
 
 // ---- Dashboard profile: other titles never repeat the main one; the work description grows with its text (v1.1.288) ----

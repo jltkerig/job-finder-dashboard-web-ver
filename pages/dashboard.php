@@ -8,7 +8,7 @@ $companies = get_kept_companies('', '', '', 'date_desc');
 $profile = get_user_profile();
 require_once APP_ROOT . '/includes/education.php';
 if (!$profile['education']) {
-    // No schools saved yet: the ones the uploaded résumé lists are saved, so every page shows the same education.
+    // No schools saved yet: the ones the uploaded resume lists are saved, so every page shows the same education.
     try {
         require_once APP_ROOT . '/includes/resume/store.php';
         $saved_schools = save_schools_if_none(parse_education(current_resume_text()));
@@ -16,7 +16,7 @@ if (!$profile['education']) {
             $profile['education'] = $saved_schools;
         }
     } catch (Throwable $error) {
-        error_log('Education from the résumé: ' . $error->getMessage());
+        error_log('Education from the resume: ' . $error->getMessage());
     }
 }
 add_job_fit($companies, $profile['skills']);
@@ -28,7 +28,7 @@ $applied_companies = array_values(array_filter($companies, fn($c) => in_array($c
 $companies = array_values(array_filter($companies, fn($c) => !in_array($c['application_status'], APPLIED_STATUSES, true)));
 require_once APP_ROOT . '/includes/resume/store.php';
 require_once APP_ROOT . '/includes/companies.php';
-$application_files = files_by_job(); // résumés and cover letters made for each job
+$application_files = files_by_job(); // resumes and cover letters made for each job
 $demanded_skills = array_map(fn($pair) => ['skill' => $pair[0], 'count' => $pair[1]], listing_skill_demand($profile['skills']));
 $counts = get_dashboard_counts();
 $applied_months = applied_by_month();
@@ -46,7 +46,7 @@ function credibility_badge($score): string
 {
     $score = (int) ($score ?? 0);
     $class = $score >= 8 ? 'high' : ($score >= 5 ? 'medium' : 'low');
-    return '<a class="credibility-link" href="/credibility-scores" aria-label="How this credibility score is calculated"><span class="credibility-badge credibility-'
+    return '<a class="credibility-link" href="/credibility-scores" aria-label="How this credibility score is calculated"><span class="badge credibility-badge credibility-'
         . $class . '">' . ($score * 10) . '%</span></a>';
 }
 
@@ -57,15 +57,12 @@ require APP_ROOT . '/templates/_top.php';
 <main>
   <section class="company-section">
     <div class="profile-layout">
-      <section class="profile-panel">
+      <section class="panel">
         <div class="profile-heading">
-          <div>
-            <h2>User Profile
-            </h2>
+          <h2>User Profile</h2>
             <?php if ($fit_updated !== null): ?><p class="fit-updated" role="status">Skills saved. Job Fit is up to date<?php if ($fit_updated): ?>: <?= $fit_updated ?> saved listing<?= $fit_updated !== 1 ? 's' : '' ?> now list<?= $fit_updated !== 1 ? '' : 's' ?> newly recognized skills<?php endif; ?>. A Search page that is already open shows the new percentages after you reload it.</p><?php endif; ?>
             <p>These job titles and locations are shared with the Search page.
             </p>
-          </div>
         </div>
         <?php if ($profile_changed): ?><p class="profile-changed-note" role="alert">Your profile was changed somewhere else after this page loaded, so nothing was saved here. It now shows the latest version: make your change again, then Save Profile.</p><?php endif; ?>
         <form action="/save-profile" method="post" class="profile-form" id="profile-form"><?= csrf_field() ?><input type="hidden" name="profile_version" value="<?= h(profile_version($profile)) ?>" /><input type="hidden" name="cities_json" id="profile-cities-json" value="<?= json_attr($profile['cities']) ?>" /><input type="hidden" name="skills_json" id="skills-json" value="<?= json_attr($profile['skills']) ?>" /><input type="hidden" name="work_history_json" id="work-history-json" value="<?= json_attr($profile['work_history']) ?>" /><input type="hidden" name="education_json" id="education-json" value="<?= json_attr($profile['education']) ?>" /><input type="hidden" name="avatar_data" id="avatar-data" value="<?= h($profile['avatar_data']) ?>" />
@@ -78,12 +75,12 @@ require APP_ROOT . '/templates/_top.php';
             </div>
             <div class="form-field"><label for="home-location">Home City, State</label><input id="home-location" name="home_location" type="text" list="city-state-options" value="<?= h($profile['home_location']) ?>" placeholder="<?= h($form_examples['home_location'] ?? '') ?>" autocomplete="off" /><input id="profile-state" name="state" type="hidden" value="<?= h($profile['state']) ?>" />
             </div>
-            <div class="form-field profile-link-field"><label for="linkedin-url">LinkedIn Profile</label><input id="linkedin-url" name="linkedin_url" type="text" inputmode="url" maxlength="255" value="<?= h($profile['linkedin_url']) ?>" placeholder="e.g. linkedin.com/in/your-name" autocomplete="url" />
+            <div class="form-field"><label for="linkedin-url">LinkedIn Profile</label><input id="linkedin-url" name="linkedin_url" type="text" inputmode="url" maxlength="255" value="<?= h($profile['linkedin_url']) ?>" placeholder="e.g. linkedin.com/in/your-name" autocomplete="url" />
             </div>
-            <div class="form-field profile-link-field"><label for="portfolio-url">Portfolio or Website</label><input id="portfolio-url" name="portfolio_url" type="text" inputmode="url" maxlength="255" value="<?= h($profile['portfolio_url']) ?>" placeholder="e.g. yourname.com" autocomplete="url" />
+            <div class="form-field"><label for="portfolio-url">Portfolio or Website</label><input id="portfolio-url" name="portfolio_url" type="text" inputmode="url" maxlength="255" value="<?= h($profile['portfolio_url']) ?>" placeholder="e.g. yourname.com" autocomplete="url" />
             </div>
           </div>
-          <details class="profile-subsection profile-collapse" open data-section="job-titles"><summary class="profile-collapse-summary"><h3>Job Titles</h3><span class="summary-chevron" aria-hidden="true"></span></summary>
+          <details class="profile-subsection profile-collapse" open data-section="job-titles"><summary class="profile-collapse-summary"><h3>Job Titles</h3><i class="summary-chevron" aria-hidden="true"></i></summary>
             <div class="form-field"><label for="primary-job-title">Primary Job Title</label><input id="primary-job-title" name="primary_job_title" type="text" data-title-suggest="single" value="<?= h($profile['primary_job_title']) ?>" placeholder="e.g. Web Designer" autocomplete="off" />
             </div>
             <div class="form-field"><label for="job-titles">Other Job Titles to Search For</label>
@@ -95,7 +92,7 @@ require APP_ROOT . '/templates/_top.php';
               </div>
             </div>
           </details>
-          <details class="profile-subsection profile-collapse" open data-section="work-preferences"><summary class="profile-collapse-summary"><h3>Work Preferences</h3><span class="summary-chevron" aria-hidden="true"></span></summary>
+          <details class="profile-subsection profile-collapse" open data-section="work-preferences"><summary class="profile-collapse-summary"><h3>Work Preferences</h3><i class="summary-chevron" aria-hidden="true"></i></summary>
             <fieldset class="preference-group">
               <legend>Work Type
               </legend>
@@ -109,50 +106,50 @@ require APP_ROOT . '/templates/_top.php';
               </div>
             </fieldset>
           </details>
-          <details class="profile-subsection profile-collapse" open data-section="work-history"><summary class="profile-collapse-summary"><h3>Work History</h3><span class="summary-chevron" aria-hidden="true"></span></summary>
-            <p class="field-help">Add past jobs manually or review suggestions from a résumé.
+          <details class="profile-subsection profile-collapse" open data-section="work-history"><summary class="profile-collapse-summary"><h3>Work History</h3><i class="summary-chevron" aria-hidden="true"></i></summary>
+            <p class="field-help">Add past jobs manually or review suggestions from a resume.
             </p>
             <p class="field-help" id="work-history-note" data-source="" data-history="[]" hidden>
             </p>
-            <div id="work-history-list">
-            </div><button class="bordered-button secondary-action" id="add-work-history" type="button">Add Job</button>
+            <div class="work-history-list js-work-history-list">
+            </div><button class="bordered-button add-work-history js-add-work-history" type="button">Add Job</button>
           </details>
-          <details class="profile-subsection profile-collapse" open data-section="education"><summary class="profile-collapse-summary"><h3>Education</h3><span class="summary-chevron" aria-hidden="true"></span></summary>
+          <details class="profile-subsection profile-collapse" open data-section="education"><summary class="profile-collapse-summary"><h3>Education</h3><i class="summary-chevron" aria-hidden="true"></i></summary>
             <p class="field-help">Schools you attended. GPA and minor are optional.
             </p>
             <div id="education-list" data-degrees="<?= json_attr(EDUCATION_DEGREES) ?>">
-            </div><button class="bordered-button secondary-action" id="add-education" type="button">Add School</button>
+            </div><button class="bordered-button" id="add-education" type="button">Add School</button>
           </details>
-          <details class="profile-subsection profile-collapse" open data-section="skills"><summary class="profile-collapse-summary"><h3>Skills</h3><span class="summary-chevron" aria-hidden="true"></span></summary>
-            <p class="field-help">The skills you list here are compared with what each job asks for to work out its Job Fit. Add the ones you really have; suggestions come from your résumé, the jobs Job Finder found and the skills you already added, and appear as you type.
+          <details class="profile-subsection profile-collapse" open data-section="skills"><summary class="profile-collapse-summary"><h3>Skills</h3><i class="summary-chevron" aria-hidden="true"></i></summary>
+            <p class="field-help">The skills you list here are compared with what each job asks for to work out its Job Fit. Add the ones you really have; suggestions come from your resume, the jobs Job Finder found and the skills you already added, and appear as you type.
             </p>
-            <div id="profile-skill-list" class="skill-chip-list">
+            <div class="skill-chip-list profile-skill-list js-profile-skill-list" data-weights="<?= json_attr((object) load_skill_weights()) ?>">
             </div>
             <div class="skill-add-row"><input id="new-skill" type="text" list="skill-options" placeholder="Add a skill" aria-label="Add a skill" />
               <datalist id="skill-options"><?php foreach ($skill_suggestions as $skill): ?><option value="<?= h($skill) ?>"></option><?php endforeach; ?>
-              </datalist><button class="bordered-button secondary-action" id="add-skill" type="button">Add Skill</button>
+              </datalist><button class="bordered-button" id="add-skill" type="button">Add Skill</button>
             </div>
-            <div id="skill-suggestions" class="skill-chip-list" aria-live="polite" data-resume="[]" data-demand="<?= json_attr($demanded_skills) ?>" hidden>
+            <div class="skill-chip-list skill-suggestions js-skill-suggestions" aria-live="polite" data-resume="[]" data-demand="<?= json_attr($demanded_skills) ?>" hidden>
             </div>
           </details>
-          <details class="profile-subsection profile-collapse" open data-section="locations"><summary class="profile-collapse-summary"><h3>Locations</h3><span class="summary-chevron" aria-hidden="true"></span></summary>
+          <details class="profile-subsection profile-collapse" open data-section="locations"><summary class="profile-collapse-summary"><h3>Locations</h3><i class="summary-chevron" aria-hidden="true"></i></summary>
             <p class="field-help">Job Finder looks for jobs around each city, out to the distance you pick.
             </p>
-            <div class="city-add-row"><input id="profile-city-input" type="text" list="city-state-options" placeholder="e.g. Wilmington, DE" autocomplete="off" /><select id="profile-city-radius"><?php foreach (CITY_RADII as $radius): ?><option value="<?= $radius ?>"<?= $radius === 50 ? ' selected' : '' ?>><?= $radius ?> miles</option><?php endforeach; ?></select><button id="add-profile-city" class="bordered-button secondary-action city-add-button" type="button">Add Location</button>
+            <div class="city-add-row"><input id="profile-city-input" type="text" list="city-state-options" placeholder="e.g. Wilmington, DE" autocomplete="off" /><select id="profile-city-radius"><?php foreach (CITY_RADII as $radius): ?><option value="<?= $radius ?>"<?= $radius === 50 ? ' selected' : '' ?>><?= $radius ?> miles</option><?php endforeach; ?></select><button id="add-profile-city" class="bordered-button" type="button">Add Location</button>
             </div>
             <div id="profile-city-list" class="city-list city-list-below">
             </div>
           </details>
           <datalist id="city-state-options">
           </datalist>
-          <div class="profile-save-actions"><button class="bordered-button primary-action" type="submit">Save Profile</button><div class="unsaved-note" id="unsaved-note" role="status" hidden><span>Unsaved changes. Click Save Profile to keep them.</span><button class="bordered-button primary-action" type="submit" form="profile-form">Save Profile</button></div><button class="bordered-button secondary-action" id="upload-resume" type="button">Upload Résumé</button><a class="bordered-button secondary-action" href="/extension-profile" title="A file to load in the Web Job Scraper extension (Load profile), so it can mark jobs that fit and show distances">Export for Web Job Scraper</a><input id="resume-file" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden />
+          <div class="profile-save-actions"><button class="primary-button" type="submit">Save Profile</button><div class="unsaved-note" id="unsaved-note" role="status" hidden><span>Unsaved changes. Click Save Profile to keep them.</span><button class="primary-button" type="submit" form="profile-form">Save Profile</button></div><button class="bordered-button" id="upload-resume" type="button">Upload Resume</button><a class="bordered-button" href="/extension-profile" title="A file to load in the Web Job Scraper extension (Load profile), so it can mark jobs that fit and show distances">Export for Web Job Scraper</a><input id="resume-file" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden />
           </div>
         </form>
       </section>
       <div class="profile-side">
-      <aside class="profile-summary-card"><button class="profile-avatar" id="change-avatar" type="button" aria-label="Upload or change profile photo"><?php if ($profile['avatar_data']): ?><img src="<?= h($profile['avatar_data']) ?>" alt="" /><?php elseif ($profile['first_name']): ?><?= h(mb_strtoupper(mb_substr($profile['first_name'], 0, 1))) ?><?php else: ?>U<?php endif; ?></button><input id="avatar-file" type="file" accept="image/png,image/jpeg,image/webp" hidden /><small>Click photo to change</small><strong><?= h(trim($profile['first_name'] . ' ' . $profile['last_name']) ?: 'Username') ?></strong><span><?= h($profile['primary_job_title'] ?: 'Add a primary job title') ?></span><span><?= h($profile['home_location'] ?: 'Add your location') ?></span>
+      <aside class="card profile-summary-card"><button class="profile-avatar" id="change-avatar" type="button" aria-label="Upload or change profile photo"><?php if ($profile['avatar_data']): ?><img src="<?= h($profile['avatar_data']) ?>" alt="" /><?php elseif ($profile['first_name']): ?><?= h(mb_strtoupper(mb_substr($profile['first_name'], 0, 1))) ?><?php else: ?>U<?php endif; ?></button><input id="avatar-file" type="file" accept="image/png,image/jpeg,image/webp" hidden /><small aria-hidden="true">&nbsp;</small><strong><?= h(trim($profile['first_name'] . ' ' . $profile['last_name']) ?: 'Username') ?></strong><span><?= h($profile['primary_job_title'] ?: 'Add a primary job title') ?></span><span><?= h($profile['home_location'] ?: 'Add your location') ?></span>
       </aside>
-      <aside class="profile-stats-card" aria-labelledby="apply-stats-heading">
+      <aside class="card profile-stats-card" aria-labelledby="apply-stats-heading">
         <?php $stage = ['applied' => (int) ($counts['applied'] ?? 0) + $applied_elsewhere_count, 'recruiter' => (int) ($counts['recruiter'] ?? 0), 'interview' => (int) ($counts['interview'] ?? 0)]; ?>
         <h2 id="apply-stats-heading">Job Apply Stats</h2>
         <dl>
@@ -160,6 +157,7 @@ require APP_ROOT . '/templates/_top.php';
           <div><dt>Applied</dt><dd data-stat="applied"><?= $stage['applied'] ?></dd></div>
           <div><dt>Talking With Recruiter</dt><dd><?= $stage['recruiter'] ?></dd></div>
           <div><dt>Interview</dt><dd><?= $stage['interview'] ?></dd></div>
+          <div><dt>Rejected</dt><dd><?= (int) ($counts['rejected'] ?? 0) ?></dd></div>
         </dl>
         <h3>Applied By Month</h3>
         <dl>
@@ -172,61 +170,59 @@ require APP_ROOT . '/templates/_top.php';
     </div>
 
     <details class="saved-jobs-panel history-collapse" id="saved-jobs-panel" open>
-    <summary class="section-heading-row saved-jobs-summary"><h2>Saved Jobs</h2><span class="summary-chevron" aria-hidden="true"></span></summary>
-    <?php if ($companies): ?>
-      <div class="collapse-all-actions"><button class="bordered-button secondary-action" id="expand-all-jobs" type="button">Expand all</button><button class="bordered-button secondary-action" id="collapse-all-jobs" type="button">Collapse all</button>
-      </div><?php endif; ?>
+    <summary class="section-heading-row saved-jobs-summary">
+      <h2>Saved Jobs</h2><i class="summary-chevron" aria-hidden="true"></i>
+    </summary>
     <?= dash_legend('saved') ?>
-    <?= dash_toolbar('saved', '#saved-jobs-grid', '.saved-job-card', $companies, '<div class="form-field compact-field dash-actions"><button class="bordered-button secondary-action" id="refresh-dashboard" type="button" data-total="' . count($companies) . '">Refresh Saved Listings</button><button class="bordered-button secondary-action" id="clear-closed" type="button">Clear closed jobs</button></div>') ?>
-    <p id="dashboard-refresh-status" class="field-help" role="status" hidden>
+    <?= dash_toolbar('saved', '#saved-jobs-grid', '.saved-job-card', $companies, '<div class="filter-actions"><button class="bordered-button" id="refresh-dashboard" type="button" data-total="' . count($companies) . '">Refresh Saved Listings</button><button class="bordered-button" id="clear-closed" type="button">Clear closed jobs</button></div>') ?>
+    <p class="field-help dashboard-refresh-status js-dashboard-refresh-status" role="status" hidden>
     </p>
 
 <?php if ($companies): ?>
-    <div class="bulk-bar" id="bulk-bar"><label class="bulk-all"><input type="checkbox" id="bulk-all" /> Select all <?= count($companies) ?> shown</label><span id="bulk-count" class="field-help" role="status">None selected</span><button id="bulk-delete" class="bordered-button destructive-action" type="button" disabled>Delete Selected</button></div>
+    <div class="bulk-bar" id="bulk-bar"><label class="bulk-all"><input type="checkbox" id="bulk-all" /> Select all <?= count($companies) ?> shown</label><span id="bulk-count" class="field-help" role="status">None selected</span><button id="bulk-delete" class="destructive-button" type="button" disabled>Delete Selected</button><div class="collapse-all-actions"><button class="bordered-button" id="expand-all-jobs" type="button">Expand all</button><button class="bordered-button" id="collapse-all-jobs" type="button">Collapse all</button>
+      </div></div>
     <div class="saved-job-grid" id="saved-jobs-grid"><?php foreach ($companies as $company): $pick = true; include APP_ROOT . '/templates/_job_card.php'; endforeach; ?>
     </div><?php else: ?>
     <div class="empty-dashboard">
-      <h3>No Saved Jobs Yet
-      </h3>
-      <p>Use the green Keep button on Search results to add jobs here.
-      </p><a class="bordered-button button-link" href="/">Search for Jobs</a>
+      <h3>No Saved Jobs Yet</h3>
+      <p>Use the green Keep button on Search results to add jobs here.</p><a class="bordered-button" href="/">Search for Jobs</a>
     </div><?php endif; ?>
     </details>
-    <details class="saved-jobs-panel history-collapse applied-jobs-panel" id="applied-jobs-panel" open>
-    <summary class="section-heading-row saved-jobs-summary"><h2>Applied Jobs</h2><span class="summary-chevron" aria-hidden="true"></span></summary><?php if ($applied_companies): ?>
+    <details class="saved-jobs-panel history-collapse" id="applied-jobs-panel" open>
+    <summary class="section-heading-row saved-jobs-summary">
+      <h2>Applied Jobs</h2><i class="summary-chevron" aria-hidden="true"></i>
+    </summary><?php if ($applied_companies): ?>
       <?= dash_legend('applied') ?>
       <?= dash_toolbar('applied', '#applied-jobs-grid', '.saved-job-card', $applied_companies) ?>
       <div class="saved-job-grid" id="applied-jobs-grid"><?php foreach ($applied_companies as $company): $pick = false; include APP_ROOT . '/templates/_job_card.php'; endforeach; ?>
       </div><?php else: ?>
       <div class="empty-dashboard">
-        <h3>No Applied Jobs Yet
-        </h3>
-        <p>Jobs you mark Applied show up here.
-        </p>
+        <h3>No Applied Jobs Yet</h3>
+        <p>Jobs you mark Applied show up here.</p>
       </div><?php endif; ?>
     </details>
   </section>
 </main>
 <dialog id="resume-review" class="review-dialog">
-  <h2>Review Résumé Suggestions
+  <h2>Review Resume Suggestions
   </h2>
-  <p>Would you like to autofill your profile from the résumé you uploaded? Review and choose each section before applying it. Existing information stays in place.
+  <p>Would you like to autofill your profile from the resume you uploaded? Review and choose each section before applying it. Existing information stays in place.
   </p>
   <div id="resume-review-content">
   </div>
-  <div class="review-actions"><button class="bordered-button secondary-action" id="cancel-resume-review" type="button">Cancel</button><button class="bordered-button primary-action" id="apply-resume-review" type="button">Add Selected to Profile</button>
+  <div class="review-actions"><button class="bordered-button" id="cancel-resume-review" type="button">Cancel</button><button class="primary-button" id="apply-resume-review" type="button">Add Selected to Profile</button>
   </div>
 </dialog>
 <dialog id="avatar-crop" class="review-dialog">
   <h2>Crop Profile Photo
   </h2>
   <div class="crop-preview">
-    <canvas id="avatar-canvas" width="320" height="320">
+    <canvas class="avatar-canvas js-avatar-canvas" width="320" height="320">
     </canvas>
-  </div><label for="avatar-zoom">Zoom</label><input id="avatar-zoom" type="range" min="1" max="3" step="0.01" value="1" />
+  </div><label for="avatar-zoom">Zoom</label><input class="avatar-zoom" id="avatar-zoom" type="range" min="1" max="3" step="0.01" value="1" />
   <p class="field-help">Drag the image to reposition it.
   </p>
-  <div class="review-actions"><button class="bordered-button secondary-action" id="cancel-avatar" type="button">Cancel</button><button class="bordered-button primary-action" id="save-avatar" type="button">Save Photo</button>
+  <div class="review-actions"><button class="bordered-button" id="cancel-avatar" type="button">Cancel</button><button class="primary-button" id="save-avatar" type="button">Save Photo</button>
   </div>
 </dialog>
 <?php require APP_ROOT . '/templates/_bottom.php';

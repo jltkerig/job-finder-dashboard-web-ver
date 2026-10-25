@@ -40,13 +40,14 @@ switch ($path) {
         } catch (RuntimeException $error) {
             api_error('E3503', $error->getMessage(), 502);
         }
+        $companies = companies_add_dates($companies);
         json_out(['status' => 'ok', 'place' => $shown, 'center' => ['lat' => $lat, 'lon' => $lon], 'miles' => $miles,
             'count' => count($companies), 'companies' => $companies]);
 
     case '/companies/mine':
         if ($method === 'GET') {
             $found = resolve_company_place((string) ($_GET['place'] ?? ''), $profile);
-            $companies = my_companies_everything($found ? $found[0] : null);
+            $companies = companies_add_dates(my_companies_everything($found ? $found[0] : null));
             json_out(['status' => 'ok', 'place' => $found ? $found[1] : '', 'count' => count($companies), 'companies' => $companies]);
         }
         try {
@@ -68,7 +69,7 @@ switch ($path) {
         } catch (InvalidArgumentException $error) {
             api_error('E3511', $error->getMessage(), 400);
         }
-        // The Profile first: an employer from your résumé is shown from the Profile again, so a change kept only here
+        // The Profile first: an employer from your resume is shown from the Profile again, so a change kept only here
         // would be undone the next time the page opens.
         $synced = null;
         try {
@@ -102,7 +103,7 @@ switch ($path) {
     case '/companies/saved':
         if ($method === 'GET') {
             $found = resolve_company_place((string) ($_GET['place'] ?? ''), $profile);
-            $companies = saved_companies_everything($found ? $found[0] : null);
+            $companies = companies_add_dates(saved_companies_everything($found ? $found[0] : null));
             json_out(['status' => 'ok', 'place' => $found ? $found[1] : '', 'count' => count($companies), 'companies' => $companies]);
         }
         try {

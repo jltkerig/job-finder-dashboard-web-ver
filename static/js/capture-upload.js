@@ -36,7 +36,7 @@
       if ((c.added || 0) + (c.updated || 0) + (c.linked || 0)) {
         const reload = document.createElement("button");
         reload.type = "button";
-        reload.className = "bordered-button secondary-action";
+        reload.className = "bordered-button";
         reload.textContent = "Show the results";
         reload.addEventListener("click", () => window.location.reload());
         result.append(reload);

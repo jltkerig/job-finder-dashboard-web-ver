@@ -11,7 +11,7 @@
   panel.className = "companies-mine companies-saved history-collapse";
   panel.id = "companies-saved";
   panel.innerHTML = '<summary><h2 id="companies-saved-heading">Saved Companies <span class="field-help" id="companies-saved-count"></span></h2>'
-    + '<span class="summary-chevron" aria-hidden="true"></span></summary>'
+    + '<i class="summary-chevron" aria-hidden="true"></i></summary>'
     + '<p class="field-help" id="companies-saved-empty">None yet. Press Save on a company in the search results to keep it here.</p>'
     + '<div class="table-wrapper companies-table-wrapper" id="companies-saved-wrapper" hidden><table class="companies-table">'
     + '<thead><tr><th>Company</th><th>Address</th><th id="companies-saved-miles">Miles</th><th>Website</th><th><span class="visually-hidden">Actions</span></th></tr></thead>'
@@ -65,12 +65,12 @@
     actions.className = "companies-row-actions";
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "bordered-button secondary-action companies-delete";
+    button.className = "bordered-button js-companies-delete";
     button.textContent = "Remove";
     button.addEventListener("click", () => remove(company));
     const edit = document.createElement("button");
     edit.type = "button";
-    edit.className = "bordered-button secondary-action companies-edit";
+    edit.className = "bordered-button js-companies-edit";
     edit.textContent = "Edit";
     edit.title = "Add its job board, notes or a fixed address. It moves to My Companies.";
     edit.addEventListener("click", () => document.dispatchEvent(new CustomEvent("edit-saved-company", { detail: { company, tr } })));

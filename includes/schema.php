@@ -132,7 +132,7 @@ function ensure_schema(PDO $pdo): void
         url_key VARCHAR(64) PRIMARY KEY, url TEXT NOT NULL, status INT NOT NULL, body $text NULL,
         final_url TEXT NULL, fetched_at VARCHAR(19) NOT NULL)$tail");
 
-    // The Résumé Builder connector (includes/connector.php): apps Claude registered, one-time sign-in codes, and access
+    // The Resume Builder connector (includes/connector.php): apps Claude registered, one-time sign-in codes, and access
     // tokens. Codes and tokens are kept only as SHA-256 hashes, so a copy of the database can't be used to sign in.
     $pdo->exec("CREATE TABLE IF NOT EXISTS oauth_clients (
         client_id VARCHAR(64) PRIMARY KEY, client_name VARCHAR(200) NOT NULL DEFAULT '', redirect_uris TEXT NOT NULL,

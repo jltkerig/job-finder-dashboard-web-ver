@@ -1,6 +1,6 @@
 <?php
 // The Companies page: businesses near a place (OpenStreetMap through Nominatim), the employers Job Finder has seen
-// hiring, and the companies you enter yourself (kept in the settings table). An employer from your résumé shares its
+// hiring, and the companies you enter yourself (kept in the settings table). An employer from your resume shares its
 // address, phone and website with that job in your Profile. Ported from the desktop app's local_companies.py,
 // my_companies.py, employer_sync.py and address_lookup.py.
 
@@ -451,7 +451,7 @@ function sync_my_companies_from_work_history(array $work_history, string $home_s
         $place = $town !== '' && str_contains($town, ',') ? $town : $zip;
         $fields = ['name' => $name, 'website' => $job['website'] ?? '', 'address' => implode(', ', array_filter([trim((string) ($job['street'] ?? '')), $town, $zip])),
             'place' => $place, 'phone' => $job['phone'] ?? '',
-            'notes' => 'From your résumé: ' . implode(', ', array_filter([trim((string) ($job['role'] ?? '')), trim((string) ($job['dates'] ?? ''))]))];
+            'notes' => 'From your resume: ' . implode(', ', array_filter([trim((string) ($job['role'] ?? '')), trim((string) ($job['dates'] ?? ''))]))];
         try {
             $entry = clean_company($fields, $home_state);
         } catch (InvalidArgumentException $error) {  // a place or website that can't be read: the company is still worth listing
@@ -482,7 +482,7 @@ function my_company_result(array $item, ?array $center = null): array
     return ['id' => 'mine/' . $item['id'], 'mine' => true, 'name' => $item['name'], 'type' => 'My company',
         'address' => $item['address'] ?? '', 'place' => $item['place'] ?? '', 'website' => $item['website'] ?? '',
         'jobs_board' => $board, 'jobs_url' => $url, 'jobs_system' => $system, 'phone' => $item['phone'] ?? '',
-        'notes' => $item['notes'] ?? ''] + split_address((string) ($item['address'] ?? ''), (string) ($item['place'] ?? ''))
+        'notes' => $item['notes'] ?? '', 'added' => $item['added'] ?? ''] + split_address((string) ($item['address'] ?? ''), (string) ($item['place'] ?? ''))
         + ['lat' => $item['lat'] ?? null, 'lon' => $item['lon'] ?? null, 'miles' => $miles];
 }
 
@@ -645,7 +645,7 @@ function push_company_to_profile(array $entry, ?array $before = null): int
     return update_work_details((string) (($before ?? $entry)['name']), $values, $fill_only);
 }
 
-/** Shows on the Companies page what the work history has for the employers that came from your résumé. */
+/** Shows on the Companies page what the work history has for the employers that came from your resume. */
 function refresh_companies_from_work_history(array $work_history, string $home_state = ''): int
 {
     $companies = my_companies_load();
@@ -803,4 +803,74 @@ function applied_elsewhere(): array
         }
     }
     return $entries;
+}
+
+/** A date or timestamp (text like 2026-10-22T14:05:00-04:00) as YYYY-MM-DD; '' when there is none. */
+function company_day($value): string
+{
+    $text = (string) ($value ?? '');
+    return preg_match('/^\d{4}-\d{2}-\d{2}/', $text) ? substr($text, 0, 10) : '';
+}
+
+/**
+ * A posting's date as YYYY-MM-DD, from what boards say: an ISO date or time, "Posted Today", "Posted Yesterday",
+ * "Posted 3 Days Ago", "Reposted 2w ago", "5 hours ago" or "Just now". '' when it says nothing exact.
+ */
+function company_posted_date($value): string
+{
+    $text = trim((string) ($value ?? ''));
+    if ($text === '') {
+        return '';
+    }
+    if (preg_match('/^(\d{4})-(\d{2})-(\d{2})/', $text, $iso)) {
+        return checkdate((int) $iso[2], (int) $iso[3], (int) $iso[1]) ? "$iso[1]-$iso[2]-$iso[3]" : '';
+    }
+    $lower = mb_strtolower($text);
+    if (str_contains($lower, '30+')) {
+        return '';
+    }
+    if (str_contains($lower, 'today') || str_contains($lower, 'just now') || preg_match('/\d+\s*(?:hours?|hrs?|minutes?|mins?|h|m)\s+ago/', $lower)) {
+        return date('Y-m-d');
+    }
+    if (str_contains($lower, 'yesterday')) {
+        return date('Y-m-d', strtotime('-1 day'));
+    }
+    if (preg_match('/(\d+)\s*(days?|d|weeks?|w)\s+ago/', $lower, $ago)) {
+        return date('Y-m-d', strtotime('-' . ((int) $ago[1] * (str_starts_with($ago[2], 'w') ? 7 : 1)) . ' days'));
+    }
+    return '';
+}
+
+/** {company name key: ['last_checked' => day, 'newest_posting' => day]} from the saved jobs. */
+function company_job_dates(): array
+{
+    $found = [];
+    foreach (rows("SELECT name, last_checked, listing_details FROM companies WHERE name IS NOT NULL AND name <> ''") as $job) {
+        $key = company_name_key((string) $job['name']);
+        if ($key === '') {
+            continue;
+        }
+        $details = json_decode((string) ($job['listing_details'] ?? ''), true);
+        $entry = $found[$key] ?? ['last_checked' => '', 'newest_posting' => ''];
+        $entry['last_checked'] = max($entry['last_checked'], company_day($job['last_checked']));
+        $entry['newest_posting'] = max($entry['newest_posting'], company_posted_date(is_array($details) ? ($details['posted'] ?? '') : ''));
+        $found[$key] = $entry;
+    }
+    return $found;
+}
+
+/**
+ * Put 'last_checked' and 'newest_posting' (YYYY-MM-DD, '' when unknown) on each company the page lists, and make
+ * 'added' a day. The last two dates come from the jobs found for a company of the same name.
+ */
+function companies_add_dates(array $companies): array
+{
+    $table = company_job_dates();
+    foreach ($companies as &$company) {
+        $dates = $table[company_name_key((string) ($company['name'] ?? ''))] ?? [];
+        $company['last_checked'] = $dates['last_checked'] ?? '';
+        $company['newest_posting'] = $dates['newest_posting'] ?? '';
+        $company['added'] = company_day($company['added'] ?? '');
+    }
+    return $companies;
 }

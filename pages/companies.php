@@ -27,7 +27,7 @@ require APP_ROOT . '/templates/_top.php';
 <main>
   <section class="company-section companies-search">
     <details class="companies-searchbox history-collapse" id="companies-searchbox" data-remember="jobFinder.companiesSearchOpen" data-open-default>
-    <summary><h2>Search</h2><span class="summary-chevron" aria-hidden="true"></span></summary>
+    <summary><h2>Search</h2><i class="summary-chevron" aria-hidden="true"></i></summary>
     <form id="companies-form" class="companies-form" autocomplete="off">
       <div class="form-field companies-place">
         <label for="companies-place">Search around</label>
@@ -38,10 +38,10 @@ require APP_ROOT . '/templates/_top.php';
         <select id="companies-miles" name="miles"><?php foreach (COMPANY_MILE_CHOICES as $miles): ?><option value="<?= $miles ?>"<?= $miles === 15 ? ' selected' : '' ?>><?= $miles ?> miles</option><?php endforeach; ?></select>
       </div>
       <div class="companies-filter-box">
-      <div class="filter-heading"><span class="filter-icon" aria-hidden="true">⌕</span><strong>Filters</strong></div>
+      <div class="filter-heading"><i class="filter-icon" aria-hidden="true">⌕</i><strong>Filters</strong></div>
       <div class="companies-filters">
         <label class="companies-website-only" title="Tick to hide every company that has no website listed."><input id="companies-website-only" type="checkbox" /> Hide companies with no website</label>
-        <button class="bordered-button secondary-action" id="companies-show-hidden" type="button" hidden>Show hidden</button>
+        <button class="bordered-button" id="companies-show-hidden" type="button" hidden>Show hidden</button>
       </div>
       <p class="companies-filter-label">Source</p>
       <div class="companies-kind-tags companies-source-tags" id="companies-source-tags" role="group" aria-label="Where the companies come from"></div>
@@ -51,47 +51,47 @@ require APP_ROOT . '/templates/_top.php';
       <fieldset class="companies-kinds" hidden>
         <?php foreach ($kinds as $key => $label): ?><label class="companies-kind"><input type="checkbox" name="kinds" value="<?= h($key) ?>"<?= in_array($key, $default_kinds, true) ? ' checked' : '' ?> /> <?= h($label) ?></label><?php endforeach; ?>
       </fieldset>
-      <div class="companies-actions"><button class="bordered-button primary-action" id="companies-search" type="submit">Search</button></div>
+      <div class="companies-actions"><button class="primary-button" id="companies-search" type="submit">Search</button></div>
     </form>
     </details>
     <details class="companies-mine history-collapse" id="companies-mine" data-remember="jobFinder.myCompaniesOpen" data-open-default>
-    <summary><h2 id="companies-mine-heading">My Companies <span class="field-help" id="companies-mine-count"></span></h2><span class="summary-chevron" aria-hidden="true"></span></summary>
+    <summary><h2 id="companies-mine-heading">My Companies <span class="field-help" id="companies-mine-count"></span></h2><i class="summary-chevron" aria-hidden="true"></i></summary>
     <p class="field-help" id="companies-mine-empty" hidden>None yet. The employers in your work history are added here, and you can add your own above.</p>
     <div class="table-wrapper companies-table-wrapper" id="companies-mine-table-wrapper" hidden>
       <table class="companies-table companies-mine-table">
-        <thead><tr><th>Company</th><th>Type</th><th>Address</th><th id="companies-mine-miles-header">Miles</th><th>Website and jobs</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
+        <thead><tr><th>Company</th><th>Type</th><th>Address</th><th id="companies-mine-miles-header">Miles</th><th>Dates</th><th>Website and jobs</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
         <tbody id="companies-mine-body"></tbody>
       </table>
     </div>
   </details>
     <details class="companies-add history-collapse" id="companies-add" data-remember="jobFinder.addCompanyOpen">
-      <summary><h2>Add a Company of Your Own</h2><span class="summary-chevron" aria-hidden="true"></span></summary>
+      <summary><h2>Add a Company of Your Own</h2><i class="summary-chevron" aria-hidden="true"></i></summary>
       <form id="companies-add-form" class="companies-add-form" autocomplete="off">
         <input type="hidden" id="companies-add-id" value="" />
         <div class="form-field"><label for="companies-add-name">Company name</label><input id="companies-add-name" name="name" type="text" maxlength="150" required /></div>
         <div class="form-field"><label for="companies-add-website">Website</label><input id="companies-add-website" name="website" type="text" maxlength="200" placeholder="acme.com" /></div>
         <div class="form-field"><label for="companies-add-jobs-board">Job board</label><input id="companies-add-jobs-board" name="jobs_board" type="text" maxlength="400" placeholder="Indeed, or a link such as jobs.lever.co/acme" title="Where the company posts jobs, if you know: a link to its jobs page, or just the name of the board" /></div>
         <div class="form-field companies-add-address"><label for="companies-add-street">Street</label><input id="companies-add-street" name="street" type="text" maxlength="120" placeholder="Start typing: 10 Main Street" /></div>
-        <div class="form-field"><label for="companies-add-city">City</label><input id="companies-add-city" name="city" type="text" list="city-state-options" maxlength="80" placeholder="Harrisburg" /></div>
-        <div class="form-field"><label for="companies-add-state">State</label><input id="companies-add-state" name="state" type="text" maxlength="30" placeholder="MD" title="Two letters, such as MD" /></div>
-        <div class="form-field"><label for="companies-add-zip">ZIP code</label><input id="companies-add-zip" name="zip" type="text" inputmode="numeric" maxlength="10" placeholder="17101" title="Used to measure how far the company is from the place you search" /></div>
+        <div class="form-field"><label for="companies-add-city">City</label><input class="companies-add-city" id="companies-add-city" name="city" type="text" list="city-state-options" maxlength="80" placeholder="Harrisburg" /></div>
+        <div class="form-field"><label for="companies-add-state">State</label><input class="companies-add-state" id="companies-add-state" name="state" type="text" maxlength="30" placeholder="MD" title="Two letters, such as MD" /></div>
+        <div class="form-field"><label for="companies-add-zip">ZIP code</label><input class="companies-add-zip" id="companies-add-zip" name="zip" type="text" inputmode="numeric" maxlength="10" placeholder="17101" title="Used to measure how far the company is from the place you search" /></div>
         <div class="form-field"><label for="companies-add-phone">Phone</label><input id="companies-add-phone" name="phone" type="text" maxlength="40" /></div>
-        <div class="form-field companies-add-notes companies-add-notes-wide"><label for="companies-add-notes">Notes</label><textarea id="companies-add-notes" name="notes" rows="2" maxlength="500" placeholder="Who you know there, what they make, when to check back"></textarea></div>
+        <div class="form-field companies-add-notes"><label for="companies-add-notes">Notes</label><textarea id="companies-add-notes" name="notes" rows="2" maxlength="500" placeholder="Who you know there, what they make, when to check back"></textarea></div>
         <div class="companies-add-actions">
-          <button class="bordered-button primary-action" id="companies-add-save" type="submit">Add company</button>
-          <button class="bordered-button secondary-action" id="companies-add-cancel" type="button" hidden>Cancel</button>
+          <button class="primary-button" id="companies-add-save" type="submit">Add company</button>
+          <button class="bordered-button" id="companies-add-cancel" type="button" hidden>Cancel</button>
           <span id="companies-add-status" class="field-help" role="status"></span>
         </div>
       </form>
-      <p class="field-help companies-add-help">The city and state (or the ZIP code) measure the distance. For an employer from your résumé, the address, phone and website are shared with that job in your Profile: what you save here shows in the Résumé Builder too, and what the Profile has shows here. Kept on this site, in your settings. They are listed in the My Companies box above, nearest first when a town or ZIP code is given.</p>
+      <p class="field-help companies-add-help">The city and state (or the ZIP code) measure the distance. For an employer from your resume, the address, phone and website are shared with that job in your Profile: what you save here shows in the Resume Builder too, and what the Profile has shows here. Kept on this site, in your settings. They are listed in the My Companies box above, nearest first when a town or ZIP code is given.</p>
     </details>
   </section>
   <section class="company-section companies-results" id="companies-results" hidden aria-live="polite">
     <details class="companies-collapse" id="companies-results-panel" open>
-    <summary class="companies-toolbar companies-collapse-summary"><strong id="companies-count"></strong><span class="summary-chevron" aria-hidden="true"></span></summary>
+    <summary class="companies-toolbar companies-collapse-summary"><h2 id="companies-count"></h2><i class="summary-chevron" aria-hidden="true"></i></summary>
     <div class="table-wrapper companies-table-wrapper">
       <table class="companies-table">
-        <thead><tr><th>Company</th><th>Type</th><th>Address</th><th id="companies-miles-header">Miles</th><th>Website</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
+        <thead><tr><th>Company</th><th>Type</th><th>Address</th><th id="companies-miles-header">Miles</th><th>Dates</th><th>Website</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
         <tbody id="companies-body"></tbody>
       </table>
     </div>

@@ -17,12 +17,15 @@
     const items = () => [...list.querySelectorAll(`:scope > ${bar.dataset.item}`)];
     const stateBox = control("state");
     [...new Set(items().map((item) => stateCode(item.dataset.state)).filter(Boolean))].sort().forEach((code) => {
-      stateBox.append(new Option(code, code));
+      stateBox.append(new Option(code === "REMOTE" ? "Remote" : code, code));
     });
 
     const sorters = {
       oldest: (a, b) => num(b, "order") - num(a, "order"),
       newest: (a, b) => text(b, "added").localeCompare(text(a, "added")) || num(b, "order") - num(a, "order"),
+      // Jobs with no applied date go last either way.
+      "applied-newest": (a, b) => (!text(a, "applied") - !text(b, "applied")) || text(b, "applied").localeCompare(text(a, "applied")),
+      "applied-oldest": (a, b) => (!text(a, "applied") - !text(b, "applied")) || text(a, "applied").localeCompare(text(b, "applied")),
       company: (a, b) => text(a, "company").localeCompare(text(b, "company")),
       job: (a, b) => text(a, "job").localeCompare(text(b, "job")),
       distance: (a, b) => num(a, "distance", 99999) - num(b, "distance", 99999),
@@ -37,6 +40,7 @@
       rows.forEach((row, index) => { if (row.dataset.order === undefined) row.dataset.order = String(index); });
       const query = control("text").value.trim().toLowerCase();
       const state = control("state").value, arrangement = control("arrangement").value, status = control("status").value;
+      const appStatus = control("appStatus") ? control("appStatus").value : "all";
       const source = control("source").value, schedule = control("schedule").value, minScore = Number(control("credibility").value);
       rows.forEach((row) => {
         const rowState = stateCode(row.dataset.state);
@@ -46,6 +50,7 @@
           && (state === "all" || rowState === state)
           && (arrangement === "all" || work === arrangement || (arrangement === "unknown" && !work))
           && (status === "all" || text(row, "status") === status)
+          && (appStatus === "all" || text(row, "appStatus") === appStatus)
           && (source === "all" || text(row, "source") === source)
           && (minScore === -1 || num(row, "careerCredibility") >= Math.max(3, minScore))
           && (schedule === "all" || (schedule === "unknown" ? !kind : schedule === "freelance"

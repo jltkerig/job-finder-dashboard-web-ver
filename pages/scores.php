@@ -10,7 +10,7 @@ require APP_ROOT . '/templates/_top.php';
 ?>
 <main>
   <div class="company-section">
-    <article class="settings-panel score-guide">
+    <article class="panel score-guide">
   <p class="score-guide-intro">Career Credibility and USA Credibility are evidence scores, displayed from 0% to 100%. Internally, Job Finder stores each as 0–10 and multiplies by ten for display. A score is not the probability that a job is real, open, or suitable for you.
       </p>
   <nav class="score-guide-nav" aria-label="Scoring sections"><a href="#career-rules">Career rules</a><a href="#usa-rules">USA rules</a><a href="#what-scores-mean">What scores mean</a><a href="#future-checks">Future checks</a>
@@ -99,7 +99,7 @@ require APP_ROOT . '/templates/_top.php';
           </li>
     </ul>
   </section>
-  <a class="bordered-button secondary-action" href="/">Back to Search</a>
+  <a class="bordered-button" href="/">Back to Search</a>
     </article>
   </div>
 </main>

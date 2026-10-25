@@ -1,5 +1,5 @@
 <?php
-// Skills: recognizing them in a listing or résumé, Job Fit, the skills jobs ask for, and reading a résumé's work
+// Skills: recognizing them in a listing or resume, Job Fit, the skills jobs ask for, and reading a resume's work
 // history. Ported from the desktop app's profile_tools.py; conservative and explainable on purpose.
 
 declare(strict_types=1);
@@ -167,7 +167,7 @@ function related_skills(string $term, array $listing_skill_lists = [], int $limi
     return array_slice($out, 0, $limit);
 }
 
-// --- Reading a résumé ----------------------------------------------------------------------------------------
+// --- Reading a resume ----------------------------------------------------------------------------------------
 
 const MONTHS = ['jan' => 1, 'january' => 1, 'feb' => 2, 'february' => 2, 'mar' => 3, 'march' => 3, 'apr' => 4, 'april' => 4,
     'may' => 5, 'jun' => 6, 'june' => 6, 'jul' => 7, 'july' => 7, 'aug' => 8, 'august' => 8, 'sep' => 9, 'sept' => 9,
@@ -207,7 +207,7 @@ function clean_lines(string $text): array
     return array_map(fn($line) => trim(preg_replace('/\s+/u', ' ', $line)), preg_split('/\r\n|\r|\n/', $text));
 }
 
-/** Jobs listed under the résumé's experience heading: [{role, company, dates, description}] (suggestions to check). */
+/** Jobs listed under the resume's experience heading: [{role, company, dates, description}] (suggestions to check). */
 function parse_work_history(string $text, int $limit = 12): array
 {
     $experience = '/^(?:(?:work|employment|professional|relevant|career)\s+)?(?:history|experience)$|^(?:work|employment|professional)\s+(?:history|experience)$/i';

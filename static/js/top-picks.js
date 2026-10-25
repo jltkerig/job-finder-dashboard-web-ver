@@ -1,8 +1,8 @@
 // Top 10 picks: ranks the results shown on the Search page and lists the 10 best to apply to. After you untick any
-// you don't want, "Build" keeps them on the Dashboard and copies one request for Résumé Builder's Claude Desktop
-// connector to make a tailored résumé and cover letter for each.
+// you don't want, "Build" keeps them on the Dashboard and copies one request for Resume Builder's Claude Desktop
+// connector to make a tailored resume and cover letter for each.
 (function () {
-  const button = document.getElementById("top-picks-button");
+  const button = document.querySelector(".js-top-picks-button");
   const panel = document.getElementById("top-picks");
   if (!button || !panel) return;
   const list = document.getElementById("top-picks-list");
@@ -43,69 +43,72 @@
   }
 
   function pick() {
-    const rows = Array.from(document.querySelectorAll("#results-table .result-row"))
+    const rows = Array.from(document.querySelectorAll(".js-results-table .result-row"))
       .filter((row) => shown(row) && row.dataset.status !== "closed" && row.dataset.saved !== "true");  // kept jobs are done
     return rows.map(rank).sort((a, b) => b.score - a.score).slice(0, PICKS);
   }
 
-  // The same facts the listing's row shows (work, place, distance, credibility, fit, domain, found date), read from the row.
-  function facts(row) {
-    const text = (label) => (row.querySelector(`td[data-label="${label}"]`)?.textContent || "").replace(/\s+/g, " ").trim();
-    const place = text("Location");
-    const distance = text("Distance");
-    const domain = row.querySelector('td[data-label="Domain"] a')?.textContent.trim() || "";
-    const meta = (row.querySelector('td[data-label="Job"] .job-meta')?.textContent || "").replace(/\s+/g, " ").trim();
-    const found = (row.querySelector('td[data-label="Found"]')?.title || "").split(". Last checked")[0].replace(/^Found /, "");
-    const fit = row.dataset.jobFit;
-    return [
-      ["Pay", meta], ["Work", text("Work Location").replace(/^—$/, "")],
-      ["Location", place + (distance && distance !== "—" ? ` (${distance})` : "")], ["Job fit", fit ? `${fit}%` : ""],
-      ["Career credibility", text("Career Credibility")], ["USA credibility", text("USA Credibility")],
-      ["Domain", domain], ["Found", found],
-    ].filter(([, value]) => value);
-  }
+  // The same arrow as the listings' Open button.
+  const ARROW = '<svg class="listing-arrow" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 17 17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   function render(picks) {
     list.replaceChildren();
     picks.forEach(({ row, reasons }) => {
       const item = document.createElement("li");
-      const label = document.createElement("label");
+      item.className = "card top-pick";
       const box = document.createElement("input");
       box.type = "checkbox";
       box.checked = true;
       box.value = row.dataset.companyId;
       box.dataset.job = row.dataset.job || "";
       box.dataset.company = row.dataset.company || "";
-      const title = document.createElement("strong");
-      title.textContent = [row.dataset.job, row.dataset.company].filter(Boolean).join(" at ") || `Job #${row.dataset.companyId}`;
-      const why = document.createElement("span");
-      why.className = "top-picks-why";
-      why.textContent = reasons.join(" · ");
-      label.append(box, " ", title, why);
-      item.append(label);
-      const list_of_facts = document.createElement("dl");
-      list_of_facts.className = "top-pick-facts";
-      for (const [name, value] of facts(row)) {
-        const group = document.createElement("div");
-        group.append(Object.assign(document.createElement("dt"), { textContent: name }),
-          Object.assign(document.createElement("dd"), { textContent: value }));
-        list_of_facts.append(group);
+      box.id = `top-pick-${row.dataset.companyId}`;
+      box.setAttribute("aria-label", `Include ${row.dataset.job || "this job"}`);
+      const body = document.createElement("div");
+      body.className = "top-pick-body";
+      const title = document.createElement("label");
+      title.className = "top-pick-title";
+      title.htmlFor = box.id;
+      title.textContent = row.dataset.job || `Job #${row.dataset.companyId}`;
+      body.append(title);
+      if (window.TopPicksFacts) {
+        body.append(window.TopPicksFacts.line(row, row.dataset.company || ""));
+        const domain = window.TopPicksFacts.domain(row);
+        if (domain) body.append(domain);
+        body.append(window.TopPicksFacts.stats(row));
+      } else {
+        body.append(Object.assign(document.createElement("span"), { className: "top-pick-company", textContent: row.dataset.company || "" }));
       }
-      item.append(list_of_facts);
-      const link = row.querySelector("a.inline-action-link[href^='http']");
+      const chips = document.createElement("div");
+      chips.className = "top-pick-chips";
+      reasons.forEach((reason) => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "navy-chip";
+        chip.textContent = reason;
+        chips.append(chip);
+      });
+      body.append(chips);
+      item.append(box, body);  // the order of the list is the ranking
+      const link = row.querySelector("a.js-listing-open[href^='http']");  // the row's Open button
       if (link) {
+        const actions = document.createElement("div");
+        actions.className = "top-pick-actions";
         const open = document.createElement("a");
+        open.className = "bordered-button";
         open.href = link.href;
         open.target = "_blank";
         open.rel = "noopener noreferrer";
-        open.textContent = "Open listing";
-        item.append(open);
+        open.innerHTML = `Open ${ARROW}`;
+        actions.append(open);
+        item.append(actions);
       }
       list.append(item);
     });
   }
 
-  button.addEventListener("click", () => {
+  button.addEventListener("click", (event) => {
+    event.preventDefault();  // the button sits in the box's title bar: do not also open or close the box
     const picks = pick();
     status.textContent = "";
     if (!picks.length) {
@@ -118,8 +121,6 @@
     panel.hidden = false;
     panel.scrollIntoView({ behavior: "smooth", block: "start" });
   });
-
-  document.getElementById("top-picks-close")?.addEventListener("click", () => { panel.hidden = true; });
 
   build.addEventListener("click", async () => {
     const chosen = Array.from(list.querySelectorAll("input:checked"));
@@ -142,8 +143,8 @@
       const job = [box.dataset.job, box.dataset.company].filter(Boolean).join(" at ");
       return `- Job Finder job #${box.value}${job ? ` (${job})` : ""}`;
     }).join("\n");
-    const request = "Using Résumé Builder, read my writing rules, then for each of these Job Finder jobs tailor my " +
-      "résumé and write a cover letter. Read the whole listing first each time, and save both as PDFs.\n" + jobs;
+    const request = "Using Resume Builder, read my writing rules, then for each of these Job Finder jobs tailor my " +
+      "resume and write a cover letter. Read the whole listing first each time, and save both as PDFs.\n" + jobs;
     try {
       await navigator.clipboard.writeText(request);
       status.textContent = `Kept ${chosen.length} on the Dashboard. Request copied: paste it in Claude Desktop.`;

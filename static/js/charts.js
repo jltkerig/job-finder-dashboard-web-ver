@@ -1,3 +1,4 @@
+// BUILT FILE: edit the parts in static/js/charts/, then run: py -3.12 scripts/build_parts.py (tests fail when this file is out of date).
 document.addEventListener("DOMContentLoaded", () => {
   const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || "";
   const page = document.body.dataset.page || "";
@@ -72,16 +73,16 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 
-  $$(".details-action").forEach((button) => button.addEventListener("click", () => {
+  $$(".js-details-action").forEach((button) => button.addEventListener("click", () => {
     const target = document.getElementById(button.dataset.detailsTarget); if (!target) return;
-    const opening = target.hidden; target.hidden = !opening; const compact = document.getElementById("results-table")?.classList.contains("compact-rows"); button.textContent = compact ? (opening ? "Hide" : "Details") : (opening ? "Hide Details" : "View Details");
+    const opening = target.hidden; target.hidden = !opening; const compact = document.querySelector(".js-results-table")?.classList.contains("compact-rows"); button.textContent = compact ? (opening ? "Hide" : "Details") : (opening ? "Hide Details" : "View Details");
   }));
 
-  // Apply: copy a ready-made request for Résumé Builder's Claude Desktop connector, then open Claude Desktop to paste it.
-  $$(".apply-action").forEach((button) => button.addEventListener("click", async () => {
+  // Apply: copy a ready-made request for Resume Builder's Claude Desktop connector, then open Claude Desktop to paste it.
+  $$(".js-apply-action").forEach((button) => button.addEventListener("click", async () => {
     const { jobId, jobTitle, companyName } = button.dataset;
     const job = [jobTitle, companyName].filter(Boolean).join(" at ");
-    const request = `Using Résumé Builder, read my writing rules, then tailor my résumé and write a cover letter for Job Finder job #${jobId}${job ? ` (${job})` : ""}. Read the whole listing first, and save both as PDFs.`;
+    const request = `Using Resume Builder, read my writing rules, then tailor my resume and write a cover letter for Job Finder job #${jobId}${job ? ` (${job})` : ""}. Read the whole listing first, and save both as PDFs.`;
     const label = button.textContent;
     try { await navigator.clipboard.writeText(request); button.textContent = "Copied - paste in Claude"; }
     catch { window.prompt("Copy this request, then paste it into Claude Desktop:", request); }
@@ -90,23 +91,23 @@ document.addEventListener("DOMContentLoaded", () => {
   }));
 
   $$(".history-cities").forEach((el) => { try { const items = JSON.parse(el.dataset.cities || "[]"); el.textContent = items.map((x) => `${x.city} · ${x.radius ?? x.radius_miles ?? 50} miles`).join(" • "); } catch { el.textContent = ""; } });
-  $$(".search-again-button").forEach((button) => button.addEventListener("click", () => {
+  $$(".js-search-again-button").forEach((button) => button.addEventListener("click", () => {
     const params = new URLSearchParams({ job_title: button.dataset.jobTitle || "", state: button.dataset.state || "", cities: button.dataset.cities || "[]" });
     window.location.href = `/?${params.toString()}`;
   }));
 
   async function saveListing(button) {
     const companyId = button.dataset.companyId; if (!companyId || button.disabled) return;
-    button.disabled = true; button.classList.add("is-saving"); button.textContent = "Adding…";
+    button.disabled = true; button.textContent = "Adding…";
     try {
       const response = await fetch("/save-kept", { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken }, body: JSON.stringify({ company_ids: [companyId] }) });
       const data = await readJsonResponse(response, "Could not save this result.", "E1201"); if (!response.ok) throw new Error(serverMessage(data, "Could not save this result.", "E1201"));
-      button.classList.remove("is-saving"); button.classList.add("is-saved"); button.textContent = "Saved"; button.disabled = false;
+      markSaved(button, true); button.textContent = "Saved"; button.disabled = false;
       const row = button.closest(".result-row"); if (row) row.dataset.saved = "true";
       // A saved job lives on the Dashboard's Saved Jobs, so it fades off the results (and stays off on reload).
       if (page === "search") window.removeResultRows([companyId]);
       showToast("Added to Saved Jobs on the Dashboard", "success");
-    } catch (error) { button.disabled = false; button.classList.remove("is-saving"); button.textContent = "Keep"; showToast(error.message, "danger"); }
+    } catch (error) { button.disabled = false; button.textContent = "Keep"; showToast(error.message, "danger"); }
   }
   async function unsaveListing(button) {
     const companyId = button.dataset.companyId; if (!companyId || button.disabled) return;
@@ -114,13 +115,13 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const response = await fetch(`/unsave-kept/${companyId}`, { method: "POST", headers: { "X-CSRF-Token": csrfToken, Accept: "application/json" } });
       const data = await readJsonResponse(response, "Could not unsave this result.", "E3102"); if (!response.ok) throw new Error(serverMessage(data, "Could not unsave this result.", "E3102"));
-      button.classList.remove("is-saved"); button.textContent = "Keep"; button.disabled = false; const row = button.closest(".result-row"); if (row) row.dataset.saved = "false"; showToast("Removed from saved jobs", "info");
+      markSaved(button, false); button.textContent = "Keep"; button.disabled = false; const row = button.closest(".result-row"); if (row) row.dataset.saved = "false"; showToast("Removed from saved jobs", "info");
     } catch (error) { button.disabled = false; button.textContent = "Saved"; showToast(error.message, "danger"); }
   }
-  $$(".keep-action").forEach((button) => {
-    button.addEventListener("mouseenter", () => { if (button.classList.contains("is-saved") && !button.disabled) button.textContent = "Unsave"; });
-    button.addEventListener("mouseleave", () => { if (button.classList.contains("is-saved") && !button.disabled) button.textContent = "Saved"; });
-    button.addEventListener("click", () => button.classList.contains("is-saved") ? unsaveListing(button) : saveListing(button));
+  $$(".js-keep-action").forEach((button) => {
+    button.addEventListener("mouseenter", () => { if (isSaved(button) && !button.disabled) button.textContent = "Unsave"; });
+    button.addEventListener("mouseleave", () => { if (isSaved(button) && !button.disabled) button.textContent = "Saved"; });
+    button.addEventListener("click", () => isSaved(button) ? unsaveListing(button) : saveListing(button));
   });
 
   async function restoreRejected(companyId) {
@@ -129,7 +130,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   // Rejected listings: change why one was rejected (the same reasons as the Reject dialog).
   $$(".rejection-reason-select").forEach((select) => {
-    const save = select.parentElement.querySelector(".change-reason-action");
+    const save = select.parentElement.querySelector(".js-change-reason-action");
     let saved = select.value;
     select.addEventListener("change", () => { save.disabled = select.value === saved; });
     save.addEventListener("click", async () => {
@@ -146,12 +147,11 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (error) { save.disabled = false; showToast(error.message, "danger"); }
     });
   });
-  $$(".reject-action").forEach((button) => button.addEventListener("click", async () => {
+  $$(".js-reject-action").forEach((button) => button.addEventListener("click", async () => {
     const companyId = button.dataset.companyId, companyName = button.dataset.companyName || "this listing";
-    const inRow = button.closest(".result-row");
-    // A result row has the "If rejecting, why?" picker on its Details tab; a saved job on the Dashboard asks in a dialog.
-    let reason = inRow?.nextElementSibling?.querySelector(".reject-reason")?.value || "other";
-    if (!inRow && window.askRejectReason) {
+    // Every Reject asks "If rejecting, why?" in the same dialog that confirms it.
+    let reason = "other";
+    if (window.askRejectReason) {
       reason = await window.askRejectReason(companyName);
       if (!reason) return;
     } else if (!confirm(`Reject ${companyName}? This hides it from search. You can restore it from Settings.`)) return;
@@ -166,7 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (error) { button.disabled = false; button.classList.remove("is-removing"); button.textContent = "Reject Listing"; showToast(error.message, "danger"); }
   }));
   // Closed: the job is no longer open. Rejects it with the reason "closed", the same as Closed on a Top 10 pick.
-  $$(".closed-action").forEach((button) => button.addEventListener("click", async () => {
+  $$(".js-closed-action").forEach((button) => button.addEventListener("click", async () => {
     const companyId = button.dataset.companyId; if (!companyId || button.disabled) return;
     button.disabled = true;
     try {
@@ -180,7 +180,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }));
 
   // Refresh: reads this one posting again (the same check as Refresh on a Top 10 pick); a job found closed turns red.
-  $$(".refresh-action").forEach((button) => button.addEventListener("click", async () => {
+  $$(".js-refresh-action").forEach((button) => button.addEventListener("click", async () => {
     const companyId = button.dataset.companyId; if (!companyId || button.disabled) return;
     const row = button.closest(".result-row"), label = button.textContent;
     button.disabled = true; button.textContent = "Refreshing…";
@@ -198,15 +198,15 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (error) { showToast(error.message, "danger"); }
     button.disabled = false; button.textContent = label;
   }));
-  $$(".restore-action").forEach((button) => button.addEventListener("click", async () => { if (!confirm(`Restore ${button.dataset.companyName || "this listing"}?`)) return; button.disabled = true; try { const data = await restoreRejected(button.dataset.companyId); button.closest(".saved-job-card")?.remove(); showToast(data.kept ? "Restored to Dashboard" : "Restored to search results", "success"); } catch (error) { button.disabled = false; showToast(error.message, "danger"); } }));
-  $$(".block-action").forEach((button) => button.addEventListener("click", async () => {
+  $$(".js-restore-action").forEach((button) => button.addEventListener("click", async () => { if (!confirm(`Restore ${button.dataset.companyName || "this listing"}?`)) return; button.disabled = true; try { const data = await restoreRejected(button.dataset.companyId); button.closest(".saved-job-card")?.remove(); showToast(data.kept ? "Restored to Dashboard" : "Restored to search results", "success"); } catch (error) { button.disabled = false; showToast(error.message, "danger"); } }));
+  $$(".js-block-action").forEach((button) => button.addEventListener("click", async () => {
     const companyId = button.dataset.companyId, domain = button.dataset.domain || "this domain"; if (!companyId || !confirm(`Block ${domain} from future searches? This blocks the entire website, not just this listing.`)) return;
     button.disabled = true; try { const response = await fetch(`/block-domain/${companyId}`, { method: "POST", headers: { "X-CSRF-Token": csrfToken, "X-Requested-With": "fetch", Accept: "application/json" } }); const data = await readJsonResponse(response, "Could not block the domain.", "E3211"); if (!response.ok) throw new Error(serverMessage(data, "Could not block the domain.", "E3211")); button.textContent = "Blocked";
       if(page==="search") { fadeResultRows(row => (row.dataset.companyId === String(companyId)) || (row.querySelector('td[data-label="Domain"]')?.textContent||"").trim().toLowerCase().endsWith(data.domain.toLowerCase())); requestReplacementIfTopPick(companyId); }
       showToast(`${data.domain || domain} blocked from future searches`, "info"); } catch (error) { button.disabled = false; showToast(error.message, "danger"); }
   }));
 
-  $$(".block-company-action").forEach((button) => button.addEventListener("click", async () => {
+  $$(".js-block-company-action").forEach((button) => button.addEventListener("click", async () => {
     const companyId=button.dataset.companyId, name=button.dataset.companyName||"this company";
     if(!companyId||!confirm(`Block ${name} from future searches?`))return;
     button.disabled=true;
@@ -221,7 +221,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }));
 
   function fadeResultRows(matches) {
-    const rows=$$("#results-table .result-row").filter(matches);
+    const rows=$$(".js-results-table .result-row").filter(matches);
     rows.forEach(row=>row.classList.add("is-removing"));
     setTimeout(()=>{
       rows.forEach(row=>{const details=row.nextElementSibling;if(details?.classList.contains("details-row"))details.remove();row.remove();});
@@ -236,9 +236,13 @@ document.addEventListener("DOMContentLoaded", () => {
   function stateCode(value){
     const raw=(value||"").trim();
     const upper=raw.toUpperCase();
+    // "United States (Remote)" is a remote job (the filter shows Remote); a bare "United States" is no state at all.
+    if(/^(UNITED STATES|USA|US)\s*\(REMOTE\)$/.test(upper)||upper==="REMOTE")return "REMOTE";
+    if(/^(UNITED STATES|USA|US|UNITED STATES OF AMERICA)$/.test(upper))return "";
     return STATE_NAMES[upper]?upper:STATE_CODES[raw.toLowerCase()]||upper;
   }
-  const resultFilter = $("#result-filter"), resultStateFilter = $("#result-state-filter"), resultArrangementFilter = $("#result-arrangement-filter"), resultStatusFilter = $("#result-status-filter"), resultSort = $("#result-sort"), resultMinCredibility = $("#result-min-credibility"), resultScheduleFilter = $("#result-schedule-filter"), resultSourceFilter = $("#result-source-filter"), resultNewFilter = $("#result-new-filter"), resultsCount = $("#results-count"), resultsTableBody = $("#results-table tbody");
+  window.jobFinderStateCode = stateCode;  // the Dashboard filters (dashboard-filters.js) match states the same way
+  const resultFilter = $("#result-filter"), resultStateFilter = $("#result-state-filter"), resultArrangementFilter = $("#result-arrangement-filter"), resultStatusFilter = $("#result-status-filter"), resultSort = $("#result-sort"), resultMinCredibility = $("#result-min-credibility"), resultScheduleFilter = $("#result-schedule-filter"), resultSourceFilter = $("#result-source-filter"), resultNewFilter = $("#result-new-filter"), resultsCount = $("#results-count"), resultsTableBody = $(".js-results-table tbody");
   function updateClientResults() {
     if (!resultsTableBody) return;
     const query=(resultFilter?.value||"").trim().toLowerCase(),status=resultStatusFilter?.value||"all";
@@ -270,8 +274,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   if(resultStateFilter&&resultsTableBody){
     const codes=[...new Set($$(".result-row",resultsTableBody).map(row=>stateCode(row.dataset.state)).filter(Boolean))];
-    codes.sort((a,b)=>(STATE_NAMES[a]||a).localeCompare(STATE_NAMES[b]||b));
-    codes.forEach(code=>{const option=document.createElement("option");option.value=code;option.textContent=STATE_NAMES[code]?`${STATE_NAMES[code]} (${code})`:code;resultStateFilter.appendChild(option);});
+    // Only the abbreviation, so the box can stay narrow; the full name is the tooltip.
+    codes.sort((a,b)=>a.localeCompare(b));
+    codes.forEach(code=>{const option=document.createElement("option");option.value=code;option.textContent=code==="REMOTE"?"Remote":code;if(STATE_NAMES[code])option.title=STATE_NAMES[code];resultStateFilter.appendChild(option);});
+    if(resultStateFilter.options[0])resultStateFilter.options[0].textContent="All";
   }
   [resultFilter,resultStateFilter,resultArrangementFilter,resultStatusFilter,resultSort,resultMinCredibility,resultScheduleFilter,resultSourceFilter,resultNewFilter].forEach(control=>control?.addEventListener("input",updateClientResults));
   [resultStateFilter,resultArrangementFilter,resultStatusFilter,resultSort,resultMinCredibility,resultScheduleFilter,resultSourceFilter,resultNewFilter].forEach(control=>control?.addEventListener("change",updateClientResults));
@@ -291,7 +297,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const list=$("#"+listId), input=$("#"+inputId), radius=$("#"+radiusId), add=$("#"+addId), hidden=hiddenId?$("#"+hiddenId):null; if(!list||!input||!radius||!add) return {getItems:()=>[]};
     let items=Array.isArray(initial)?initial.map((i)=>({city:String(i.city||"").trim(),radius:Number(i.radius??i.radius_miles??50),scope:STATE_CODES[String(i.city||"").trim().toLowerCase()]?"state":"city"})).filter((i)=>i.city):[];
     const persist=()=>{ if(storageKey)localStorage.setItem(storageKey,JSON.stringify(items)); if(hidden)hidden.value=JSON.stringify(items); };
-    function render(){ list.innerHTML=""; items.forEach((item,index)=>{ const chip=document.createElement("div"); chip.className="city-chip"; const label=document.createElement("span"); label.textContent=item.scope==="state"?`${item.city} · statewide`:`${item.city} · ${item.radius} miles`; chip.appendChild(label); const remove=document.createElement("button"); remove.type="button"; remove.className="city-remove"; remove.textContent="×"; remove.addEventListener("click",()=>{items.splice(index,1);persist();render();}); chip.appendChild(remove); list.appendChild(chip); }); persist(); }
+    function render(){ list.innerHTML=""; items.forEach((item,index)=>{ const chip=document.createElement("div"); chip.className="navy-chip"; const label=document.createElement("span"); label.textContent=item.scope==="state"?`${item.city} · statewide`:`${item.city} · ${item.radius} miles`; chip.appendChild(label); const remove=document.createElement("button"); remove.type="button"; remove.className="city-remove"; remove.textContent="×"; remove.addEventListener("click",()=>{items.splice(index,1);persist();render();}); chip.appendChild(remove); list.appendChild(chip); }); persist(); }
     function addCity(){ const city=input.value.trim(); if(!city)return; const r=Number(radius.value||50); const existing=items.find((i)=>i.city.toLowerCase()===city.toLowerCase()); if(existing)existing.radius=r; else items.push({city,radius:r,scope:STATE_CODES[city.toLowerCase()]?"state":"city"}); input.value=""; radius.disabled=false; render(); }
     input.addEventListener("input",()=>{radius.disabled=Boolean(STATE_CODES[input.value.trim().toLowerCase()]);});
     add.addEventListener("click",addCity); input.addEventListener("keydown",(e)=>{if(e.key==="Enter"){e.preventDefault();addCity();}}); render(); return {getItems:()=>items.slice(),addPending:addCity,setItems:(v)=>{items=Array.isArray(v)?v:[];render();}};
@@ -300,10 +306,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchCityEditor=setupCityEditor({listId:"search-city-list",inputId:"search-city-input",radiusId:"search-city-radius",addId:"add-search-city",initial:searchCitiesInitial,storageKey:"jobFinderCities"});
   let profileCitiesInitial=[]; try{profileCitiesInitial=JSON.parse($("#profile-cities-json")?.value||"[]");}catch{} setupCityEditor({listId:"profile-city-list",inputId:"profile-city-input",radiusId:"profile-city-radius",addId:"add-profile-city",initial:profileCitiesInitial,hiddenId:"profile-cities-json"});
 
-  const jobTitleInput=$("#job-title"), stateInput=$("#search-state"), jobTitleSuggestions=$("#job-title-suggestions");
+  const jobTitleInput=$(".js-job-title"), stateInput=$("#search-state"), jobTitleSuggestions=$("#job-title-suggestions");
   if(jobTitleInput){ const params=new URLSearchParams(location.search); const profileTitles=(()=>{try{return JSON.parse($("#saved-profile-titles")?.textContent||"[]").join(", ");}catch{return "";}})(); jobTitleInput.value=params.get("job_title")||profileTitles||localStorage.getItem("jobFinderJobTitle")||jobTitleInput.value||""; }
   if(stateInput){ const params=new URLSearchParams(location.search); stateInput.value=params.get("state")||stateInput.value||localStorage.getItem("jobFinderState")||""; }
-  async function loadJobTitleSuggestions(){ if(!jobTitleInput||!jobTitleSuggestions)return; const titles=normalizeJobTitles(jobTitleInput.value); if(!titles){jobTitleSuggestions.hidden=true;jobTitleSuggestions.innerHTML="";return;} try{const response=await fetch(`/job-title-suggestions?titles=${encodeURIComponent(titles)}`,{cache:"no-store"}); const data=await readJsonResponse(response,"Could not load related job-title suggestions.","E1101"); if(!response.ok)throw new Error(serverMessage(data,"Could not load related job-title suggestions.","E1101")); jobTitleSuggestions.innerHTML=""; (data.suggestions||[]).forEach((suggestion)=>{const b=document.createElement("button");b.type="button";b.className="job-suggestion-button";b.textContent=`+ ${suggestion}`;b.addEventListener("click",()=>{jobTitleInput.value=normalizeJobTitles(`${jobTitleInput.value}, ${suggestion}`);localStorage.setItem("jobFinderJobTitle",jobTitleInput.value);});jobTitleSuggestions.appendChild(b);}); jobTitleSuggestions.hidden=!jobTitleSuggestions.children.length;}catch(e){console.error(e);jobTitleSuggestions.hidden=true;}}
+  async function loadJobTitleSuggestions(){ if(!jobTitleInput||!jobTitleSuggestions)return; const titles=normalizeJobTitles(jobTitleInput.value); if(!titles){jobTitleSuggestions.hidden=true;jobTitleSuggestions.innerHTML="";return;} try{const response=await fetch(`/job-title-suggestions?titles=${encodeURIComponent(titles)}`,{cache:"no-store"}); const data=await readJsonResponse(response,"Could not load related job-title suggestions.","E1101"); if(!response.ok)throw new Error(serverMessage(data,"Could not load related job-title suggestions.","E1101")); jobTitleSuggestions.innerHTML=""; (data.suggestions||[]).forEach((suggestion)=>{const b=document.createElement("button");b.type="button";b.className="navy-chip";b.textContent=`+ ${suggestion}`;b.addEventListener("click",()=>{jobTitleInput.value=normalizeJobTitles(`${jobTitleInput.value}, ${suggestion}`);localStorage.setItem("jobFinderJobTitle",jobTitleInput.value);});jobTitleSuggestions.appendChild(b);}); jobTitleSuggestions.hidden=!jobTitleSuggestions.children.length;}catch(e){console.error(e);jobTitleSuggestions.hidden=true;}}
   let titleSuggestionTimer=null; jobTitleInput?.addEventListener("input",()=>{clearTimeout(titleSuggestionTimer); titleSuggestionTimer=setTimeout(loadJobTitleSuggestions,600);}); jobTitleInput?.addEventListener("blur",()=>{ if(jobTitleInput.value.trim()){ clearTimeout(titleSuggestionTimer); titleSuggestionTimer=setTimeout(loadJobTitleSuggestions,350); }});
 
   const searchFormError=$("#search-form-error"); function showFormError(message=""){ if(!searchFormError)return; searchFormError.textContent=message; searchFormError.hidden=!message; }
@@ -313,8 +319,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function showStatusModal(title,message,tone="info",{loading=false,stopLabel="",onStop=null,closable=true,confirmLabel="OK",onConfirm=null}={}){
     let modal=$("#status-modal"); if(!modal){modal=document.createElement("div");modal.id="status-modal";modal.className="status-modal";document.body.appendChild(modal);} modal.dataset.tone=tone; modal.hidden=false;
-    modal.innerHTML=`<div class="status-modal-backdrop"></div><div class="status-modal-card" role="dialog" aria-modal="true"><div class="${loading?"color-spinner":"status-modal-icon"}" aria-hidden="true"></div><h2>${title}</h2><p>${message}</p><div class="modal-actions">${stopLabel?`<button class="bordered-button secondary-action modal-stop" type="button">${stopLabel}</button>`:""}${closable?`<button class="bordered-button primary-action modal-close" type="button">${confirmLabel}</button>`:""}</div></div>`;
-    $(".modal-close",modal)?.addEventListener("click",()=>{modal.hidden=true;if(onConfirm)onConfirm();}); $(".status-modal-backdrop",modal)?.addEventListener("click",()=>{if(closable)modal.hidden=true;}); $(".modal-stop",modal)?.addEventListener("click",async()=>{if(onStop)await onStop();modal.hidden=true;});
+    modal.innerHTML=`<div class="status-modal-backdrop"></div><div class="status-modal-card" role="dialog" aria-modal="true"><div class="${loading?"color-spinner":"status-modal-icon"}" aria-hidden="true"></div><h2>${title}</h2><p>${message}</p><div class="modal-actions">${stopLabel?`<button class="bordered-button js-modal-stop" type="button">${stopLabel}</button>`:""}${closable?`<button class="primary-button js-modal-close" type="button">${confirmLabel}</button>`:""}</div></div>`;
+    $(".js-modal-close",modal)?.addEventListener("click",()=>{modal.hidden=true;if(onConfirm)onConfirm();}); $(".status-modal-backdrop",modal)?.addEventListener("click",()=>{if(closable)modal.hidden=true;}); $(".js-modal-stop",modal)?.addEventListener("click",async()=>{if(onStop)await onStop();modal.hidden=true;});
   }
   async function fetchWithTimeout(url,options={},timeoutMs=8000,externalController=null){const controller=externalController||new AbortController();const timer=setTimeout(()=>controller.abort(),timeoutMs);try{return await fetch(url,{...options,signal:controller.signal});}finally{clearTimeout(timer);}}
 
@@ -338,7 +344,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       if(total<=1)return;
       const previous=document.createElement("button"),next=document.createElement("button"),label=document.createElement("span");
-      previous.type=next.type="button";previous.className=next.className="bordered-button secondary-action";
+      previous.type=next.type="button";previous.className=next.className="bordered-button";
       previous.textContent="Previous";next.textContent="Next";label.textContent=`Page ${page+1} of ${total}`;
       previous.disabled=page===0;next.disabled=page===total-1;
       previous.addEventListener("click",()=>{page--;render();});
@@ -370,7 +376,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const data = await response.json();
         const list = titleChips.querySelector(".chip-row");
         list.replaceChildren(...(data.suggestions || []).map((title) => {
-          const b = document.createElement("button"); b.type = "button"; b.className = "job-suggestion-button"; b.textContent = `+ ${title}`;
+          const b = document.createElement("button"); b.type = "button"; b.className = "navy-chip"; b.textContent = `+ ${title}`;
           b.addEventListener("click", () => {
             const kept = titles.value.split(",").map((t) => t.trim()).filter(Boolean);
             titles.value = [...kept, title].join(", ");
@@ -385,26 +391,60 @@ document.addEventListener("DOMContentLoaded", () => {
     titles.addEventListener("input", queueChips); titles.addEventListener("blur", queueChips);
     primaryTitle?.addEventListener("change", queueChips); primaryTitle?.addEventListener("blur", queueChips);
     refreshTitleChips();
-    const skillsField = $("#skills-json"), historyField = $("#work-history-json"), skillsList = $("#profile-skill-list"), historyList = $("#work-history-list");
+    const skillsField = $("#skills-json"), historyField = $("#work-history-json"), skillsList = $(".js-profile-skill-list"), historyList = $(".js-work-history-list");
     let skills = [], history = [];
     try { skills = JSON.parse(skillsField.value); } catch {}
     try { history = JSON.parse(historyField.value); } catch {}
     if (!Array.isArray(skills)) skills = [];
     if (!Array.isArray(history)) history = [];
+    let skillWeights = {}; try { skillWeights = JSON.parse(skillsList.dataset.weights || "{}"); } catch {}
+    // Skills sit in three boxes: Core (counts triple in Job Fit Minus Titles) and Nice to have (counts half) above, and Normal
+    // (the list below). Drag a skill into another box; the choice is saved as soon as you drop it.
+    const skillChips = new Map(); // skill -> its chip, to point at one already listed
+    const zoneLists = { normal: skillsList };
+    const zoneBox = (weight, title, note) => {
+      const box = document.createElement("div"); box.className = "skill-zone"; box.dataset.weight = weight;
+      const heading = document.createElement("strong"); heading.textContent = title;
+      const hint = document.createElement("small"); hint.textContent = note;
+      const list = document.createElement("div"); list.className = "skill-chip-list skill-zone-list";
+      box.append(heading, hint, list); zoneLists[weight] = list; return box;
+    };
+    const zonesRow = document.createElement("div"); zonesRow.className = "skill-zones";
+    zonesRow.append(zoneBox("core", "Core", "Counts triple"), zoneBox("nice", "Nice to have", "Counts half"));
+    const normalHeading = document.createElement("p"); normalHeading.className = "skill-zone-title"; normalHeading.innerHTML = "<strong>Normal</strong> <small>Drag a skill up to make it Core or Nice to have</small>";
+    skillsList.before(zonesRow, normalHeading); skillsList.classList.add("skill-zone-list"); skillsList.dataset.weight = "normal";
+    async function setWeight(skill, weight) {
+      if ((skillWeights[skill] || "normal") === weight) return;
+      try {
+        const response = await fetch("/job-skill-fitting/weight", { method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken, "X-Requested-With": "fetch", Accept: "application/json" }, body: JSON.stringify({ skill, weight }) });
+        if (!response.ok) throw new Error();
+        skillWeights[skill] = weight; renderSkills();
+      } catch { showToast("Could not save how much that skill counts.", "danger"); }
+    }
+    Object.entries(zoneLists).forEach(([weight, list]) => {
+      const target = list.closest(".skill-zone") || list;
+      target.addEventListener("dragover", (event) => { event.preventDefault(); target.classList.add("is-over"); });
+      target.addEventListener("dragleave", (event) => { if (!target.contains(event.relatedTarget)) target.classList.remove("is-over"); });
+      target.addEventListener("drop", (event) => { event.preventDefault(); target.classList.remove("is-over"); const skill = event.dataTransfer.getData("text/plain"); if (skill) setWeight(skill, weight); });
+    });
     function renderSkills() {
-      skillsList.replaceChildren();
+      Object.values(zoneLists).forEach((list) => list.replaceChildren()); skillChips.clear();
       skills.forEach((skill, index) => {
-        const chip = document.createElement("span"); chip.className = "skill-chip";
+        const chip = document.createElement("span"); chip.className = "skill-chip"; chip.draggable = true;
+        chip.title = "Drag to Core, Normal or Nice to have";
+        chip.addEventListener("dragstart", (event) => { event.dataTransfer.setData("text/plain", skill); event.dataTransfer.effectAllowed = "move"; chip.classList.add("is-dragging"); });
+        chip.addEventListener("dragend", () => chip.classList.remove("is-dragging"));
         const label = document.createElement("span"); label.textContent = skill;
         const remove = document.createElement("button"); remove.type = "button"; remove.textContent = "×"; remove.setAttribute("aria-label", `Remove ${skill}`);
         remove.addEventListener("click", () => { skills.splice(index, 1); renderSkills(); });
-        chip.append(label, remove); skillsList.append(chip);
+        chip.append(label, remove); skillChips.set(skill, chip);
+        (zoneLists[skillWeights[skill]] || skillsList).append(chip);
       }); skillsField.value = JSON.stringify(skills); showSkillSuggestions(); updateRelated();
     }
-    // One list of suggested skills under the Add Skill box: skills your résumé mentions, skills the jobs Job Finder found keep
+    // One list of suggested skills under the Add Skill box: skills your resume mentions, skills the jobs Job Finder found keep
     // asking for, skills that go with the ones you already added, and, as you type, skills that go with the word being typed
     // ("HTML" brings up CSS, Responsive Design and so on). Click one to add it.
-    const suggestBox = $("#skill-suggestions");
+    const suggestBox = $(".js-skill-suggestions");
     const readList = (name) => { try { return JSON.parse(suggestBox?.dataset[name] || "[]"); } catch { return []; } };
     const fromResume = readList("resume"), asked = readList("demand").map(item => item.skill || item);
     const relatedCache = new Map(); // skill (lower case) -> skills that go with it
@@ -432,13 +472,13 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!open.length) return;
       const title = document.createElement("h4"); title.textContent = "Suggested:"; suggestBox.append(title);
       for (const skill of open) {
-        const button = document.createElement("button"); button.type = "button"; button.className = "bordered-button secondary-action";
+        const button = document.createElement("button"); button.type = "button"; button.className = "bordered-button";
         button.textContent = `+ ${skill}`;
         button.addEventListener("click", () => addSkill(skill));
         suggestBox.append(button);
       }
       if (open.length > 1) {
-        const all = document.createElement("button"); all.type = "button"; all.className = "bordered-button primary-action"; all.textContent = "Add all";
+        const all = document.createElement("button"); all.type = "button"; all.className = "primary-button"; all.textContent = "Add all";
         all.addEventListener("click", () => open.forEach(skill => addSkill(skill)));
         suggestBox.append(all);
       }
@@ -455,7 +495,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const at = skills.findIndex(s => s.toLowerCase() === value.toLowerCase());
       if (at === -1) { skills.push(value); renderSkills(); return; }
       if (!announce) return;
-      const chip = skillsList.children[at];
+      const chip = skillChips.get(skills[at]);
       if (chip) {
         chip.scrollIntoView({ block: "nearest" });
         chip.classList.add("skill-chip-found");
@@ -483,12 +523,12 @@ document.addEventListener("DOMContentLoaded", () => {
     function el(tag, className, text) { const node = document.createElement(tag); if (className) node.className = className; if (text !== undefined) node.textContent = text; return node; }
     function renderHistory() {
       historyList.replaceChildren();
-      if (!history.length) historyList.append(el("p", "work-empty", "No jobs added yet. Add one, or upload a résumé to fill these in."));
+      if (!history.length) historyList.append(el("p", "work-empty", "No jobs added yet. Add one, or upload a resume to fill these in."));
       history.forEach((job, index) => {
         const details = el("details", "work-entry");
         const summary = el("summary");
         const main = el("span", "work-main"), role = el("strong", "work-role"), company = el("span", "work-company"), dates = el("span", "work-dates"), preview = el("span", "work-preview");
-        main.append(role, company); summary.append(main, dates, preview); details.append(summary);
+        main.append(role, company); const chevron = el("i", "summary-chevron"); chevron.setAttribute("aria-hidden", "true"); summary.append(main, dates, preview, chevron); details.append(summary);
         const refresh = () => {
           role.textContent = job.role || "New role"; company.textContent = job.company || "";
           const label = datesLabel(job.dates); dates.textContent = label; dates.hidden = !label;
@@ -541,9 +581,9 @@ document.addEventListener("DOMContentLoaded", () => {
           ["Name", "supervisor_name", example("supervisor_name")], ["Title", "supervisor_title", example("supervisor_title")],
           ["Email", "supervisor_email", "e.g. name@company.com"], ["Phone", "supervisor_phone", "Their own number, if you have it"]]));
         const actions = el("div", "work-actions");
-        const remove = el("button", "bordered-button destructive-action", "Remove Job"); remove.type = "button";
+        const remove = el("button", "destructive-button", "Remove Job"); remove.type = "button";
         remove.addEventListener("click", () => keepPage(() => { history.splice(index, 1); renderHistory(); }));
-        const done = el("button", "bordered-button secondary-action", "Done"); done.type = "button";
+        const done = el("button", "bordered-button", "Done"); done.type = "button";
         done.addEventListener("click", () => { details.open = false; details.scrollIntoView({ block: "nearest" }); });
         actions.append(remove, done); fields.append(actions); details.append(fields); historyList.append(details);
       }); historyField.value = JSON.stringify(history);
@@ -557,16 +597,16 @@ document.addEventListener("DOMContentLoaded", () => {
       window.scrollTo(0, top);
       requestAnimationFrame(() => { window.scrollTo(0, top); if (reveal) reveal(); });
     };
-    $("#add-work-history").addEventListener("click", () => keepPage(
+    $(".js-add-work-history").addEventListener("click", () => keepPage(
       () => { history.push({role:"",company:"",dates:"",description:""}); renderHistory(); historyList.lastElementChild.open = true; },
       () => historyList.lastElementChild?.scrollIntoView({ block: "nearest" })));
-    // No work history saved yet: fill the form in from the uploaded résumé. Nothing is saved until Save Profile.
+    // No work history saved yet: fill the form in from the uploaded resume. Nothing is saved until Save Profile.
     const historyNote = $("#work-history-note");
     if (historyNote && !history.length) {
       let fromResume = []; try { fromResume = JSON.parse(historyNote.dataset.history || "[]"); } catch {}
       if (Array.isArray(fromResume) && fromResume.length) {
         history = fromResume.map(job => ({ role: job.role || "", company: job.company || "", dates: job.dates || "", description: job.description || "" }));
-        historyNote.textContent = `Filled in from your résumé (${historyNote.dataset.source || "uploaded résumé"}): check each job, remove any you don't want, then Save Profile.`;
+        historyNote.textContent = `Filled in from your resume (${historyNote.dataset.source || "uploaded resume"}): check each job, remove any you don't want, then Save Profile.`;
         historyNote.hidden = false;
       }
     }
@@ -574,14 +614,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const educationField = $("#education-json"), educationList = $("#education-list");
     let education = []; try { education = JSON.parse(educationField.value); } catch {}
     let degrees = []; try { degrees = JSON.parse(educationList.dataset.degrees || "[]"); } catch {}
-    // No schools saved yet: fill the form in from the uploaded résumé. Nothing is saved until Save Profile.
+    // No schools saved yet: fill the form in from the uploaded resume. Nothing is saved until Save Profile.
     const educationNote = $("#education-note");
     if (educationNote && !education.length) {
       let fromResume = []; try { fromResume = JSON.parse(educationNote.dataset.schools || "[]"); } catch {}
       if (Array.isArray(fromResume) && fromResume.length) {
         education = fromResume.map(school => ({ school: school.school || "", degree: school.degree || "", major: school.major || "", minor: school.minor || "",
           start_date: school.start_date || "", end_date: school.end_date || "", gpa: school.gpa || "" }));
-        educationNote.textContent = `Filled in from your résumé (${educationNote.dataset.source || "uploaded résumé"}): check each school, remove any you don't want, then Save Profile.`;
+        educationNote.textContent = `Filled in from your resume (${educationNote.dataset.source || "uploaded resume"}): check each school, remove any you don't want, then Save Profile.`;
         educationNote.hidden = false;
       }
     }
@@ -622,9 +662,9 @@ document.addEventListener("DOMContentLoaded", () => {
         for (const [caption, control] of [["Start month", start], ["End month", end], ["Currently attending", current]]) { const item = el("label"); item.append(control, caption); months.append(item); }
         const dateBlock = el("fieldset", "work-dates-editor"); dateBlock.append(el("legend", "", "Time There"), months); fields.append(dateBlock);
         const actions = el("div", "work-actions");
-        const remove = el("button", "bordered-button destructive-action", "Remove School"); remove.type = "button";
+        const remove = el("button", "destructive-button", "Remove School"); remove.type = "button";
         remove.addEventListener("click", () => keepPage(() => { education.splice(index, 1); renderEducation(); }));
-        const done = el("button", "bordered-button secondary-action", "Done"); done.type = "button";
+        const done = el("button", "bordered-button", "Done"); done.type = "button";
         done.addEventListener("click", () => { details.open = false; });
         actions.append(remove, done); fields.append(actions); details.append(fields); educationList.append(details);
       }); educationField.value = JSON.stringify(education);
@@ -640,13 +680,13 @@ document.addEventListener("DOMContentLoaded", () => {
     let suggestions = null;
     resumeFile.addEventListener("change", async () => {
       const file = resumeFile.files[0]; if (!file) return;
-      if (file.size > 5 * 1024 * 1024) { showToast("Résumé must be under 5 MB.", "danger"); resumeFile.value = ""; return; }
+      if (file.size > 5 * 1024 * 1024) { showToast("Resume must be under 5 MB.", "danger"); resumeFile.value = ""; return; }
       const body = new FormData(); body.append("resume", file);
-      showToast("Reading résumé…", "info");
+      showToast("Reading resume…", "info");
       try {
         const response = await fetch("/profile/parse-resume", {method:"POST",headers:{"X-CSRF-Token":csrfToken},body});
-        const data = await readJsonResponse(response, "Could not read résumé.", "E3313");
-        if (!response.ok) throw new Error(data.message || "Could not read résumé.");
+        const data = await readJsonResponse(response, "Could not read resume.", "E3313");
+        if (!response.ok) throw new Error(data.message || "Could not read resume.");
         suggestions = data.suggestions; resumeContent.replaceChildren();
         const fields = [["Name", "name", [suggestions.first_name, suggestions.last_name].filter(Boolean).join(" ")], ["Home City, State", "location", suggestions.home_location], ["Skills", "skills", (suggestions.skills || []).join(", ")], ["Work history", "history", (suggestions.work_history || []).map(j => `${j.role} · ${j.company} · ${j.dates}`).join("\n")], ["Education", "education", (suggestions.education || []).map(s => [s.school, [s.degree, s.major].filter(Boolean).join(", ")].filter(Boolean).join(" · ")).join("\n")]];
         fields.forEach(([label, key, value]) => {
@@ -676,7 +716,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       resumeDialog.close(); showToast("Suggestions added for review. Save Profile to keep them.", "success");
     });
-    const avatarInput = $("#avatar-file"), cropDialog = $("#avatar-crop"), canvas = $("#avatar-canvas"), ctx = canvas.getContext("2d"), zoom = $("#avatar-zoom");
+    const avatarInput = $("#avatar-file"), cropDialog = $("#avatar-crop"), canvas = $(".js-avatar-canvas"), ctx = canvas.getContext("2d"), zoom = $("#avatar-zoom");
     let photo = null, offsetX = 0, offsetY = 0, dragging = false, pointerX = 0, pointerY = 0;
     $("#change-avatar").addEventListener("click", () => avatarInput.click());
     function drawCrop() { if (!photo) return; const base = Math.max(320/photo.width,320/photo.height), width = photo.width*base*Number(zoom.value), height = photo.height*base*Number(zoom.value); const x = Math.max(320-width,Math.min(0,(320-width)/2+offsetX)), y = Math.max(320-height,Math.min(0,(320-height)/2+offsetY)); ctx.clearRect(0,0,320,320); ctx.drawImage(photo,x,y,width,height); }
@@ -691,12 +731,12 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("beforeunload",event=>{if(!submittingProfile&&$("#avatar-data").value!==savedAvatar){event.preventDefault();event.returnValue="";}});
     profileForm.addEventListener("submit",()=>{submittingProfile=true;});
   }
-  $$(".save-history-title").forEach(button => button.addEventListener("click", async () => {
+  $$(".js-save-history-title").forEach(button => button.addEventListener("click", async () => {
     button.disabled = true;
     try { const response = await fetch("/profile/save-title",{method:"POST",headers:{"Content-Type":"application/json","X-CSRF-Token":csrfToken},body:JSON.stringify({title:button.dataset.jobTitle})}); const data=await readJsonResponse(response,"Could not save title."); if(!response.ok)throw new Error(data.message); const versionField=document.querySelector('input[name="profile_version"]'); if(versionField&&data.profile_version)versionField.value=data.profile_version; button.textContent="Saved"; showToast("Job title saved to your profile.","success"); }
     catch(error){button.disabled=false;showToast(error.message,"danger");}
   }));
-  const dashboardRefresh = $("#refresh-dashboard"), dashboardRefreshStatus = $("#dashboard-refresh-status");
+  const dashboardRefresh = $("#refresh-dashboard"), dashboardRefreshStatus = $(".js-dashboard-refresh-status");
   if(dashboardRefresh){
     const ids = $$("#saved-jobs-grid .saved-job-card").filter(card=>!card.hidden).map(card=>Number(card.dataset.companyId)).filter(Number.isSafeInteger);  // the shown Saved Jobs
     dashboardRefresh.addEventListener("click", async () => {
@@ -707,7 +747,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  const startButton=$("#start-search"),refreshButton=$("#refresh-search"),searchingStatus=$("#searching-status"),activityLabel=$("#activity-label"),progressBar=$("#search-progress-bar");
+  const startButton=$(".js-start-search"),refreshButton=$("#refresh-search"),searchingStatus=$("#searching-status"),activityLabel=$("#activity-label"),progressBar=$("#search-progress-bar");
   if(startButton&&refreshButton&&searchingStatus&&activityLabel){let wasRunning=document.body.dataset.scraperRunning==="true",currentMode=document.body.dataset.scraperMode||null;
     function getSearchCriteria(){showFormError("");searchCityEditor.addPending?.();const jobTitle=normalizeJobTitles(jobTitleInput?.value||"");const cities=searchCityEditor.getItems();if(!jobTitle){showFormError("Enter at least one job title.");jobTitleInput?.focus();return null;}if(!cities.length){showFormError("Add a city and state or a full state name.");$("#search-city-input")?.focus();return null;}const states=[...new Set(cities.map((i)=>i.scope==="state"?i.city:(i.city.includes(",")?i.city.split(",").pop().trim():"")).filter(Boolean))];const state=states.join(", ")||stateInput?.value.trim()||"United States";if(stateInput)stateInput.value=state;localStorage.setItem("jobFinderJobTitle",jobTitle);localStorage.setItem("jobFinderState",state);return{job_title:jobTitle,state,cities};}
     function setActivity(running,mode=null){startButton.disabled=running;refreshButton.disabled=running;searchingStatus.hidden=true;if(progressBar)progressBar.hidden=true;activityLabel.textContent=mode==="import"?"Importing captured jobs":mode==="update"?"Updating existing results":mode==="refresh"?"Refreshing results":mode==="replacement"?"Finding a replacement":"Searching";if(running)showLoading(activityLabel.textContent+"…",mode==="import"?"Checking captured jobs against your profile's job titles and cities.":(mode==="update"||mode==="refresh")?"Checking existing results for current information.":"Job Finder is collecting and validating results.",true);else hideLoading();}
@@ -855,7 +895,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Unsaved profile changes (job titles, work preferences, work history, skills, locations, name...): a note beside
   // Save Profile, and the browser asks before the page is left. Compared against the form as it stood once the page
-  // finished setting itself up (including anything filled in from the résumé), so only the user's own edits count.
+  // finished setting itself up (including anything filled in from the resume), so only the user's own edits count.
   const unsavedForm = document.getElementById("profile-form");
   if (unsavedForm) {
     const snapshot = () => JSON.stringify([...new FormData(unsavedForm)].filter(([name, value]) => typeof value === "string" && name !== "csrf_token"));
@@ -914,7 +954,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// The Search page's Results (top picks, filters and the table) open and close from the heading; the choice is remembered.
+// The Search page's Results (the filters) open and close from the heading; the choice is remembered.
 document.addEventListener("DOMContentLoaded", () => {
   const panel = document.getElementById("results-panel");
   if (!panel) return;
@@ -922,7 +962,7 @@ document.addEventListener("DOMContentLoaded", () => {
   panel.addEventListener("toggle", () => { try { localStorage.setItem("jobFinder.resultsOpen", panel.open ? "1" : "0"); } catch {} });
 });
 
-// The listings (scoring guide and results table) open and close from their heading; the choice is remembered.
+// The listings (Top 10 Picks, scoring guide and results table) open and close from their heading; the choice is remembered.
 document.addEventListener("DOMContentLoaded", () => {
   const panel = document.getElementById("listings-panel");
   if (!panel) return;

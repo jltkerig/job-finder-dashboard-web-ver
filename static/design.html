@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design palette</title>
+<style>
+	:root {
+		--text-strong: #111827;
+		--text: #444444;
+		--text-medium: #394657;
+		--text-faint: #6b7280;
+		--text-on-dark: #ffffff;
+
+		--page-bg: #f5f5f5;
+		--panel: #ffffff;
+		--panel-soft: #f7f8fa;
+		--border: #d6d9dd;
+		--border-soft: #e5e7eb;
+		--dark: #1f2937;
+		--footer-white: #f5f7fa;
+		--white: #ffffff;
+
+		--primary: #2563eb;
+		--primary-soft: #6f8fbf;
+		--primary-dark: #1d4ed8;
+		--link: #2a4a7a;
+		--accent-light: #93c5fd;
+
+		--danger: #b42318;
+		--danger-bg: #fff5f4;
+		--danger-med: #d46a62;
+		--success: #1f7a3d;
+		--success-bg: #eef9f1;
+		--amber: #9a6700;
+		--amber-bg: #fff8e6;
+		--orange: #b45309;
+		--brown: #4a3500;
+		--grey: #b9c1cc;
+		--purple: #6b21a8;
+		--purple-bg: #faf5ff;
+		--success-mid: #73b78a;
+		--medium: #c88a00;
+		--high: #2f8f4e;
+		--linkedin: #0a66c2;
+	}
+
+	* { box-sizing: border-box; }
+	body { margin: 0; font-family: Arial, sans-serif; background: var(--page-bg); color: var(--text); }
+	.layout { display: grid; grid-template-columns: 380px 1fr; gap: 20px; padding: 20px; align-items: start; }
+	@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+	/* editor column (fixed colors so it stays usable while you edit the palette) */
+	.editor { position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow: auto; background: #fff; color: #111; border: 1px solid #ccc; border-radius: 10px; padding: 14px; }
+	.editor h1 { font-size: 1.1rem; margin: 0 0 8px; }
+	.editor h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: #555; margin: 16px 0 6px; }
+	.row { display: grid; grid-template-columns: 34px 1fr 92px; gap: 8px; align-items: center; padding: 3px 0; }
+	.row input[type=color] { width: 34px; height: 28px; padding: 0; border: 1px solid #aaa; border-radius: 5px; background: none; cursor: pointer; }
+	.row input[type=text] { width: 100%; padding: 5px 7px; border: 1px solid #aaa; border-radius: 5px; font: .85rem Consolas, monospace; }
+	.row label { font: .8rem Consolas, monospace; color: #222; }
+	.buttons { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+	.buttons button { padding: 7px 12px; border: 1px solid #555; border-radius: 6px; background: #f3f3f3; font: inherit; font-size: .85rem; cursor: pointer; }
+	.status { font-size: .8rem; color: #555; min-height: 1em; }
+
+	/* preview column (uses only the variables) */
+	.preview > section { background: var(--panel); border: 1px solid var(--border-soft); border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+	.preview h2 { margin: 0 0 12px; color: var(--text-strong); font-size: 1.05rem; }
+	.preview h3 { margin: 14px 0 6px; color: var(--text); font-size: .95rem; }
+	.preview p { margin: 4px 0; }
+	.common-item { margin: 0 0 16px; }
+	.common-item h3 { margin: 0 0 6px; }
+	.common-item iframe { width: 100%; height: 120px; border: 1px solid var(--border-soft); border-radius: 8px; background: #fff; }
+	.swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+	.sw { width: 112px; border: 1px solid var(--border-soft); border-radius: 8px; overflow: hidden; background: var(--panel); font-size: .72rem; }
+	.sw i { display: block; height: 44px; }
+	.sw b { display: block; padding: 4px 6px 0; color: var(--text); font-weight: 600; }
+	.sw span { display: block; padding: 0 6px 5px; color: var(--text-faint); font-family: Consolas, monospace; }
+	#btns, #chips { display: flex; flex-wrap: wrap; gap: 8px; }
+	#btns .bg, #chips .bg { padding: 8px 10px; }
+	#btns .bg .demo, #chips .bg .demo { min-height: 0; padding: 0 0 4px; }
+	.bg { border: 1px solid var(--border-soft); border-radius: 8px; padding: 10px; background: var(--panel-soft); }
+	.bg .demo { padding: 6px 0 8px; min-height: 46px; }
+	.bg .demo button { cursor: default; }
+	.bg .cls { font: 11px/1.5 Consolas, monospace; color: var(--text-medium); margin: 0; padding: 0; list-style: none; }
+	.bg .cls li { word-break: break-all; }
+	.bg .cls em { font-style: normal; color: var(--text-faint); }
+	.bg .meta { font-size: 11px; color: var(--text-faint); margin-bottom: 4px; }
+	.rgba-list { display: grid; gap: 12px; margin-top: 10px; }
+	.rgba-card { border: 1px solid var(--border-soft); border-radius: 10px; padding: 12px; background: var(--panel-soft); display: grid; grid-template-columns: 220px 1fr; gap: 14px; align-items: start; }
+	@media (max-width: 700px) { .rgba-card { grid-template-columns: 1fr; } }
+	.rgba-card h3 { margin: 0 0 4px; font: 700 13px Consolas, monospace; color: var(--text-strong); }
+	.rgba-card .kind { font-size: 12px; color: var(--text-strong); margin: 0 0 4px; font-weight: 600; }
+	.rgba-card .where { font: 11px/1.5 Consolas, monospace; color: var(--text-faint); margin: 0; word-break: break-all; }
+	.rgba-chips { display: flex; gap: 6px; margin: 6px 0; }
+	.rgba-chips span { flex: 1; height: 34px; border: 1px solid var(--border-soft); border-radius: 6px; }
+	.rgba-card iframe { width: 100%; height: 190px; border: 1px solid var(--border-soft); border-radius: 8px; background: var(--panel); }
+</style>
+</head>
+<body>
+<div class="layout">
+
+	<aside class="editor">
+		<h1>Palette</h1>
+		<div class="buttons">
+			<button id="copy" type="button">Copy :root CSS</button>
+			<button id="reset" type="button">Reset</button>
+		</div>
+		<div class="status" id="status"></div>
+		<div id="rows"></div>
+	</aside>
+
+	<main class="preview">
+		<section>
+			<h2>All colors</h2>
+			<div class="swatches" id="swatches"></div>
+		</section>
+
+		<section>
+			<h2>Common things, as they look now</h2>
+			<p style="color:var(--text-faint);font-size:.85rem">Each box is a small page that loads the real tokens.css, structure.css, style.css and animations.css, so it always matches the program. Resume Builder uses the same four sheets.</p>
+			<div id="common"></div>
+		</section>
+
+		<section>
+			<h2>Transparent colors (rgba) in use</h2>
+			<p style="color:var(--text-faint);font-size:.85rem">Each one is shown over white and over the page background, with the kind of item it belongs to and a live example built from the real css/style.css. Only rgba(17, 24, 39, .12) so far.</p>
+			<div class="rgba-list" id="rgbaList"></div>
+		</section>
+
+		<section>
+			<h2>Buttons currently used in the program <small id="btnCount" style="color:var(--text-faint);font-weight:400"></small></h2>
+			<p style="color:var(--text-faint);font-size:.85rem">Every button-like element in the templates and the JS-built ones, rendered with the real css/style.css on its own page, then grouped so duplicates by look appear once. Resting state only (no hover or focus). The list under each button shows the class combinations that look the same.</p>
+			<div id="btnStatus" style="color:var(--text-faint);font-size:.85rem"></div>
+			<div class="btns" id="btns"></div>
+			<div id="btnFrames" style="position:absolute;left:-9999px;top:0;width:1200px;height:10px;overflow:hidden"></div>
+		</section>
+
+		<section>
+			<h2>Chips, pills, bubbles and badges currently used <small id="chipCount" style="color:var(--text-faint);font-weight:400"></small></h2>
+			<p style="color:var(--text-faint);font-size:.85rem">Same method as the buttons: rendered with the real css/style.css, then grouped by look. Each is placed inside its usual container class. Dashboard only (Resume Builder has its own stylesheet).</p>
+			<div id="chipStatus" style="color:var(--text-faint);font-size:.85rem"></div>
+			<div class="btns" id="chips"></div>
+			<div id="chipFrames" style="position:absolute;left:-9999px;top:0;width:1200px;height:10px;overflow:hidden"></div>
+		</section>
+
+	</main>
+</div>
+
+<script>
+	var GROUPS = [
+		['Text', ['--text-strong', '--text', '--text-medium', '--text-faint', '--text-on-dark']],
+		['Surfaces', ['--page-bg', '--panel', '--panel-soft', '--border', '--border-soft', '--dark', '--footer-white', '--white']],
+		['Accent', ['--primary', '--primary-soft', '--primary-dark', '--link', '--accent-light']],
+		['Status', ['--danger', '--danger-med', '--danger-bg', '--success', '--success-bg', '--amber', '--amber-bg', '--orange', '--brown', '--grey', '--purple', '--purple-bg', '--success-mid', '--medium', '--high', '--linkedin']]
+	];
+	var KEY = 'design-palette-v1';
+	var root = document.documentElement;
+	var defaults = {};
+	var all = [];
+
+	GROUPS.forEach(function (g) { g[1].forEach(function (n) { all.push(n); }); });
+
+	// Read the defaults from the :root block above, before any saved values are applied.
+	var cs = getComputedStyle(root);
+	all.forEach(function (n) { defaults[n] = cs.getPropertyValue(n).trim(); });
+
+	function load() {
+		try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; }
+	}
+	function save(vals) {
+		try { localStorage.setItem(KEY, JSON.stringify(vals)); } catch (e) {}
+	}
+	function current() {
+		var out = {};
+		all.forEach(function (n) { out[n] = root.style.getPropertyValue(n).trim() || defaults[n]; });
+		return out;
+	}
+	function apply(name, value) {
+		root.style.setProperty(name, value);
+	}
+	function isHex(v) { return /^#[0-9a-f]{6}$/i.test(v); }
+
+	var rowsEl = document.getElementById('rows');
+	var swEl = document.getElementById('swatches');
+	var statusEl = document.getElementById('status');
+	var inputs = {};
+
+	function say(msg) { statusEl.textContent = msg; }
+
+	function buildRows() {
+		rowsEl.innerHTML = '';
+		GROUPS.forEach(function (g) {
+			var h = document.createElement('h2');
+			h.textContent = g[0];
+			rowsEl.appendChild(h);
+			g[1].forEach(function (name) {
+				var row = document.createElement('div');
+				row.className = 'row';
+				var pick = document.createElement('input');
+				pick.type = 'color';
+				var txt = document.createElement('input');
+				txt.type = 'text';
+				txt.spellcheck = false;
+				var lab = document.createElement('label');
+				lab.textContent = name.replace('--', '');
+				inputs[name] = { pick: pick, txt: txt };
+				pick.addEventListener('input', function () { set(name, pick.value); });
+				txt.addEventListener('input', function () {
+					var v = txt.value.trim();
+					if (v && v.charAt(0) !== '#' && /^[0-9a-f]{3,8}$/i.test(v)) v = '#' + v;
+					if (/^#[0-9a-f]{3}$/i.test(v)) v = '#' + v[1] + v[1] + v[2] + v[2] + v[3] + v[3];
+					if (isHex(v)) set(name, v.toLowerCase(), true);
+				});
+				row.appendChild(pick);
+				row.appendChild(txt);
+				row.appendChild(lab);
+				rowsEl.appendChild(row);
+			});
+		});
+	}
+
+	function sync() {
+		var cur = current();
+		all.forEach(function (n) {
+			var v = cur[n];
+			inputs[n].pick.value = isHex(v) ? v : '#000000';
+			if (document.activeElement !== inputs[n].txt) inputs[n].txt.value = v;
+		});
+		swEl.innerHTML = '';
+		all.forEach(function (n) {
+			var d = document.createElement('div');
+			d.className = 'sw';
+			d.innerHTML = '<i style="background:var(' + n + ')"></i><b>' + n.replace('--', '') + '</b><span>' + cur[n] + '</span>';
+			swEl.appendChild(d);
+		});
+	}
+
+	function set(name, value) {
+		apply(name, value);
+		var vals = load();
+		vals[name] = value;
+		save(vals);
+		sync();
+	}
+
+	function cssText() {
+		var cur = current();
+		var lines = [':root {'];
+		GROUPS.forEach(function (g, i) {
+			if (i) lines.push('');
+			g[1].forEach(function (n) { lines.push('\t' + n + ': ' + cur[n] + ';'); });
+		});
+		lines.push('}');
+		return lines.join('\n');
+	}
+
+	document.getElementById('copy').addEventListener('click', function () {
+		var text = cssText();
+		if (navigator.clipboard && navigator.clipboard.writeText) {
+			navigator.clipboard.writeText(text).then(function () { say('Copied.'); }, function () { say('Copy failed.'); });
+		} else {
+			say('Clipboard unavailable.');
+		}
+	});
+
+	document.getElementById('reset').addEventListener('click', function () {
+		all.forEach(function (n) { root.style.removeProperty(n); });
+		save({});
+		sync();
+		say('Reset to defaults.');
+	});
+
+	// Button-like elements per page, scanned from templates, partials and static/js.
+	var BTN = {"companies":[["button","primary-button","Search"]],"guide":[],"search":[["button","primary-button","Start Job Finder"],["button","bordered-button","Top 10 Picks"],["button","destructive-button","Clear Results"],["label","compact-rows-toggle","Button"],["button","link-button","Show"]],"skill-fitting":[["button","primary-button","Save Weights"]],"rejected":[["button","primary-button","Save settings"],["a","bordered-button","View Career Page"],["button","bordered-button js-details-action","View Details"],["button","js-block-action destructive-button","Block Company Domain"],["button","js-block-company-action destructive-button","Block Company"]],"tuning":[["button","bordered-button js-save-history-title","Button"],["button","bordered-button js-search-again-button","Search Again"],["a","bordered-button","Open Skill Fitting"]],"dashboard":[["button","primary-button","Save Profile"],["button","profile-avatar","Button"],["button","bordered-button","Add Link"],["button","bordered-button primary","Add Selected to the Queu"],["button","bordered-button js-apply-queue-download","Download"],["button","bordered-button js-apply-queue-combine","Button"],["button","bordered-button js-apply-queue-download-combined","Download Combined"],["button","destructive-button js-apply-queue-reject","Reject"],["button","bordered-button js-apply-queue-applied","Mark Applied"],["a","bordered-button","Edit"],["summary","bordered-button","Edit"],["a","primary-button","Open"],["button","destructive-button","Delete Selected"]],"_partials":[["button","primary-button js-saved-apply-button","Apply"],["a","bordered-button","Listing"],["button","destructive-button","Delete"],["button","bordered-button js-details-action","Button"],["button","bordered-button js-apply-action","AddedApply"],["button","step-add","+"],["button","step-remove","×"],["button","primary-button","Save Changes"],["button","js-block-action destructive-button","Block Domain"],["button","js-block-company-action destructive-button","Block Company"],["button","js-reject-action destructive-button","Reject"],["span","btn-long","View"],["button","bordered-button js-refresh-action","Refresh"],["button","js-closed-action destructive-button","Closed"],["button","bordered-button js-notes-edit","Edit"],["button","primary-button js-notes-save","Save"]],"_js":[["button","bordered-button js-apply-queue-download-combined","Button"],["button","skill-chip","Button"],["button","navy-chip","Button"],["button","skill-chip-list skill-zone-list","Button"],["button","primary-button","Button"],["button","primary-button js-modal-close","Button"],["button","navy-chip companies-mine-badge","Button"],["button","bordered-button","Button"],["button","nav-link quit-button","Button"],["button","top-pick-chips","Button"],["button","top-pick-buttons","Button"],["button","bordered-button js-top-pick-details-button","Button"],["button","destructive-button","Button"]]};
+	// Partials and JS-built buttons are rendered under every page that could contain them.
+	var PAGES = [['companies', 'companies'], ['guide', 'guide'], ['search', 'search'], ['skill-fitting', 'skill-fitting'], ['rejected', 'rejected'], ['tuning', 'tuning'], ['dashboard', 'dashboard'],
+		['search', '_partials'], ['dashboard', '_partials'], ['rejected', '_partials'], ['search', '_js'], ['dashboard', '_js'], ['companies', '_js'], ['rejected', '_js']];
+	var PROPS = ['display', 'box-sizing', 'min-width', 'min-height', 'height', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
+		'color', 'background-color', 'background-image', 'font-family', 'font-size', 'font-weight', 'font-stretch', 'line-height', 'letter-spacing', 'text-transform', 'text-decoration-line', 'text-align',
+		'border-top-width', 'border-top-style', 'border-top-color', 'border-right-width', 'border-right-style', 'border-right-color',
+		'border-bottom-width', 'border-bottom-style', 'border-bottom-color', 'border-left-width', 'border-left-style', 'border-left-color',
+		'border-top-left-radius', 'border-top-right-radius', 'border-bottom-right-radius', 'border-bottom-left-radius', 'box-shadow', 'opacity', 'justify-content', 'align-items'];
+
+	function buildButtons() {
+		var groups = {};
+		var pending = PAGES.length;
+		var host = document.getElementById('btnFrames');
+
+		function finish() {
+			var list = Object.keys(groups).map(function (k) { return groups[k]; });
+			list.sort(function (a, b) { return Object.keys(b.names).length - Object.keys(a.names).length; });
+			var el = document.getElementById('btns');
+			var total = 0;
+			list.forEach(function (g) {
+				var names = Object.keys(g.names);
+				total += names.length;
+				var box = document.createElement('div');
+				box.className = 'bg';
+				var demo = document.createElement('div');
+				demo.className = 'demo';
+				var b = document.createElement('button');
+				b.type = 'button';
+				b.textContent = g.label || 'Button';
+				PROPS.forEach(function (p) { b.style.setProperty(p, g.props[p]); });
+				demo.appendChild(b);
+				var meta = document.createElement('div');
+				meta.className = 'meta';
+				meta.textContent = names.length + ' class combination' + (names.length === 1 ? '' : 's') + ' share this look';
+				box.title = names.sort().map(function (n) { return n + ' (' + Object.keys(g.names[n]).sort().join(', ') + ')'; }).join('\n');
+				box.appendChild(demo);
+				box.appendChild(meta);
+				el.appendChild(box);
+			});
+			document.getElementById('btnCount').textContent = '(' + list.length + ' distinct looks from ' + total + ' class combinations)';
+			document.getElementById('btnStatus').textContent = '';
+		}
+
+		PAGES.forEach(function (pg) {
+			var page = pg[0], key = pg[1];
+			var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="css/tokens.css"><link rel="stylesheet" href="css/structure.css"><link rel="stylesheet" href="css/style.css"></head><body data-page="' + page + '">';
+			BTN[key].forEach(function (it, i) {
+				var tag = it[0], cls = it[1], label = it[2] || 'Button';
+				if (/(^| )(skill-chip-list|top-pick-chips|top-pick-buttons)( |$)/.test(cls)) return;
+				if (tag === 'summary') html += '<details><summary data-i="' + i + '" class="' + cls + '">' + label + '</summary></details>';
+				else if (tag === 'a') html += '<a data-i="' + i + '" href="#" class="' + cls + '">' + label + '</a> ';
+				else if (tag === 'label') html += '<label data-i="' + i + '" class="' + cls + '"><input type="checkbox">' + label + '</label> ';
+				else html += '<' + tag + ' data-i="' + i + '" type="button" class="' + cls + '">' + label + '</' + tag + '> ';
+			});
+			html += '</body></html>';
+			var f = document.createElement('iframe');
+			f.style.cssText = 'width:1200px;height:600px;border:0';
+			f.addEventListener('load', function () {
+				try {
+					var doc = f.contentDocument, win = f.contentWindow;
+					Array.prototype.forEach.call(doc.querySelectorAll('[data-i]'), function (node) {
+						var cs = win.getComputedStyle(node);
+						var props = {}, sig = [];
+						PROPS.forEach(function (p) { props[p] = cs.getPropertyValue(p); sig.push(props[p]); });
+						if (cs.display === 'none') return;
+						var s = sig.join('|');
+						var it = BTN[key][+node.getAttribute('data-i')];
+						var name = it[0] + '.' + it[1].split(' ').join('.');
+						if (!groups[s]) groups[s] = { props: props, label: it[2], names: {} };
+						if (!groups[s].names[name]) groups[s].names[name] = {};
+						groups[s].names[name][key === '_partials' ? 'partial/' + page : key === '_js' ? 'js/' + page : page] = 1;
+					});
+				} catch (e) {
+					document.getElementById('btnStatus').textContent = 'Could not read the page stylesheet (' + e.message + '). Open this page through the running app instead of from the file.';
+				}
+				if (--pending === 0) finish();
+			});
+			f.srcdoc = html;
+			host.appendChild(f);
+		});
+		document.getElementById('btnStatus').textContent = 'Loading...';
+	}
+
+	// [tag, class, container class, label]
+	var CHIPS = [
+		['span', 'badge credibility-badge credibility-high', '', 'High'],
+		['span', 'badge credibility-badge credibility-medium', '', 'Medium'],
+		['span', 'badge credibility-badge credibility-low', '', 'Low'],
+		['span', 'badge easy-apply-badge', '', 'Easy Apply'],
+		['span', 'badge saved-badge', '', 'Saved'],
+		['div', 'search-running-pill', '', 'Search running'],
+		['span', 'navy-chip', 'title-chips', 'Austin, TX'],
+		['span', 'skill-chip', 'skill-chip-list', 'Python'],
+		['span', 'skill-chip skill-chip-found', 'skill-chip-list', 'Python'],
+		['button', 'navy-chip', 'top-pick-chips', 'Remote'],
+		['button', 'skill-bubble', 'skill-bubbles', '+ SQL'],
+		['button', 'skill-bubble have', 'skill-bubbles', '✓ Python'],
+		['button', 'navy-chip companies-kind-tag', 'companies-kind-tags', 'Hospital'],
+		['button', 'navy-chip companies-kind-tag is-active', 'companies-kind-tags', 'Hospital'],
+		['button', 'navy-chip companies-kind-tag is-empty', 'companies-kind-tags', 'Hospital'],
+		['span', 'navy-chip companies-mine-badge', '', 'Mine']
+	];
+	var CHIP_PAGES = ['search', 'dashboard', 'companies', 'rejected'];
+
+	function buildChips() {
+		var groups = {}, pending = CHIP_PAGES.length, host = document.getElementById('chipFrames');
+
+		function finish() {
+			var list = Object.keys(groups).map(function (k) { return groups[k]; });
+			list.sort(function (a, b) { return Object.keys(b.names).length - Object.keys(a.names).length; });
+			var el = document.getElementById('chips'), total = 0;
+			list.forEach(function (g) {
+				var names = Object.keys(g.names);
+				total += names.length;
+				var box = document.createElement('div');
+				box.className = 'bg';
+				var demo = document.createElement('div');
+				demo.className = 'demo';
+				var b = document.createElement('span');
+				b.textContent = g.label;
+				PROPS.forEach(function (p) { b.style.setProperty(p, g.props[p]); });
+				if (g.props.display === 'block') b.style.display = 'inline-block';
+				demo.appendChild(b);
+				var meta = document.createElement('div');
+				meta.className = 'meta';
+				meta.textContent = names.length + ' class combination' + (names.length === 1 ? '' : 's') + ' share this look';
+				var ul = document.createElement('ul');
+				ul.className = 'cls';
+				names.sort().forEach(function (n) {
+					var li = document.createElement('li');
+					li.appendChild(document.createTextNode(n + ' '));
+					var em = document.createElement('em');
+					em.textContent = '(' + Object.keys(g.names[n]).sort().join(', ') + ')';
+					li.appendChild(em);
+					ul.appendChild(li);
+				});
+				box.appendChild(demo);
+				box.appendChild(meta);
+				box.appendChild(ul);
+				el.appendChild(box);
+			});
+			document.getElementById('chipCount').textContent = '(' + list.length + ' distinct looks from ' + total + ' class combinations)';
+			document.getElementById('chipStatus').textContent = '';
+		}
+
+		CHIP_PAGES.forEach(function (page) {
+			var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="css/tokens.css"><link rel="stylesheet" href="css/structure.css"><link rel="stylesheet" href="css/style.css"></head><body data-page="' + page + '">';
+			CHIPS.forEach(function (it, i) {
+				var open = it[2] ? '<div class="' + it[2] + '">' : '', close = it[2] ? '</div>' : '';
+				html += open + '<' + it[0] + ' data-i="' + i + '" class="' + it[1] + '">' + it[3] + '</' + it[0] + '>' + close;
+			});
+			html += '</body></html>';
+			var f = document.createElement('iframe');
+			f.style.cssText = 'width:1200px;height:600px;border:0';
+			f.addEventListener('load', function () {
+				try {
+					var doc = f.contentDocument, win = f.contentWindow;
+					Array.prototype.forEach.call(doc.querySelectorAll('[data-i]'), function (node) {
+						var cs = win.getComputedStyle(node);
+						if (cs.display === 'none') return;
+						var props = {}, sig = [];
+						PROPS.forEach(function (p) { props[p] = cs.getPropertyValue(p); sig.push(props[p]); });
+						var s = sig.join('|'), it = CHIPS[+node.getAttribute('data-i')];
+						var name = it[0] + '.' + it[1].split(' ').join('.');
+						if (!groups[s]) groups[s] = { props: props, label: it[3], names: {} };
+						if (!groups[s].names[name]) groups[s].names[name] = {};
+						groups[s].names[name][page] = 1;
+					});
+				} catch (e) {
+					document.getElementById('chipStatus').textContent = 'Could not read the page stylesheet (' + e.message + ').';
+				}
+				if (--pending === 0) finish();
+			});
+			f.srcdoc = html;
+			host.appendChild(f);
+		});
+		document.getElementById('chipStatus').textContent = 'Loading...';
+	}
+
+	// rgba() values still hard-coded in the CSS: value, what it is attached to, where, and a live example.
+	var RGBA = [{
+		value: 'rgba(17, 24, 39, .12)',
+		kind: 'Box shadow on the title suggestion dropdown (box-shadow: 0 10px 24px). The list of titles that drops down under a job title input.',
+		where: '.title-suggest in static/css/style.css and in resume-builder/static/style.css',
+		page: 'dashboard',
+		html: '<div class="title-suggest-host" style="padding:6px 12px 0"><label style="display:block;font-size:.85rem;margin-bottom:4px">Job title</label>' +
+			'<input type="text" value="Soft" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font:inherit">' +
+			'<ul class="title-suggest" role="listbox" style="left:12px;right:12px"><li>Software Engineer</li><li class="active">Software Developer</li><li>Software Architect</li></ul></div>'
+	}];
+
+	function buildRgba() {
+		var el = document.getElementById('rgbaList');
+		RGBA.forEach(function (r) {
+			var card = document.createElement('div');
+			card.className = 'rgba-card';
+			var left = document.createElement('div');
+			left.innerHTML = '<h3></h3><p class="kind"></p><div class="rgba-chips"><span></span><span></span></div><p class="where"></p>';
+			left.querySelector('h3').textContent = r.value;
+			left.querySelector('.kind').textContent = r.kind;
+			left.querySelectorAll('.rgba-chips span')[0].style.background = '#ffffff linear-gradient(' + r.value + ',' + r.value + ')';
+			left.querySelectorAll('.rgba-chips span')[1].style.background = '#f5f5f5 linear-gradient(' + r.value + ',' + r.value + ')';
+			left.querySelector('.where').textContent = r.where;
+			var f = document.createElement('iframe');
+			f.srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="css/tokens.css"><link rel="stylesheet" href="css/structure.css"><link rel="stylesheet" href="css/style.css"></head><body data-page="' + r.page + '" style="background:#fff;display:block;min-height:0;padding:0">' + r.html + '</body></html>';
+			card.appendChild(left);
+			card.appendChild(f);
+			el.appendChild(card);
+		});
+	}
+
+	// Common things: [title, html]. Real classes from the templates, shown on a white page with the real sheets.
+	var COMMON = [
+		['Headings, text and links', '<h1>Heading 1</h1><h2>Heading 2</h2><h3>Heading 3</h3><h4>Heading 4</h4><p>Body text with a <a href="#">link</a>.</p><p class="field-help">Help text under a field.</p>'],
+		['Panel and card', '<div class="panel"><h2>Panel</h2><p>The white section container: one padding, border, radius and shadow.</p><div class="card"><p><strong>Card</strong></p><p class="field-help">The item card inside it: saved jobs, rejected listings, picks.</p></div></div>'],
+		['Buttons', '<p><button class="primary-button" type="button">Primary</button> <button class="bordered-button" type="button">Bordered</button> <button class="destructive-button" type="button">Destructive</button> <button class="success-button" type="button">Success</button> <button class="primary-button" type="button" disabled>Disabled</button></p>'],
+		['Badges', '<p><span class="badge credibility-badge credibility-high">90%</span> <span class="badge credibility-badge credibility-medium">60%</span> <span class="badge credibility-badge credibility-low">20%</span> <span class="badge job-fit">75%</span> <span class="badge easy-apply-badge">Easy Apply</span> <span class="badge saved-badge">Saved</span></p>'],
+		['Chips', '<div class="skill-chip-list"><span class="skill-chip">Python</span><span class="skill-chip skill-chip-found">SQL</span></div><div class="title-chips"><span class="navy-chip">Austin, TX</span></div><p><span class="navy-chip">Remote</span></p>'],
+		['Form fields', '<div class="form-field"><label for="d1">Job title</label><input id="d1" type="text" value="Software Engineer" /><p class="field-help">Separate titles with commas.</p></div><div class="form-field"><label for="d2">State</label><select id="d2"><option>Maryland</option><option>Texas</option></select></div><div class="form-field"><label class="switch-row"><input type="checkbox" checked /> Skip staffing agencies</label></div>'],
+		['Status dots and indicators', '<p><span class="status-dot open"></span> Open &nbsp; <span class="status-dot closed"></span> Closed &nbsp; <span class="status-dot unknown"></span> Unknown &nbsp; <span class="application-indicator status-applied">Applied</span> <span class="application-indicator status-none">Not applied</span></p>'],
+		['Saved job card (collapsed)', '<article class="card saved-job-card"><details class="saved-job-collapse"><summary class="saved-job-summary"><div class="summary-text"><p class="summary-line summary-title"><strong>Senior Software Engineer</strong> <span class="badge easy-apply-badge">Easy Apply</span></p><p class="summary-line summary-facts"><span class="summary-company">Acme Corp</span><span>Austin, TX</span><span>Hybrid</span></p></div><div class="summary-actions"><button class="primary-button" type="button">Apply</button><a class="bordered-button" href="#">Listing</a><button class="destructive-button" type="button">Delete</button></div><i class="summary-chevron" aria-hidden="true"></i></summary></details></article>'],
+		['Table', '<table class="score-rules"><thead><tr><th>Company</th><th>Status</th><th>Score</th></tr></thead><tbody><tr><td>Acme Corp</td><td>Applied</td><td>87</td></tr><tr><td>Globex</td><td>Pending</td><td>64</td></tr></tbody></table>'],
+		['Corner radius tokens', '<div style="display:flex;gap:12px;flex-wrap:wrap">' + ['small', 'medium', 'large', 'semi-large', 'x-large', 'pill'].map(function (n) { return '<div style="width:96px;height:56px;border:var(--line);border-radius:var(--radius-' + n + ')">' + n + '</div>'; }).join('') + '</div>'],
+		['Shadow tokens', '<div style="display:flex;gap:20px;flex-wrap:wrap;padding:8px">' + ['card', 'raised', 'floating'].map(function (n) { return '<div style="width:120px;height:56px;border-radius:var(--radius-large);box-shadow:var(--shadow-' + n + ')">' + n + '</div>'; }).join('') + '</div>'],
+		['Spacing tokens', '<div style="font:12px Consolas,monospace">' + ['x-small', 'small', 'medium', 'large', 'semi-large', 'x-large', '2x-large', '3x-large', '4x-large'].map(function (n) { return '<div style="display:flex;align-items:center;gap:8px;margin:2px 0"><span style="width:90px">' + n + '</span><span style="display:block;height:10px;background:var(--primary);width:var(--spacing-' + n + ')"></span></div>'; }).join('') + '</div>']
+	];
+
+	function buildCommon() {
+		var el = document.getElementById('common');
+		COMMON.forEach(function (c) {
+			var box = document.createElement('div');
+			box.className = 'common-item';
+			var h = document.createElement('h3');
+			h.textContent = c[0];
+			var f = document.createElement('iframe');
+			f.addEventListener('load', function () {
+				try { f.style.height = (f.contentDocument.documentElement.scrollHeight + 4) + 'px'; } catch (e) {}
+			});
+			f.srcdoc = '<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="css/tokens.css"><link rel="stylesheet" href="css/structure.css"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/animations.css"></head><body data-page="dashboard" style="background:#fff;display:block;min-height:0;padding:12px;margin:0">' + c[1] + '</body></html>';
+			box.appendChild(h);
+			box.appendChild(f);
+			el.appendChild(box);
+		});
+	}
+
+	buildRows();
+	buildRgba();
+	buildButtons();
+	buildChips();
+	buildCommon();
+	var saved = load();
+	Object.keys(saved).forEach(function (n) { if (all.indexOf(n) !== -1 && isHex(saved[n])) apply(n, saved[n]); });
+	sync();
+</script>
+</body>
+</html>

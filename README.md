@@ -42,6 +42,31 @@ profile and settings are kept in `data/jobfinder.sqlite`, which is never uploade
   file already imported unchanged is skipped. Each job's company website is looked up for about 20 seconds after
   the upload; the cron job finishes the rest a few a minute.
 
+## What changed in 1.1.301 - 1.1.302
+
+The web version took over the desktop Job Finder's new look and page markup (it was at 1.1.300):
+
+- **Styles:** `static/css` is now `tokens.css` (every variable), `structure.css` (sizes), `style.css` and `animations.css`,
+  the desktop's own files. The few web-only rules (Logout in the menu, the password and sign-in log, the changed-profile
+  note, Résumé Builder bits) sit at the end of `style.css`. `resume.css` is gone: the Résumé Builder pages use
+  `<main class="resume-builder">` and the same stylesheet. Barlow headings are in `static/fonts`; the header's month color and
+  photo come from `header-theme.js` and `static/img/header` (add the photos there). `static/design.html` is the desktop's
+  Design page, linked in the menu.
+- **Markup:** one class per button (`bordered-button`, `primary-button`, `destructive-button`, `success-button`), `js-` hook
+  classes for scripts, `filter-box` filters, `card` and `panel`, `badge` pills, `navy-chip` chips, `<i>` collapse arrows, the
+  header and footer in the desktop's form. Skill Fitting moved from the menu to Tuning, as on the desktop.
+- **Search:** Top 10 Picks sits inside the Results box with its button in the title bar and cards like the listings'
+  (`top-picks-facts.js`); Apply and Details/Reject use the new buttons; the Reject pop-up asks the reason (the picker on
+  Details is gone) and has *Applied Before*; the Job column shows the open/closed dot.
+- **Dashboard:** Applied Jobs has an Application Status filter and Date Applied sorts; skills sit in Core / Normal /
+  Nice to have boxes you drag between (`POST /job-skill-fitting/weight`); the stats card lists Rejected.
+- **Companies:** a Dates column (added, last checked, newest posting; `companies_add_dates()` in `includes/companies.php`).
+- **Resume** is spelled without accents, as on the desktop.
+
+Still not in the web version: the Apply Queue and what is built on it, Keep Browsing, the place check on Add Location, the
+Job Posting preview, Refresh and Closed on a listing, Avoid in Job Postings / Ignore, the GitHub profile box, status
+steps ("More dates"); Quit is the Logout button.
+
 ## What changed in 1.1.286 - 1.1.300
 
 The web version caught up to the desktop Job Finder's v1.1.300 (it was at 1.1.285):

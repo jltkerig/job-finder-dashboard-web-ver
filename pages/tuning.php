@@ -23,11 +23,11 @@ $page = 'tuning';
 require APP_ROOT . '/templates/_top.php';
 ?>
 <main>
-  <div class="company-section">
-    <details class="settings-panel history-collapse" id="search-health" data-remember="jobFinder.boardHealthOpen">
+  <div class="company-section tuning-section">
+    <details class="panel history-collapse search-health js-search-health" data-remember="jobFinder.boardHealthOpen">
   <summary>
         <h2>Board Health
-        </h2><span class="summary-chevron" aria-hidden="true"></span>
+        </h2><i class="summary-chevron" aria-hidden="true"></i>
       </summary>
   <?php if ($health): ?>
   <p class="field-help">The most recent <?= h($health['run']) ?> · <?= h($health['updated_text']) ?>. Employer boards and remote feeds are listed with what they produced.
@@ -55,10 +55,10 @@ require APP_ROOT . '/templates/_top.php';
       </p>
   <?php endif; ?>
     </details>
-    <details class="settings-panel history-collapse" id="brave-usage" data-remember="jobFinder.braveUsageOpen">
+    <details class="panel history-collapse" id="brave-usage" data-remember="jobFinder.braveUsageOpen">
   <summary>
         <h2>Brave Search Usage
-        </h2><span class="summary-chevron" aria-hidden="true"></span>
+        </h2><i class="summary-chevron" aria-hidden="true"></i>
       </summary>
   <p class="field-help">Every web search uses one of your Brave Search API credits. Credits reset at 00:00 UTC on the 1st of each month, and unused ones do not carry over.
       </p>
@@ -69,7 +69,7 @@ require APP_ROOT . '/templates/_top.php';
       <tr><th>Credits reset</th><td><?= h(gmdate('l, F j, Y', $reset)) ?> at 00:00 UTC (<?= h(date('M j, g:i a T', $reset)) ?>) · in <?= $days ?> <?= plural($days, 'day', 'days') ?></td></tr>
       <tr><th>All time</th><td><?= $brave['total'] ?> <?= plural($brave['total'], 'search', 'searches') ?><?= $brave['since'] ? ' since ' . h(date('M j, Y', strtotime($brave['since']))) : '' ?></td></tr>
       <tr><th>Testing limit</th><td><?= brave_used() ?> <?= brave_limit() ? 'of ' . brave_limit() . ' used' : 'used (no limit set)' ?>
-        <form method="post" action="/tuning/settings" class="inline"><?= csrf_field() ?><button class="bordered-button secondary-action" type="submit" name="reset_brave" value="1">Reset testing count</button></form></td></tr>
+        <form method="post" action="/tuning/settings" class="inline"><?= csrf_field() ?><button class="bordered-button" type="submit" name="reset_brave" value="1">Reset testing count</button></form></td></tr>
     <?php foreach (array_reverse($brave['months'], true) as $month => $count): if ($month === gmdate('Y-m')) continue; ?>
       <tr><th><?= h(date('F Y', strtotime("$month-01"))) ?></th><td><?= (int) $count ?> <?= plural((int) $count, 'search', 'searches') ?></td></tr>
     <?php endforeach; ?>
@@ -77,30 +77,38 @@ require APP_ROOT . '/templates/_top.php';
         </table>
       </div>
     </details>
-    <details class="settings-panel history-collapse" id="skipped-pages" data-remember="jobFinder.skippedPagesOpen">
+    <details class="panel history-collapse" id="skipped-pages" data-remember="jobFinder.skippedPagesOpen">
   <summary>
         <h2>Skipped Pages (<?= count($skipped) ?> Recent Checks)
-        </h2><span class="summary-chevron" aria-hidden="true"></span>
+        </h2><i class="summary-chevron" aria-hidden="true"></i>
       </summary>
       <?php if ($skipped): ?><ul class="skipped-list"><?php foreach ($skipped as $item): ?>
         <li><strong><?= h($item['reason']) ?></strong><?php if ($item['title']): ?> · <?= h($item['title']) ?><?php endif; ?> <a href="<?= h($item['url']) ?>" target="_blank" rel="noopener noreferrer">Source</a></li><?php endforeach; ?>
       </ul><?php else: ?><p class="field-help">Nothing was skipped in the recent searches.</p><?php endif; ?>
     </details>
-  <details class="history-panel history-collapse" id="recent-searches" data-remember="jobFinder.recentSearchesOpen">
-    <summary class="history-summary">
+  <details class="panel history-collapse" id="recent-searches" data-remember="jobFinder.recentSearchesOpen">
+    <summary>
       <h2>Recent Searches
-      </h2><span class="summary-chevron" aria-hidden="true"></span>
+      </h2><i class="summary-chevron" aria-hidden="true"></i>
     </summary><?php if ($search_history): ?>
     <div class="history-list"><?php foreach ($search_history as $search): $is_saved = in_array(mb_strtolower($search['main_title']), $saved_titles, true); ?>
       <div class="history-item">
         <div class="history-main"><strong class="history-title" title="<?= h($search['job_title']) ?>"><?= h($search['main_title']) ?></strong><?php if ($search['other_titles']): ?><small class="history-titles"><?= h(implode(' • ', $search['other_titles'])) ?></small><?php endif; ?><span><?= h($search['state']) ?></span><?php if ($search['cities_json']): ?><small class="history-cities" data-cities="<?= h($search['cities_json'] ?: '[]') ?>"></small><?php endif; ?><small><?= h(local_time($search['searched_at'], 'M d, Y h:i A')) ?></small>
         </div>
-        <div class="history-actions"><button class="bordered-button save-history-title" type="button" data-job-title="<?= h($search['main_title']) ?>"<?= $is_saved ? ' disabled' : '' ?>><?= $is_saved ? 'Saved' : 'Save Job Title' ?></button><button class="bordered-button search-again-button" type="button" data-job-title="<?= h($search['job_title']) ?>" data-state="<?= h($search['state']) ?>" data-cities="<?= h($search['cities_json'] ?: '[]') ?>">Search Again</button>
+        <div class="history-actions"><button class="bordered-button js-save-history-title" type="button" data-job-title="<?= h($search['main_title']) ?>"<?= $is_saved ? ' disabled' : '' ?>><?= $is_saved ? 'Saved' : 'Save Job Title' ?></button><button class="bordered-button js-search-again-button" type="button" data-job-title="<?= h($search['job_title']) ?>" data-state="<?= h($search['state']) ?>" data-cities="<?= h($search['cities_json'] ?: '[]') ?>">Search Again</button>
         </div>
       </div><?php endforeach; ?>
     </div><?php else: ?>
     <div class="empty-inline">No searches recorded yet.
     </div><?php endif; ?>
+  </details>
+  <details class="panel history-collapse" id="skill-fitting" data-remember="jobFinder.skillFittingOpen">
+    <summary>
+      <h2>Skill Fitting
+      </h2><i class="summary-chevron" aria-hidden="true"></i>
+    </summary>
+    <p class="field-help">Adjust how your skills are matched against job postings.</p>
+    <p><a class="bordered-button" href="/job-skill-fitting">Open Skill Fitting</a></p>
   </details>
   </div>
 </main>

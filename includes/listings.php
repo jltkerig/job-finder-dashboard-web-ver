@@ -16,9 +16,9 @@ const CAPTURE_SOURCES = ['LinkedIn', 'Indeed', 'Glassdoor', 'Maryland Workforce 
 const SAVED_STATUSES = ['Saved', 'Applied', 'Talking With Recruiter', 'Interview'];
 const CLOSED_KEEP_DAYS = 7;
 // The reasons offered when rejecting, with their labels (the same list as the desktop Job Finder).
-const REJECT_REASON_LABELS = ['other' => 'Other reason', 'wrong_role' => 'Wrong role', 'wrong_location' => 'Wrong location',
-    'bad_job_fit' => 'Bad Job Fit', 'not_a_job' => 'Not a job', 'duplicate' => 'Duplicate', 'closed' => 'Job is closed'];
-const REJECT_REASONS = ['other', 'wrong_role', 'wrong_location', 'bad_job_fit', 'not_a_job', 'duplicate', 'closed'];
+const REJECT_REASON_LABELS = ['other' => 'Other', 'wrong_role' => 'Wrong role', 'wrong_location' => 'Wrong location',
+    'bad_job_fit' => 'Bad Job Fit', 'not_a_job' => 'Not a job', 'duplicate' => 'Duplicate', 'applied_before' => 'Applied Before', 'closed' => 'Job is closed'];
+const REJECT_REASONS = ['other', 'wrong_role', 'wrong_location', 'bad_job_fit', 'not_a_job', 'duplicate', 'applied_before', 'closed'];
 const APPLIED_STATUSES = ['Applied', 'Talking With Recruiter', 'Interview'];
 const UNSAVED_KEEP_DAYS = 14;  // an unsaved result is deleted this long after it was first saved here
 const SKIPS_PER_PAGE = 25;
@@ -181,7 +181,9 @@ function get_dashboard_counts(): array
         SUM(CASE WHEN application_status = 'Interview' THEN 1 ELSE 0 END) AS interview,
         SUM(CASE WHEN job_open_status = 'Closed' THEN 1 ELSE 0 END) AS closed
         FROM companies WHERE is_kept = 1 AND is_rejected = 0") ?? [];
-    return array_map('intval', $row);
+    $counts = array_map('intval', $row);
+    $counts['rejected'] = (int) value('SELECT COUNT(*) FROM companies WHERE is_rejected = 1');
+    return $counts;
 }
 
 function add_job_fit(array &$companies, array $skills): void
@@ -506,7 +508,7 @@ function recent_skips(int $limit = 20): array
 /** LinkedIn's Easy Apply mark, in the look LinkedIn gives the button on its job tracker: its blue, with its "in" square. */
 function easy_apply_badge(): string
 {
-    return '<span class="easy-apply-badge" title="LinkedIn Easy Apply: you apply on LinkedIn without leaving it"><svg aria-hidden="true" viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M15 2v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1M5 6H3v7h2zm.25-2A1.25 1.25 0 1 0 4 5.25 1.25 1.25 0 0 0 5.25 4M13 9.29c0-2.2-.73-3.49-2.86-3.49A2.71 2.71 0 0 0 7.89 7V6H6v7h2V9.73a1.73 1.73 0 0 1 1.54-1.92h.12C10.82 7.8 11 8.94 11 9.73V13h2z"/></svg>Easy Apply</span>';
+    return '<span class="badge easy-apply-badge" title="LinkedIn Easy Apply: you apply on LinkedIn without leaving it"><svg aria-hidden="true" viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M15 2v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1M5 6H3v7h2zm.25-2A1.25 1.25 0 1 0 4 5.25 1.25 1.25 0 0 0 5.25 4M13 9.29c0-2.2-.73-3.49-2.86-3.49A2.71 2.71 0 0 0 7.89 7V6H6v7h2V9.73a1.73 1.73 0 0 1 1.54-1.92h.12C10.82 7.8 11 8.94 11 9.73V13h2z"/></svg>Easy Apply</span>';
 }
 
 /** The Job Apply Stats: jobs applied to by month (the last 6), those before that, and those with no date saved. Jobs
