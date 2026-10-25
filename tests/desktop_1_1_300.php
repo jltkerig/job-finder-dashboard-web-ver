@@ -170,4 +170,4 @@ check('rule presets: the Resume Builder pages load their scripts', str_contains(
 check('profile: the other-titles box skips the main title when it suggests', str_contains(file_get_contents(APP_ROOT . '/pages/dashboard.php'), 'name="job_titles" type="text" data-title-suggest="list" data-also-from="primary-job-title"')
     && str_contains($charts_js, 'input.dataset.alsoFrom') && str_contains($charts_js, 'box.scrollHeight'));
 
-check('version: the web version matches the desktop Job Finder it caught up to', APP_VERSION === '1.1.300');
+check('version: the web version matches the desktop Job Finder it caught up to', APP_VERSION === '1.1.302');
